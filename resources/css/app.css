@@ -1,0 +1,177 @@
+@import 'tailwindcss';
+@import url('https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap');
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+/* Custom Theme Variables */
+:root {
+    --color-primary: #29AAE1;
+    --color-primary-dark: #1E8CC0;
+    --color-success: #17C353;
+    --color-warning: #FBED21;
+    --color-danger: #EB2027;
+    --color-purple: #B51CEC;
+    --color-dark-green: #3E7E55;
+    
+    /* Region Colors */
+    --color-kab-cirebon: rgba(181, 28, 236, 0.1);
+    --color-kota-cirebon: rgba(255, 136, 140, 0.1);
+    --color-kuningan: rgba(18, 227, 255, 0.1);
+    --color-majalengka: rgba(23, 195, 83, 0.1);
+    --color-indramayu: rgba(251, 237, 33, 0.1);
+    
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 16px;
+}
+
+/* Base Styles */
+body {
+    font-family: 'Nunito Sans', sans-serif;
+    background-color: #F0F4F8;
+}
+
+/* Sidebar Styles */
+.sidebar {
+    transition: width 0.3s ease;
+}
+
+.sidebar.collapsed {
+    width: 60px;
+}
+
+.sidebar.expanded {
+    width: 250px;
+}
+
+.sidebar-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 16px;
+    color: white;
+    transition: background-color 0.2s ease;
+    border-radius: 8px;
+    margin: 4px 8px;
+}
+
+.sidebar-item:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-item.active {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Card Styles */
+.card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    padding: 20px;
+}
+
+/* Map Container */
+.map-container {
+    height: calc(100vh - 140px);
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Legend Styles */
+.legend {
+    background: white;
+    padding: 16px;
+    border-radius: 8px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    z-index: 1000;
+    min-width: 160px;
+}
+
+/* Detail Panel Styles */
+.detail-panel {
+    position: fixed;
+    top: 0;
+    right: -400px;
+    width: 400px;
+    height: 100vh;
+    background: white;
+    box-shadow: -4px 0 24px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease;
+    z-index: 1001;
+    overflow-y: auto;
+}
+
+.detail-panel.open {
+    right: 0;
+}
+
+.detail-panel-content {
+    background-image: url('/images/pln-background.png');
+    background-size: 200px;
+    background-position: center;
+    background-repeat: no-repeat;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+    .sidebar.expanded {
+        width: 100%;
+        position: fixed;
+        z-index: 1000;
+    }
+    
+    .detail-panel {
+        width: 100%;
+        right: -100%;
+    }
+}
+
+/* Leaflet Custom Marker Styles */
+.custom-marker-circle {
+    border: 3px solid currentColor;
+    border-radius: 50%;
+    background: transparent;
+}
+
+.custom-marker-filled {
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.custom-marker-triangle {
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 18px solid currentColor;
+}
+
+.custom-marker-star {
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+    background: currentColor;
+}
