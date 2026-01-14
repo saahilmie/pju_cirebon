@@ -24,18 +24,23 @@
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
                         class="bg-white rounded-lg shadow-lg px-5 py-2.5 flex items-center gap-2 text-sm text-gray-700 hover:bg-gray-50 min-w-[140px]">
-                        Regional
+                        <span x-text="selectedRegion || 'Regional'"></span>
                         <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
                     <div x-show="open" @click.away="open = false" x-transition
                         class="absolute top-full mt-2 bg-white rounded-lg shadow-xl py-2 w-52 z-50">
+                        <button @click="filterByRegion(null); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left text-sm">
+                            Semua Regional
+                        </button>
                         <template x-for="region in regions" :key="region.name">
-                            <label class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer">
+                            <button @click="filterByRegion(region.name); open = false"
+                                class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left">
                                 <span class="w-3 h-3 rounded-full" :style="'background-color:' + region.color"></span>
                                 <span x-text="region.label" class="text-sm"></span>
-                            </label>
+                            </button>
                         </template>
                     </div>
                 </div>
@@ -43,30 +48,30 @@
                 <div class="relative" x-data="{ open: false }">
                     <button @click="open = !open"
                         class="bg-white rounded-lg shadow-lg px-5 py-2.5 flex items-center gap-2 text-sm text-gray-700 hover:bg-gray-50 min-w-[120px]">
-                        Status
+                        <span x-text="selectedStatus || 'Status'"></span>
                         <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                         </svg>
                     </button>
                     <div x-show="open" @click.away="open = false" x-transition
                         class="absolute top-full mt-2 bg-white rounded-lg shadow-xl py-2 w-44 z-50">
-                        <label class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                            <span class="w-3 h-3 rounded-full bg-[#17C353]"></span> Meterisasi
-                        </label>
-                        <label class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                            <span class="w-3 h-3 rounded-full bg-[#FBED21]"></span> Abonemen
-                        </label>
-                        <label class="flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer">
-                            <span class="w-3 h-3 rounded-full bg-[#EB2027]"></span> Unclear
-                        </label>
+                        <button @click="filterByStatus(null); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left text-sm">
+                            Semua Status
+                        </button>
+                        <button @click="filterByStatus('M'); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left">
+                            <span class="w-3 h-3 rounded-full bg-[#17C353]"></span> <span class="text-sm">Meterisasi</span>
+                        </button>
+                        <button @click="filterByStatus('A'); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left">
+                            <span class="w-3 h-3 rounded-full bg-[#FBED21]"></span> <span class="text-sm">Abonemen</span>
+                        </button>
+                        <button @click="filterByStatus('unclear'); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left">
+                            <span class="w-3 h-3 rounded-full bg-[#EB2027]"></span> <span class="text-sm">Unclear</span>
+                        </button>
                     </div>
-                </div>
-
-                <!-- View IDPEL indicator when selected -->
-                <div x-show="selectedPoint"
-                    class="bg-white rounded-lg shadow-lg px-4 py-2.5 text-sm font-medium text-gray-700">
-                    View <span x-text="selectedPoint?.idpel" class="text-[#29AAE1]"></span>
-                    <button @click="closeDetail()" class="ml-2 text-gray-400 hover:text-red-500"></button>
                 </div>
             </div>
 
@@ -161,9 +166,9 @@
 
             <!-- Info Content -->
             <div class="flex-1 overflow-y-auto p-4 text-sm relative">
-                <!-- PLN Logo Watermark in data section -->
+                <!-- PLN Logo Watermark in data section - centered, bigger, 25% opacity -->
                 <img src="{{ asset('images/pln-sipju-logo.png') }}"
-                    class="absolute right-2 top-1/2 -translate-y-1/2 w-32 opacity-10 pointer-events-none">
+                    class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-48 opacity-25 pointer-events-none">
 
                 <table class="w-full">
                     <tr class="h-8">
@@ -219,11 +224,10 @@
                     <tr class="h-8">
                         <td class="text-gray-600">Titik Koordinat</td>
                         <td>:</td>
-                        <td></td>
+                        <td class="font-mono text-xs text-gray-700"
+                            x-text="(selectedPoint?.koordinat_x || '-') + ', ' + (selectedPoint?.koordinat_y || '-')"></td>
                     </tr>
                 </table>
-                <p class="font-mono text-xs text-gray-700 mt-1"
-                    x-text="(selectedPoint?.koordinat_x || '-') + ', ' + (selectedPoint?.koordinat_y || '-')"></p>
             </div>
         </div>
     </div>
@@ -240,6 +244,9 @@
                     popupX: 0,
                     popupY: 0,
                     searchQuery: '',
+                    selectedRegion: null,
+                    selectedStatus: null,
+                    allMarkersData: [],
                     regions: [
                         { name: 'KAB. CIREBON', label: 'Kab. Cirebon', color: '#B51CEC' },
                         { name: 'KOTA CIREBON', label: 'Kota Cirebon', color: '#29AAE1' },
@@ -326,6 +333,55 @@
                             this.selectedPoint = found.data;
                             this.map.setView([found.data.koordinat_x, found.data.koordinat_y], 16);
                         }
+                    },
+
+                    filterByRegion(regionName) {
+                        this.selectedRegion = regionName ? this.regions.find(r => r.name === regionName)?.label : null;
+                        this.applyFilters();
+                    },
+
+                    filterByStatus(status) {
+                        if (status === null) {
+                            this.selectedStatus = null;
+                        } else if (status === 'M') {
+                            this.selectedStatus = 'Meterisasi';
+                        } else if (status === 'A') {
+                            this.selectedStatus = 'Abonemen';
+                        } else {
+                            this.selectedStatus = 'Unclear';
+                        }
+                        this.applyFilters();
+                    },
+
+                    applyFilters() {
+                        this.markers.forEach(({ marker, data }) => {
+                            let showMarker = true;
+                            
+                            // Filter by region
+                            if (this.selectedRegion) {
+                                const regionMatch = this.regions.find(r => r.label === this.selectedRegion);
+                                if (regionMatch && data.nama_kabupaten !== regionMatch.name) {
+                                    showMarker = false;
+                                }
+                            }
+                            
+                            // Filter by status
+                            if (this.selectedStatus) {
+                                const statusMap = { 'Meterisasi': 'M', 'Abonemen': 'A', 'Unclear': null };
+                                const expectedKdam = statusMap[this.selectedStatus];
+                                if (this.selectedStatus === 'Unclear') {
+                                    if (data.kdam === 'M' || data.kdam === 'A') showMarker = false;
+                                } else if (data.kdam !== expectedKdam) {
+                                    showMarker = false;
+                                }
+                            }
+                            
+                            if (showMarker) {
+                                marker.addTo(this.markerLayer);
+                            } else {
+                                this.markerLayer.removeLayer(marker);
+                            }
+                        });
                     }
                 };
             }
