@@ -81,8 +81,8 @@ class UserController extends Controller
         $sheet->getStyle('A1:F1')->getFont()->setBold(true);
         $sheet->getStyle('A1:F1')->getFill()
             ->setFillType(\PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID)
-            ->getStartColor()->setARGB('29AAE1');
-        $sheet->getStyle('A1:F1')->getFont()->getColor()->setARGB('FFFFFF');
+            ->getStartColor()->setARGB('FF29AAE1');
+        $sheet->getStyle('A1:F1')->getFont()->getColor()->setARGB('FFFFFFFF');
 
         // Data
         $row = 2;
@@ -102,14 +102,15 @@ class UserController extends Controller
         }
 
         $filename = 'users_export_' . date('Y-m-d_His') . '.xlsx';
-        $writer = new Xlsx($spreadsheet);
-
-        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-        header('Content-Disposition: attachment;filename="' . $filename . '"');
-        header('Cache-Control: max-age=0');
-
-        $writer->save('php://output');
-        exit;
+        
+        // Use Symfony StreamedResponse for proper file download
+        return response()->streamDownload(function() use ($spreadsheet) {
+            $writer = new Xlsx($spreadsheet);
+            $writer->save('php://output');
+        }, $filename, [
+            'Content-Type' => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            'Cache-Control' => 'max-age=0',
+        ]);
     }
 
     public function store(Request $request)
