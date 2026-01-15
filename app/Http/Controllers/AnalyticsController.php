@@ -131,42 +131,57 @@ class AnalyticsController extends Controller
     // Get IDPEL analysis - potential anomalies (many PJU with low daya)
     public function getIdpelAnalysis(Request $request)
     {
-        $query = PjuData::query();
+        try {
+            $query = PjuData::query();
 
-        // Apply filters
-        if ($request->filled('wilayah')) {
-            $query->where('nama_kabupaten', $request->wilayah);
-        }
-        if ($request->filled('status')) {
-            if ($request->status === 'unclear') {
-                $query->where(function ($q) {
-                    $q->whereNull('kdam')->orWhere(function ($q2) {
-                        $q2->where('kdam', '!=', 'M')->where('kdam', '!=', 'A');
-                    });
-                });
-            } else {
-                $query->where('kdam', $request->status);
+            // Apply filters
+            if ($request->filled('wilayah')) {
+                $query->where('nama_kabupaten', $request->wilayah);
             }
+            if ($request->filled('status')) {
+                if ($request->status === 'unclear') {
+                    $query->where(function ($q) {
+                        $q->whereNull('kdam')->orWhere(function ($q2) {
+                            $q2->where('kdam', '!=', 'M')->where('kdam', '!=', 'A');
+                        });
+                    });
+                } else {
+                    $query->where('kdam', $request->status);
+                }
+            }
+
+            // Find IDPELs with more than 3 PJU - use subquery approach
+            $data = $query->select(
+                'idpel',
+                DB::raw('MIN(daya) as daya'),
+                DB::raw('MIN(nama_kabupaten) as nama_kabupaten'),
+                DB::raw('MIN(kdam) as kdam'),
+                DB::raw('COUNT(*) as pju_count')
+            )
+                ->whereNotNull('idpel')
+                ->groupBy('idpel')
+                ->having('pju_count', '>', 3)
+                ->orderByDesc('pju_count')
+                ->limit(50)
+                ->get()
+                ->map(function ($item) {
+                    // Mark as potential anomaly if daya <= 900 but pju_count > 3
+                    $item->is_anomaly = ($item->daya <= 900 && $item->pju_count > 3);
+                    $item->status = $item->kdam === 'M' ? 'Meterisasi' : ($item->kdam === 'A' ? 'Abonemen' : 'Unclear');
+                    return $item;
+                });
+
+            return response()->json([
+                'data' => $data,
+                'total_anomalies' => $data->where('is_anomaly', true)->count()
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'data' => [],
+                'total_anomalies' => 0,
+                'error' => $e->getMessage()
+            ]);
         }
-
-        // Find IDPELs with more than 3 PJU
-        $data = $query->select('idpel', 'daya', 'nama_kabupaten', 'kdam', DB::raw('COUNT(*) as pju_count'))
-            ->groupBy('idpel', 'daya', 'nama_kabupaten', 'kdam')
-            ->having('pju_count', '>', 3)
-            ->orderByDesc('pju_count')
-            ->limit(50)
-            ->get()
-            ->map(function ($item) {
-                // Mark as potential anomaly if daya <= 900 but pju_count > 3
-                $item->is_anomaly = ($item->daya <= 900 && $item->pju_count > 3);
-                $item->status = $item->kdam === 'M' ? 'Meterisasi' : ($item->kdam === 'A' ? 'Abonemen' : 'Unclear');
-                return $item;
-            });
-
-        return response()->json([
-            'data' => $data,
-            'total_anomalies' => $data->where('is_anomaly', true)->count()
-        ]);
     }
 
     // Get filter options

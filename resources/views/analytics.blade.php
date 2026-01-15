@@ -345,66 +345,130 @@
                     },
 
                     exportPDF() {
-                        const element = document.getElementById('charts-container');
-
-                        // Show loading state
-                        const btn = event?.target;
-                        const originalText = btn?.innerText;
-                        if (btn) {
-                            btn.disabled = true;
-                            btn.innerText = 'Generating...';
-                        }
-
-                        const opt = {
-                            margin: 10,
-                            filename: 'analytics-pju-' + new Date().toISOString().slice(0, 10) + '.pdf',
-                            image: { type: 'jpeg', quality: 0.8 },
-                            html2canvas: { scale: 1, useCORS: true, logging: false },
-                            jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
-                        };
-
-                        html2pdf().set(opt).from(element).save().then(() => {
-                            if (btn) {
-                                btn.disabled = false;
-                                btn.innerText = originalText;
-                            }
-                        }).catch(err => {
-                            console.error('PDF export error:', err);
-                            if (btn) {
-                                btn.disabled = false;
-                                btn.innerText = originalText;
-                            }
-                        });
-                    },
-
-                    exportExcel() {
-                        // Prepare data for Excel
-                        const wb = XLSX.utils.book_new();
-
-                        // Status sheet
-                        const statusSheet = XLSX.utils.aoa_to_sheet([
-                            ['Status', 'Jumlah'],
-                            ['Meterisasi', this.statusData.data?.[0] || 0],
-                            ['Abonemen', this.statusData.data?.[1] || 0],
-                            ['Unclear', this.statusData.data?.[2] || 0],
-                            ['Total', this.statusData.total || 0]
-                        ]);
-                        XLSX.utils.book_append_sheet(wb, statusSheet, 'Status Meter');
-
-                        // IDPEL Anomaly sheet
-                        if (this.idpelData.data?.length) {
-                            const idpelRows = [['IDPEL', 'Daya', 'Jumlah PJU', 'Status', 'Anomali']];
-                            this.idpelData.data.forEach(item => {
-                                idpelRows.push([item.idpel, item.daya, item.pju_count, item.status, item.is_anomaly ? 'Ya' : 'Tidak']);
-                            });
-                            const idpelSheet = XLSX.utils.aoa_to_sheet(idpelRows);
-                            XLSX.utils.book_append_sheet(wb, idpelSheet, 'Analisis IDPEL');
-                        }
-
-                        XLSX.writeFile(wb, 'analytics-pju-' + new Date().toISOString().slice(0, 10) + '.xlsx');
-                    }
-                };
+                        // Use window.print() as html2pdf doesn't support oklch colors
+                        const printContent = document.getElementById('charts-container').innerHTML;
+                        const printWindow = window.open('', '_blank');
+                        printWindow.document.write(`
+                                    <!DOCTYPE html>
+                                    <html>
+                                    <head>
+                                        <title>Analytics PJU - ${new Date().toLocaleDateString('id-ID')}</title>
+                                        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <style>
+            @media print {
+                body {
+                    -webkit-print-color-adjust: exact !important;
+                    print-color-adjust: exact !important;
+                }
             }
+
+            body {
+                font-family: Arial, sans-serif;
+                padding: 20px;
+                background: #f3f4f6;
+            }
+
+            .grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+            }
+
+            .card {
+                background: white;
+                border-radius: 12px;
+                padding: 24px;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            h3 {
+                font-size: 18px;
+                font-weight: bold;
+                color: #1f2937;
+                margin-bottom: 16px;
+            }
+
+            table {
+                width: 100%;
+                font-size: 14px;
+                border-collapse: collapse;
+            }
+
+            th,
+            td {
+                padding: 8px 12px;
+                text-align: left;
+            }
+
+            th {
+                background: #f9fafb;
+            }
+
+            .text-center {
+                text-align: center;
+            }
+
+            .header {
+                text-align: center;
+                margin-bottom: 20px;
+            }
+
+            canvas {
+                max-width: 100%;
+            }
+        </style>
+        </head>
+
+        <body>
+            <div class="header">
+                <h1>Laporan Analytics PJU</h1>
+                <p>Tanggal: ${new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day:
+                    'numeric' })}</p>
+            </div>
+            ${printContent}
+            <script>
+                                            window.onload = function() { 
+                                                setTimeout(function() {
+                                                    window.print(); 
+                                                    window.close();
+                                                }, 500);
+                                            };
+            </script>
+        </body>
+
+        </html>
+        `);
+        printWindow.document.close();
+        },
+
+        exportExcel() {
+        // Prepare data for Excel
+        const wb = XLSX.utils.book_new();
+
+        // Status sheet
+        const statusSheet = XLSX.utils.aoa_to_sheet([
+        ['Status', 'Jumlah'],
+        ['Meterisasi', this.statusData.data?.[0] || 0],
+        ['Abonemen', this.statusData.data?.[1] || 0],
+        ['Unclear', this.statusData.data?.[2] || 0],
+        ['Total', this.statusData.total || 0]
+        ]);
+        XLSX.utils.book_append_sheet(wb, statusSheet, 'Status Meter');
+
+        // IDPEL Anomaly sheet
+        if (this.idpelData.data?.length) {
+        const idpelRows = [['IDPEL', 'Daya', 'Jumlah PJU', 'Status', 'Anomali']];
+        this.idpelData.data.forEach(item => {
+        idpelRows.push([item.idpel, item.daya, item.pju_count, item.status, item.is_anomaly ? 'Ya' : 'Tidak']);
+        });
+        const idpelSheet = XLSX.utils.aoa_to_sheet(idpelRows);
+        XLSX.utils.book_append_sheet(wb, idpelSheet, 'Analisis IDPEL');
+        }
+
+        XLSX.writeFile(wb, 'analytics-pju-' + new Date().toISOString().slice(0, 10) + '.xlsx');
+        }
+        };
+        }
         </script>
     @endpush
 @endsection

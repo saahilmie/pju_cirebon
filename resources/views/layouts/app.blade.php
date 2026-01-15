@@ -9,21 +9,24 @@
     <title>@yield('title', 'PLN SIPJU') - PLN SIPJU Cirebon</title>
 
     <link rel="icon" type="image/png" href="{{ asset('images/pln-sipju-logo.png') }}">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
-    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
 
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
-
+    <!-- Critical CSS - must load before Alpine.js -->
     <style>
         html {
             font-size: 14px;
         }
+
         /* Prevent flash of unstyled content for Alpine.js elements */
         [x-cloak] {
             display: none !important;
         }
     </style>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body class="min-h-screen bg-gray-100 dark:bg-gray-900">
