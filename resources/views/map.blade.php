@@ -477,6 +477,23 @@
                 background: transparent !important;
                 border: none !important;
             }
+            /* Fix map drag issue */
+            #main-map {
+                z-index: 1;
+            }
+            .leaflet-container {
+                z-index: 1 !important;
+            }
+            .marker-cluster {
+                background-clip: padding-box;
+            }
+            .marker-cluster div {
+                background-color: rgba(41, 170, 225, 0.6);
+            }
+            .marker-cluster span {
+                color: #fff;
+                font-weight: bold;
+            }
         </style>
     @endpush
 @endsection
