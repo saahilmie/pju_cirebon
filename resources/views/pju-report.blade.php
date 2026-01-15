@@ -389,7 +389,8 @@
         </div>
 
         <!-- Add/Edit Modal -->
-        <div x-show="showModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
+        <div x-show="showModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            x-transition>
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
                 @click.away="showModal = false">
                 <div class="flex items-center justify-between p-6" style="border-bottom: 1px solid #C8BFBF;">
@@ -607,6 +608,30 @@
                 </button>
             </div>
         </div>
+
+        <!-- Import Progress Modal -->
+        <div x-show="isImporting" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-[60]">
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
+                <div class="w-20 h-20 mx-auto mb-6 relative">
+                    <!-- Spinning loader -->
+                    <div class="absolute inset-0 border-4 border-gray-200 rounded-full"></div>
+                    <div class="absolute inset-0 border-4 border-[#29AAE1] rounded-full animate-spin border-t-transparent">
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-[#29AAE1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                    </div>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Importing Data...</h3>
+                <p class="text-gray-500 mb-4" x-text="importStatus || 'Processing your file, please wait...'"></p>
+                <div class="bg-gray-100 rounded-lg p-3">
+                    <p class="text-sm text-gray-600">This may take a few minutes for large files.</p>
+                    <p class="text-sm text-gray-500 mt-1">Please do not close or refresh this page.</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     @push('scripts')
@@ -621,7 +646,7 @@
                     currentPage: 1, perPage: 10,
                     showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
                     showImportResultModal: false, importResult: { imported: 0, duplicates: 0, errors: 0 },
-                    isImporting: false,
+                    isImporting: false, importStatus: '',
                     isDragging: false, photoPreview: null, photoName: '', photoFile: null,
                     toast: { show: false, message: '', type: 'success' },
                     form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '' },
@@ -643,7 +668,7 @@
                     init() { this.loadData(); },
                     async loadData() {
                         try {
-                            const res = await fetch('/api/pju-report/data?limit=500');
+                            const res = await fetch('/api/pju-report/data?limit=5000');
                             const json = await res.json();
                             this.pjuData = json.data || [];
                             this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
@@ -705,12 +730,14 @@
                         }
 
                         this.isImporting = true;
-                        this.showToast(`Importing ${file.name}... Please wait.`, 'success');
+                        this.importStatus = `Uploading ${file.name}...`;
 
                         const formData = new FormData();
                         formData.append('file', file);
 
                         try {
+                            this.importStatus = `Processing ${file.name}... This may take several minutes for large files.`;
+
                             const res = await fetch('/api/pju-report/import', {
                                 method: 'POST',
                                 body: formData,
@@ -725,7 +752,8 @@
                             this.importResult = {
                                 imported: result.imported || 0,
                                 duplicates: result.duplicates || 0,
-                                errors: result.errors || 0
+                                errors: result.errors || 0,
+                                processed: result.processed || 0
                             };
 
                             // Show result modal if there are duplicates or the import succeeded

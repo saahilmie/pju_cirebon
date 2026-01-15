@@ -108,19 +108,32 @@ class PjuReportController extends Controller
     }
 
     /**
-     * Import CSV with duplicate detection
+     * Import CSV with duplicate detection and auto-delimiter detection
      */
     public function importCsv(Request $request)
     {
+        set_time_limit(600); // 10 minutes for large files
+
         $request->validate([
-            'file' => 'required|file|mimes:csv,txt|max:51200', // 50MB max
+            'file' => 'required|file|mimes:csv,txt|max:102400', // 100MB max
         ]);
 
         $file = $request->file('file');
         $handle = fopen($file->getPathname(), 'r');
 
+        // Read first line to detect delimiter
+        $firstLine = fgets($handle);
+        rewind($handle);
+
+        // Detect delimiter - check for semicolon or comma
+        $delimiter = strpos($firstLine, ';') !== false ? ';' : ',';
+
         // Get headers from first row
-        $headers = fgetcsv($handle);
+        $headers = fgetcsv($handle, 0, $delimiter);
+        if (!$headers) {
+            return response()->json(['success' => false, 'error' => 'Could not read CSV headers']);
+        }
+
         $headers = array_map(function ($h) {
             return strtolower(trim(str_replace(['"', ' '], ['', '_'], $h)));
         }, $headers);
@@ -132,9 +145,13 @@ class PjuReportController extends Controller
         $imported = 0;
         $duplicates = 0;
         $errors = 0;
-        $duplicateList = [];
+        $processed = 0;
+        $batchData = [];
+        $batchSize = 500; // Insert in batches
 
-        while (($row = fgetcsv($handle)) !== false) {
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            $processed++;
+
             if (count($row) !== count($headers)) {
                 $errors++;
                 continue;
@@ -153,9 +170,6 @@ class PjuReportController extends Controller
             // Check for duplicate
             if (isset($existingIdpelsFlipped[$idpel])) {
                 $duplicates++;
-                if (count($duplicateList) < 10) {
-                    $duplicateList[] = $idpel;
-                }
                 continue;
             }
 
@@ -164,7 +178,7 @@ class PjuReportController extends Controller
             $koordinatY = $this->parseCoordinate($data['koordinat_y'] ?? $data['y'] ?? $data['latitude'] ?? $data['lat'] ?? null);
 
             // Prepare data for insert
-            $insertData = [
+            $batchData[] = [
                 'idpel' => $idpel,
                 'nama' => $data['nama'] ?? $data['name'] ?? null,
                 'namapnj' => $data['namapnj'] ?? $data['nama_pnj'] ?? null,
@@ -184,15 +198,32 @@ class PjuReportController extends Controller
                 'nama_kabupaten' => $data['nama_kabupaten'] ?? $data['kabupaten'] ?? null,
                 'nama_kecamatan' => $data['nama_kecamatan'] ?? $data['kecamatan'] ?? null,
                 'nama_kelurahan' => $data['nama_kelurahan'] ?? $data['kelurahan'] ?? null,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
 
+            // Add to existing list to catch duplicates within same file
+            $existingIdpelsFlipped[$idpel] = true;
+
+            // Batch insert
+            if (count($batchData) >= $batchSize) {
+                try {
+                    PjuData::insert($batchData);
+                    $imported += count($batchData);
+                } catch (\Exception $e) {
+                    $errors += count($batchData);
+                }
+                $batchData = [];
+            }
+        }
+
+        // Insert remaining data
+        if (count($batchData) > 0) {
             try {
-                PjuData::create($insertData);
-                $imported++;
-                // Add to existing list to catch duplicates within same file
-                $existingIdpelsFlipped[$idpel] = true;
+                PjuData::insert($batchData);
+                $imported += count($batchData);
             } catch (\Exception $e) {
-                $errors++;
+                $errors += count($batchData);
             }
         }
 
@@ -203,7 +234,7 @@ class PjuReportController extends Controller
             'imported' => $imported,
             'duplicates' => $duplicates,
             'errors' => $errors,
-            'duplicate_sample' => $duplicateList,
+            'processed' => $processed,
             'message' => "Successfully imported {$imported} records."
         ]);
     }
