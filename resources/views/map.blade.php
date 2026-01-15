@@ -196,7 +196,7 @@
                     <tr class="h-8">
                         <td class="text-gray-600">Alamat</td>
                         <td>:</td>
-                        <td class="text-[#29AAE1]" x-text="selectedPoint?.alamat || '-'"></td>
+                        <td class="text-[#29AAE1]" x-text="getAlamat(selectedPoint)"></td>
                     </tr>
                     <tr class="h-8">
                         <td class="text-gray-600">Status Meter</td>
@@ -208,18 +208,17 @@
                     <tr class="h-8">
                         <td class="text-gray-600">No Meter</td>
                         <td>:</td>
-                        <td class="text-[#29AAE1]"
-                            x-text="selectedPoint?.no_meter ? 'PRABAYAR (' + selectedPoint.no_meter + ')' : '-'"></td>
+                        <td class="text-[#29AAE1]" x-text="getNoMeter(selectedPoint)"></td>
                     </tr>
                     <tr class="h-8">
                         <td class="text-gray-600">Jumlah Lampu</td>
                         <td>:</td>
-                        <td class="text-[#EB2027] font-bold" x-text="selectedPoint?.jumlah_lampu || 1"></td>
+                        <td class="text-[#EB2027] font-bold" x-text="getJumlahLampu(selectedPoint?.idpel)"></td>
                     </tr>
                     <tr class="h-8">
                         <td class="text-gray-600">Data Gardu</td>
                         <td>:</td>
-                        <td class="text-[#29AAE1]" x-text="selectedPoint?.gardu || '-'"></td>
+                        <td class="text-[#29AAE1]" x-text="getGardu(selectedPoint)"></td>
                     </tr>
                     <tr class="h-8">
                         <td class="text-gray-600">Titik Koordinat</td>
@@ -254,6 +253,38 @@
                         { name: 'MAJALENGKA', label: 'Majalengka', color: '#FBED21' },
                         { name: 'KAB. KUNINGAN', label: 'Kuningan', color: '#17C353' }
                     ],
+                    idpelCounts: {},
+
+                    // Helper function: Get formatted address
+                    getAlamat(point) {
+                        if (!point) return '-';
+                        const parts = [point.namapnj, point.rt ? `RT ${point.rt}` : null, point.rw ? `RW ${point.rw}` : null, point.nama_kecamatan, point.nama_kelurahan].filter(Boolean);
+                        return parts.length ? parts.join(', ') : '-';
+                    },
+
+                    // Helper function: Get no meter info
+                    getNoMeter(point) {
+                        if (!point) return '-';
+                        const jenis = point.jenislayanan || '';
+                        const kwh = point.nomor_meter_kwh || '';
+                        const prepaid = point.nomor_meter_prepaid || '';
+                        if (prepaid) return `PRABAYAR (${prepaid})`;
+                        if (kwh) return `PASKABAYAR (${kwh})`;
+                        if (jenis) return jenis;
+                        return '-';
+                    },
+
+                    // Helper function: Get gardu info
+                    getGardu(point) {
+                        if (!point) return '-';
+                        const parts = [point.nomor_gardu, point.nama_gardu, point.nomor_jurusan_tiang].filter(Boolean);
+                        return parts.length ? parts.join(' / ') : '-';
+                    },
+
+                    // Helper function: Get jumlah lampu (count of markers with same IDPEL)
+                    getJumlahLampu(idpel) {
+                        return this.idpelCounts[idpel] || 1;
+                    },
 
                     init() {
                         // Prevent double initialization
@@ -261,7 +292,7 @@
                         if (container != null) {
                             container._leaflet_id = null;
                         }
-                        
+
                         this.map = L.map('main-map', { zoomControl: true }).setView([-6.7320, 108.5523], 11);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: ' OpenStreetMap' }).addTo(this.map);
                         this.markerLayer = L.layerGroup().addTo(this.map);
@@ -288,6 +319,14 @@
                             const response = await fetch('/api/pju-markers?limit=2000');
                             const data = await response.json();
 
+                            // Count IDPEL occurrences for Jumlah Lampu
+                            this.idpelCounts = {};
+                            data.forEach(p => {
+                                if (p.idpel) {
+                                    this.idpelCounts[p.idpel] = (this.idpelCounts[p.idpel] || 0) + 1;
+                                }
+                            });
+
                             // Group markers by IDPEL for connecting lines
                             const idpelGroups = {};
                             console.log('Loaded markers:', data.length);
@@ -295,7 +334,7 @@
                                 // Parse coordinates as floats (they come as strings from DB)
                                 const lat = parseFloat(p.koordinat_x);
                                 const lng = parseFloat(p.koordinat_y);
-                                
+
                                 if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
                                     p.koordinat_x = lat;
                                     p.koordinat_y = lng;

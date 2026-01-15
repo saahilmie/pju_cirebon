@@ -9,7 +9,27 @@ Route::get('/pju-markers', function (Request $request) {
 
     $points = PjuData::whereNotNull('koordinat_x')
         ->whereNotNull('koordinat_y')
-        ->select('idpel', 'koordinat_x', 'koordinat_y', 'kdam', 'nama_kabupaten', 'nama')
+        ->select([
+            'idpel',
+            'nama',
+            'namapnj',
+            'rt',
+            'rw',
+            'tarif',
+            'daya',
+            'kdam',
+            'nama_kabupaten',
+            'nama_kecamatan',
+            'nama_kelurahan',
+            'jenislayanan',
+            'nomor_meter_kwh',
+            'nomor_meter_prepaid',
+            'nomor_gardu',
+            'nama_gardu',
+            'nomor_jurusan_tiang',
+            'koordinat_x',
+            'koordinat_y'
+        ])
         ->limit($limit)
         ->get();
 
