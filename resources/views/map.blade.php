@@ -256,6 +256,12 @@
                     ],
 
                     init() {
+                        // Prevent double initialization
+                        const container = L.DomUtil.get('main-map');
+                        if (container != null) {
+                            container._leaflet_id = null;
+                        }
+                        
                         this.map = L.map('main-map', { zoomControl: true }).setView([-6.7320, 108.5523], 11);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: ' OpenStreetMap' }).addTo(this.map);
                         this.markerLayer = L.layerGroup().addTo(this.map);
