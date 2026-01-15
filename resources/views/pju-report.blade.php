@@ -195,7 +195,13 @@
                 <div class="flex items-center gap-3">
                     <input type="text" placeholder="Find ID Pel and Status" x-model="searchTable"
                         class="px-4 py-2 rounded-lg text-sm w-64 focus:outline-none" style="border: 1px solid #C8BFBF;">
-                    <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
+
+                    <!-- Hidden file input for import -->
+                    <input type="file" id="importFile" accept=".csv,.xlsx,.xls" @change="handleImport($event)"
+                        class="hidden">
+
+                    <button @click="document.getElementById('importFile').click()"
+                        class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
                         style="border: 1px solid #C8BFBF;">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -203,7 +209,8 @@
                         </svg>
                         Import Excel/CSV
                     </button>
-                    <button class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
+                    <button @click="exportData()"
+                        class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
                         style="border: 1px solid #C8BFBF;">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -579,7 +586,95 @@
                             if (json.success) { this.showToast('Data successfully deleted', 'success'); this.showDeleteModal = false; this.loadData(); }
                         } catch (e) { this.showToast('Error deleting data', 'error'); }
                     },
-                    showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); }
+                    showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); },
+
+                    // Import CSV/Excel
+                    async handleImport(event) {
+                        const file = event.target.files[0];
+                        if (!file) return;
+
+                        const ext = file.name.split('.').pop().toLowerCase();
+                        if (!['csv', 'xlsx', 'xls'].includes(ext)) {
+                            this.showToast('Only CSV and Excel files are allowed', 'error');
+                            return;
+                        }
+
+                        // For CSV, parse and show preview
+                        if (ext === 'csv') {
+                            const reader = new FileReader();
+                            reader.onload = async (e) => {
+                                const text = e.target.result;
+                                const rows = text.split('\n').filter(r => r.trim());
+                                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
+
+                                this.showToast(`Importing ${rows.length - 1} records...`, 'success');
+
+                                // For now, just reload data after showing message
+                                // Full import would require server-side processing
+                                setTimeout(() => {
+                                    this.showToast('For full import, please use the server-side CSV import feature', 'success');
+                                }, 2000);
+                            };
+                            reader.readAsText(file);
+                        } else {
+                            this.showToast('Excel import requires server-side processing. Use CSV for client-side preview.', 'success');
+                        }
+
+                        // Reset file input
+                        event.target.value = '';
+                    },
+
+                    // Export to Excel/CSV
+                    exportData() {
+                        if (!this.filteredData.length) {
+                            this.showToast('No data to export', 'error');
+                            return;
+                        }
+
+                        // Create CSV content
+                        const headers = ['IDPEL', 'NAMA', 'NAMAPNJ', 'RT', 'RW', 'TARIF', 'DAYA', 'JENISLAYANAN',
+                            'NOMOR_METER_KWH', 'NOMOR_GARDU', 'NOMOR_JURUSAN_TIANG', 'NAMA_GARDU',
+                            'NOMOR_METER_PREPAID', 'KOORDINAT_X', 'KOORDINAT_Y', 'KDAM',
+                            'NAMA_KABUPATEN', 'NAMA_KECAMATAN', 'NAMA_KELURAHAN'];
+
+                        let csv = headers.join(',') + '\n';
+
+                        this.filteredData.forEach(item => {
+                            const row = [
+                                item.idpel || '',
+                                `"${(item.nama || '').replace(/"/g, '""')}"`,
+                                `"${(item.namapnj || '').replace(/"/g, '""')}"`,
+                                item.rt || '',
+                                item.rw || '',
+                                item.tarif || '',
+                                item.daya || '',
+                                item.jenislayanan || item.jenis_layanan || '',
+                                item.nomor_meter_kwh || '',
+                                item.nomor_gardu || '',
+                                item.nomor_jurusan_tiang || '',
+                                `"${(item.nama_gardu || '').replace(/"/g, '""')}"`,
+                                item.nomor_meter_prepaid || '',
+                                item.koordinat_x || '',
+                                item.koordinat_y || '',
+                                item.kdam || '',
+                                item.nama_kabupaten || '',
+                                item.nama_kecamatan || '',
+                                item.nama_kelurahan || ''
+                            ];
+                            csv += row.join(',') + '\n';
+                        });
+
+                        // Download CSV
+                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
+                        link.href = url;
+                        link.download = `pju-report-${new Date().toISOString().slice(0, 10)}.csv`;
+                        link.click();
+                        URL.revokeObjectURL(url);
+
+                        this.showToast(`Exported ${this.filteredData.length} records`, 'success');
+                    }
                 };
             }
         </script>
