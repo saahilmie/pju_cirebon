@@ -190,8 +190,7 @@
                     <tr class="h-8">
                         <td class="text-gray-600">Wilayah Dishub</td>
                         <td>:</td>
-                        <td class="text-[#29AAE1]"
-                            x-text="selectedPoint?.nama_kabupaten?.replace('KAB. ', '').replace('KOTA ', '') || '-'"></td>
+                        <td class="text-[#29AAE1]" x-text="getWilayahDishub(selectedPoint)"></td>
                     </tr>
                     <tr class="h-8">
                         <td class="text-gray-600">Alamat</td>
@@ -281,6 +280,20 @@
                         return parts.length ? parts.join(' / ') : '-';
                     },
 
+                    // Helper function: Get Wilayah Dishub with proper naming
+                    getWilayahDishub(point) {
+                        if (!point || !point.nama_kabupaten) return '-';
+                        let wilayah = point.nama_kabupaten.toUpperCase();
+
+                        // Map Cilimus to Kab. Cirebon
+                        if (wilayah.includes('CILIMUS')) {
+                            return 'KAB. CIREBON';
+                        }
+
+                        // Return the full name as-is from database
+                        return wilayah;
+                    },
+
                     // Helper function: Get jumlah lampu (count of markers with same IDPEL)
                     getJumlahLampu(idpel) {
                         return this.idpelCounts[idpel] || 1;
@@ -292,7 +305,7 @@
                             console.log('Map already initialized, skipping');
                             return;
                         }
-                        
+
                         // Also check if container already has a map
                         const container = document.getElementById('main-map');
                         if (container && container._leaflet_id) {
@@ -484,19 +497,24 @@
                 background: transparent !important;
                 border: none !important;
             }
+
             /* Fix map drag issue */
             #main-map {
                 z-index: 1;
             }
+
             .leaflet-container {
                 z-index: 1 !important;
             }
+
             .marker-cluster {
                 background-clip: padding-box;
             }
+
             .marker-cluster div {
                 background-color: rgba(41, 170, 225, 0.6);
             }
+
             .marker-cluster span {
                 color: #fff;
                 font-weight: bold;
