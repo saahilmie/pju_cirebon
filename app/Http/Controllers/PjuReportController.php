@@ -26,6 +26,7 @@ class PjuReportController extends Controller
             'rw',
             'tarif',
             'daya',
+            'jenislayanan',
             'nomor_meter_kwh',
             'nomor_gardu',
             'nomor_jurusan_tiang',
@@ -37,13 +38,11 @@ class PjuReportController extends Controller
             'nama_kabupaten',
             'nama_kecamatan',
             'nama_kelurahan',
-            'no_meter',
-            'photo'
         ])
             ->limit($limit)
             ->get()
             ->map(function ($item) {
-                $item->jenis_layanan = $item->no_meter ? 'PRABAYAR' : 'PASKABAYAR';
+                $item->jenis_layanan = $item->jenislayanan ?: ($item->nomor_meter_prepaid ? 'PRABAYAR' : 'PASKABAYAR');
                 return $item;
             });
 
