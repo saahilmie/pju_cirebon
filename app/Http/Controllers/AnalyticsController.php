@@ -160,8 +160,8 @@ class AnalyticsController extends Controller
             )
                 ->whereNotNull('idpel')
                 ->groupBy('idpel')
-                ->having('pju_count', '>', 3)
-                ->orderByDesc('pju_count')
+                ->havingRaw('COUNT(*) > 3')
+                ->orderByRaw('COUNT(*) DESC')
                 ->limit(50)
                 ->get()
                 ->map(function ($item) {
