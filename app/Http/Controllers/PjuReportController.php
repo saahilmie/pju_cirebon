@@ -38,6 +38,7 @@ class PjuReportController extends Controller
             'nama_kabupaten',
             'nama_kecamatan',
             'nama_kelurahan',
+            'photo',
         ])
             ->limit($limit)
             ->get()

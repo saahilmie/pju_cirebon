@@ -279,20 +279,46 @@
 
                     async loadMarkers() {
                         try {
-                            const response = await fetch('/api/pju-markers?limit=500');
+                            const response = await fetch('/api/pju-markers?limit=2000');
                             const data = await response.json();
-                            data.forEach(p => p.koordinat_x && p.koordinat_y && this.addMarker(p));
+
+                            // Group markers by IDPEL for connecting lines
+                            const idpelGroups = {};
+                            data.forEach(p => {
+                                if (p.koordinat_x && p.koordinat_y) {
+                                    this.addMarker(p);
+                                    // Group by IDPEL for connecting lines
+                                    if (p.idpel) {
+                                        if (!idpelGroups[p.idpel]) idpelGroups[p.idpel] = [];
+                                        idpelGroups[p.idpel].push([p.koordinat_x, p.koordinat_y]);
+                                    }
+                                }
+                            });
+
+                            // Draw connecting lines for same IDPEL (multiple lamps)
+                            this.drawConnectingLines(idpelGroups);
                         } catch (e) {
-                            this.loadSampleMarkers();
+                            console.error('Error loading markers:', e);
                         }
                     },
 
+                    drawConnectingLines(idpelGroups) {
+                        Object.entries(idpelGroups).forEach(([idpel, coords]) => {
+                            if (coords.length > 1) {
+                                // Draw polyline connecting all points with same IDPEL
+                                const lineColor = '#29AAE1'; // Blue color for connections
+                                L.polyline(coords, {
+                                    color: lineColor,
+                                    weight: 2,
+                                    opacity: 0.7,
+                                    dashArray: '5, 5'
+                                }).addTo(this.markerLayer);
+                            }
+                        });
+                    },
+
                     loadSampleMarkers() {
-                        [
-                            { idpel: '533113026974', koordinat_x: -6.7166, koordinat_y: 108.5570, kdam: null, nama: 'PT. ***** ****', nama_kabupaten: 'KOTA CIREBON', tarif: 'R1T', daya: '1300', alamat: 'Jalan Duren Wetan', no_meter: '32114441416', jumlah_lampu: 3, gardu: 'GD533110731 / GKKC 103L01' },
-                            { idpel: '533113027000', koordinat_x: -6.7066, koordinat_y: 108.5670, kdam: 'M', nama: 'Sample M', nama_kabupaten: 'KOTA CIREBON', tarif: 'R1M', daya: '900', jumlah_lampu: 2 },
-                            { idpel: '533113028000', koordinat_x: -6.6966, koordinat_y: 108.5470, kdam: 'A', nama: 'Sample A', nama_kabupaten: 'KAB. CIREBON', tarif: 'R1T', daya: '1300', jumlah_lampu: 1 },
-                        ].forEach(p => this.addMarker(p));
+                        // Sample data - will be replaced by real database data
                     },
 
                     addMarker(point) {
@@ -356,7 +382,7 @@
                     applyFilters() {
                         this.markers.forEach(({ marker, data }) => {
                             let showMarker = true;
-                            
+
                             // Filter by region
                             if (this.selectedRegion) {
                                 const regionMatch = this.regions.find(r => r.label === this.selectedRegion);
@@ -364,7 +390,7 @@
                                     showMarker = false;
                                 }
                             }
-                            
+
                             // Filter by status
                             if (this.selectedStatus) {
                                 const statusMap = { 'Meterisasi': 'M', 'Abonemen': 'A', 'Unclear': null };
@@ -375,7 +401,7 @@
                                     showMarker = false;
                                 }
                             }
-                            
+
                             if (showMarker) {
                                 marker.addTo(this.markerLayer);
                             } else {
