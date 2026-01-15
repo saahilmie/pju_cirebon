@@ -31,6 +31,8 @@ class PjuData extends Model
         'nama_kabupaten',
         'nama_kecamatan',
         'nama_kelurahan',
+        'no_meter',
+        'photo',
     ];
 
     protected $casts = [
@@ -42,7 +44,7 @@ class PjuData extends Model
     // Get status meter label
     public function getStatusMeterAttribute(): string
     {
-        return match($this->kdam) {
+        return match ($this->kdam) {
             'M' => 'Meterisasi',
             'A' => 'Abonemen',
             default => 'Unclear',

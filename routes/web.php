@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\PjuReportController;
 use Illuminate\Support\Facades\Route;
 
 // Auth Routes
@@ -22,9 +23,12 @@ Route::middleware('auth')->group(function () {
         return view('map');
     })->name('map');
 
-    Route::get('/pju-report', function () {
-        return view('pju-report');
-    })->name('pju-report');
+    // PJU Report
+    Route::get('/pju-report', [PjuReportController::class, 'index'])->name('pju-report');
+    Route::get('/api/pju-report/data', [PjuReportController::class, 'getData']);
+    Route::post('/api/pju-report', [PjuReportController::class, 'store']);
+    Route::put('/api/pju-report/{id}', [PjuReportController::class, 'update']);
+    Route::delete('/api/pju-report/{id}', [PjuReportController::class, 'destroy']);
 
     // User Management (Admin only)
     Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
