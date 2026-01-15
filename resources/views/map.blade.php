@@ -284,13 +284,20 @@
 
                             // Group markers by IDPEL for connecting lines
                             const idpelGroups = {};
+                            console.log('Loaded markers:', data.length);
                             data.forEach(p => {
-                                if (p.koordinat_x && p.koordinat_y) {
+                                // Parse coordinates as floats (they come as strings from DB)
+                                const lat = parseFloat(p.koordinat_x);
+                                const lng = parseFloat(p.koordinat_y);
+                                
+                                if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                                    p.koordinat_x = lat;
+                                    p.koordinat_y = lng;
                                     this.addMarker(p);
                                     // Group by IDPEL for connecting lines
                                     if (p.idpel) {
                                         if (!idpelGroups[p.idpel]) idpelGroups[p.idpel] = [];
-                                        idpelGroups[p.idpel].push([p.koordinat_x, p.koordinat_y]);
+                                        idpelGroups[p.idpel].push([lat, lng]);
                                     }
                                 }
                             });
