@@ -15,13 +15,17 @@ Route::middleware('auth')->group(function () {
     Route::get('/', function () {
         return redirect()->route('dashboard');
     });
-    
+
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-    
+
     Route::get('/map', function () {
         return view('map');
     })->name('map');
-    
+
+    Route::get('/pju-report', function () {
+        return view('pju-report');
+    })->name('pju-report');
+
     // User Management (Admin only)
     Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
 });

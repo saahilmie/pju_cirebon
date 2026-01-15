@@ -30,8 +30,8 @@
             <span x-show="sidebarOpen" class="whitespace-nowrap text-sm">Map</span>
         </a>
 
-        <a href="#"
-            class="flex items-center gap-3 px-3 py-2.5 text-white rounded-lg transition-all duration-200 hover:bg-white/15"
+        <a href="{{ route('pju-report') }}"
+            class="flex items-center gap-3 px-3 py-2.5 text-white rounded-lg transition-all duration-200 hover:bg-white/15 {{ request()->routeIs('pju-report') ? 'bg-white/20' : '' }}"
             :class="!sidebarOpen && 'justify-center'">
             <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
