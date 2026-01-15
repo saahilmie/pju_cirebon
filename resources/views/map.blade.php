@@ -287,10 +287,17 @@
                     },
 
                     init() {
-                        // Prevent double initialization
-                        const container = L.DomUtil.get('main-map');
-                        if (container != null) {
-                            container._leaflet_id = null;
+                        // Prevent double initialization - check if map already exists
+                        if (this.map) {
+                            console.log('Map already initialized, skipping');
+                            return;
+                        }
+                        
+                        // Also check if container already has a map
+                        const container = document.getElementById('main-map');
+                        if (container && container._leaflet_id) {
+                            console.log('Container already has map, skipping');
+                            return;
                         }
 
                         this.map = L.map('main-map', { zoomControl: true }).setView([-6.7320, 108.5523], 11);
