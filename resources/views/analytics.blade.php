@@ -346,14 +346,35 @@
 
                     exportPDF() {
                         const element = document.getElementById('charts-container');
+
+                        // Show loading state
+                        const btn = event?.target;
+                        const originalText = btn?.innerText;
+                        if (btn) {
+                            btn.disabled = true;
+                            btn.innerText = 'Generating...';
+                        }
+
                         const opt = {
                             margin: 10,
                             filename: 'analytics-pju-' + new Date().toISOString().slice(0, 10) + '.pdf',
-                            image: { type: 'jpeg', quality: 0.98 },
-                            html2canvas: { scale: 2 },
+                            image: { type: 'jpeg', quality: 0.8 },
+                            html2canvas: { scale: 1, useCORS: true, logging: false },
                             jsPDF: { unit: 'mm', format: 'a4', orientation: 'landscape' }
                         };
-                        html2pdf().set(opt).from(element).save();
+
+                        html2pdf().set(opt).from(element).save().then(() => {
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerText = originalText;
+                            }
+                        }).catch(err => {
+                            console.error('PDF export error:', err);
+                            if (btn) {
+                                btn.disabled = false;
+                                btn.innerText = originalText;
+                            }
+                        });
                     },
 
                     exportExcel() {

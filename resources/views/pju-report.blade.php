@@ -196,28 +196,83 @@
                     <input type="text" placeholder="Find ID Pel and Status" x-model="searchTable"
                         class="px-4 py-2 rounded-lg text-sm w-64 focus:outline-none" style="border: 1px solid #C8BFBF;">
 
-                    <!-- Hidden file input for import -->
-                    <input type="file" id="importFile" accept=".csv,.xlsx,.xls" @change="handleImport($event)"
+                    <!-- Hidden file inputs for import -->
+                    <input type="file" id="importFileCSV" accept=".csv" @change="handleImport($event, 'csv')"
+                        class="hidden">
+                    <input type="file" id="importFileExcel" accept=".xlsx,.xls" @change="handleImport($event, 'excel')"
                         class="hidden">
 
-                    <button @click="document.getElementById('importFile').click()"
-                        class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
-                        style="border: 1px solid #C8BFBF;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                        </svg>
-                        Import Excel/CSV
-                    </button>
-                    <button @click="exportData()"
-                        class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
-                        style="border: 1px solid #C8BFBF;">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                        </svg>
-                        Export Excel/CSV
-                    </button>
+                    <!-- Import Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open"
+                            class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
+                            style="border: 1px solid #C8BFBF;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                            </svg>
+                            Import
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-transition
+                            class="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-xl z-50 w-40 py-1"
+                            style="border: 1px solid #C8BFBF;">
+                            <button @click="document.getElementById('importFileExcel').click(); open = false"
+                                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Excel (.xlsx)
+                            </button>
+                            <button @click="document.getElementById('importFileCSV').click(); open = false"
+                                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                CSV (.csv)
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Export Dropdown -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open"
+                            class="px-4 py-2 rounded-lg text-sm flex items-center gap-2 hover:bg-gray-50"
+                            style="border: 1px solid #C8BFBF;">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                            </svg>
+                            Export
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-transition
+                            class="absolute top-full right-0 mt-1 bg-white rounded-lg shadow-xl z-50 w-40 py-1"
+                            style="border: 1px solid #C8BFBF;">
+                            <button @click="exportData('excel'); open = false"
+                                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                Excel (.xlsx)
+                            </button>
+                            <button @click="exportData('csv'); open = false"
+                                class="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2">
+                                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                </svg>
+                                CSV (.csv)
+                            </button>
+                        </div>
+                    </div>
                     <button @click="openAddModal()"
                         class="px-4 py-2 bg-[#29AAE1] text-white rounded-lg text-sm flex items-center gap-2 hover:bg-[#1E8CC0]">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -508,6 +563,7 @@
     </div>
 
     @push('scripts')
+        <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
         <script>
             function pjuReport() {
                 return {
@@ -589,91 +645,84 @@
                     showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); },
 
                     // Import CSV/Excel
-                    async handleImport(event) {
+                    async handleImport(event, format) {
                         const file = event.target.files[0];
                         if (!file) return;
 
-                        const ext = file.name.split('.').pop().toLowerCase();
-                        if (!['csv', 'xlsx', 'xls'].includes(ext)) {
-                            this.showToast('Only CSV and Excel files are allowed', 'error');
-                            return;
-                        }
+                        this.showToast(`Importing ${file.name}...`, 'success');
 
-                        // For CSV, parse and show preview
-                        if (ext === 'csv') {
+                        if (format === 'csv') {
                             const reader = new FileReader();
                             reader.onload = async (e) => {
                                 const text = e.target.result;
                                 const rows = text.split('\n').filter(r => r.trim());
-                                const headers = rows[0].split(',').map(h => h.trim().replace(/"/g, ''));
-
-                                this.showToast(`Importing ${rows.length - 1} records...`, 'success');
-
-                                // For now, just reload data after showing message
-                                // Full import would require server-side processing
-                                setTimeout(() => {
-                                    this.showToast('For full import, please use the server-side CSV import feature', 'success');
-                                }, 2000);
+                                this.showToast(`Found ${rows.length - 1} records. Server-side import required for full functionality.`, 'success');
                             };
                             reader.readAsText(file);
                         } else {
-                            this.showToast('Excel import requires server-side processing. Use CSV for client-side preview.', 'success');
+                            this.showToast('Excel import requires server-side processing.', 'success');
                         }
 
-                        // Reset file input
                         event.target.value = '';
                     },
 
                     // Export to Excel/CSV
-                    exportData() {
+                    exportData(format = 'csv') {
                         if (!this.filteredData.length) {
                             this.showToast('No data to export', 'error');
                             return;
                         }
 
-                        // Create CSV content
                         const headers = ['IDPEL', 'NAMA', 'NAMAPNJ', 'RT', 'RW', 'TARIF', 'DAYA', 'JENISLAYANAN',
                             'NOMOR_METER_KWH', 'NOMOR_GARDU', 'NOMOR_JURUSAN_TIANG', 'NAMA_GARDU',
                             'NOMOR_METER_PREPAID', 'KOORDINAT_X', 'KOORDINAT_Y', 'KDAM',
                             'NAMA_KABUPATEN', 'NAMA_KECAMATAN', 'NAMA_KELURAHAN'];
 
-                        let csv = headers.join(',') + '\n';
+                        const rows = this.filteredData.map(item => [
+                            item.idpel || '',
+                            item.nama || '',
+                            item.namapnj || '',
+                            item.rt || '',
+                            item.rw || '',
+                            item.tarif || '',
+                            item.daya || '',
+                            item.jenislayanan || item.jenis_layanan || '',
+                            item.nomor_meter_kwh || '',
+                            item.nomor_gardu || '',
+                            item.nomor_jurusan_tiang || '',
+                            item.nama_gardu || '',
+                            item.nomor_meter_prepaid || '',
+                            item.koordinat_x || '',
+                            item.koordinat_y || '',
+                            item.kdam || '',
+                            item.nama_kabupaten || '',
+                            item.nama_kecamatan || '',
+                            item.nama_kelurahan || ''
+                        ]);
 
-                        this.filteredData.forEach(item => {
-                            const row = [
-                                item.idpel || '',
-                                `"${(item.nama || '').replace(/"/g, '""')}"`,
-                                `"${(item.namapnj || '').replace(/"/g, '""')}"`,
-                                item.rt || '',
-                                item.rw || '',
-                                item.tarif || '',
-                                item.daya || '',
-                                item.jenislayanan || item.jenis_layanan || '',
-                                item.nomor_meter_kwh || '',
-                                item.nomor_gardu || '',
-                                item.nomor_jurusan_tiang || '',
-                                `"${(item.nama_gardu || '').replace(/"/g, '""')}"`,
-                                item.nomor_meter_prepaid || '',
-                                item.koordinat_x || '',
-                                item.koordinat_y || '',
-                                item.kdam || '',
-                                item.nama_kabupaten || '',
-                                item.nama_kecamatan || '',
-                                item.nama_kelurahan || ''
-                            ];
-                            csv += row.join(',') + '\n';
-                        });
+                        if (format === 'excel' && typeof XLSX !== 'undefined') {
+                            // Export as Excel using SheetJS
+                            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, 'PJU Report');
+                            XLSX.writeFile(wb, `pju-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                        } else {
+                            // Export as CSV
+                            let csv = headers.join(',') + '\n';
+                            rows.forEach(row => {
+                                csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+                            });
 
-                        // Download CSV
-                        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                        const url = URL.createObjectURL(blob);
-                        const link = document.createElement('a');
-                        link.href = url;
-                        link.download = `pju-report-${new Date().toISOString().slice(0, 10)}.csv`;
-                        link.click();
-                        URL.revokeObjectURL(url);
+                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `pju-report-${new Date().toISOString().slice(0, 10)}.csv`;
+                            link.click();
+                            URL.revokeObjectURL(url);
+                        }
 
-                        this.showToast(`Exported ${this.filteredData.length} records`, 'success');
+                        this.showToast(`Exported ${this.filteredData.length} records as ${format.toUpperCase()}`, 'success');
                     }
                 };
             }

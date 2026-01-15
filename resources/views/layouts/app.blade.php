@@ -19,6 +19,10 @@
         html {
             font-size: 14px;
         }
+        /* Prevent flash of unstyled content for Alpine.js elements */
+        [x-cloak] {
+            display: none !important;
+        }
     </style>
 </head>
 
@@ -40,7 +44,7 @@
     </div>
 
     <!-- Logout Modal -->
-    <div x-show="showLogoutModal" x-transition.opacity
+    <div x-show="showLogoutModal" x-cloak x-transition.opacity
         class="fixed inset-0 bg-black/50 z-[100] flex items-center justify-center p-4"
         @click.self="showLogoutModal = false">
         <div x-show="showLogoutModal" x-transition
