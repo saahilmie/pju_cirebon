@@ -560,6 +560,48 @@
                 </div>
             </div>
         </div>
+
+        <!-- Import Result Modal -->
+        <div x-show="showImportResultModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50" x-transition>
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 text-center"
+                @click.away="showImportResultModal = false">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full flex items-center justify-center"
+                    :class="importResult.duplicates > 0 ? 'bg-yellow-100' : 'bg-green-100'">
+                    <svg x-show="importResult.duplicates > 0" class="w-8 h-8 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <svg x-show="importResult.duplicates === 0" class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Import Complete</h3>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-4 text-left space-y-2">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Successfully imported:</span>
+                        <span class="font-bold text-green-600" x-text="importResult.imported"></span>
+                    </div>
+                    <div x-show="importResult.duplicates > 0" class="flex justify-between">
+                        <span class="text-gray-600">Skipped (duplicates):</span>
+                        <span class="font-bold text-yellow-600" x-text="importResult.duplicates"></span>
+                    </div>
+                    <div x-show="importResult.errors > 0" class="flex justify-between">
+                        <span class="text-gray-600">Errors:</span>
+                        <span class="font-bold text-red-600" x-text="importResult.errors"></span>
+                    </div>
+                </div>
+
+                <p x-show="importResult.duplicates > 0" class="text-sm text-yellow-600 mb-4">
+                    <span x-text="importResult.duplicates"></span> record(s) could not be imported because they already exist in the database (duplicate IDPEL).
+                </p>
+
+                <button @click="showImportResultModal = false" 
+                    class="px-8 py-2.5 bg-[#29AAE1] text-white rounded-lg font-medium hover:bg-[#1E8CC0]">
+                    OK
+                </button>
+            </div>
+        </div>
     </div>
 
     @push('scripts')
@@ -573,6 +615,8 @@
                     statuses: ['M', 'A', 'Unclear'], idpels: [], pjuData: [],
                     currentPage: 1, perPage: 10,
                     showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
+                    showImportResultModal: false, importResult: { imported: 0, duplicates: 0, errors: 0 },
+                    isImporting: false,
                     isDragging: false, photoPreview: null, photoName: '', photoFile: null,
                     toast: { show: false, message: '', type: 'success' },
                     form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '' },
@@ -649,21 +693,53 @@
                         const file = event.target.files[0];
                         if (!file) return;
 
-                        this.showToast(`Importing ${file.name}...`, 'success');
-
-                        if (format === 'csv') {
-                            const reader = new FileReader();
-                            reader.onload = async (e) => {
-                                const text = e.target.result;
-                                const rows = text.split('\n').filter(r => r.trim());
-                                this.showToast(`Found ${rows.length - 1} records. Server-side import required for full functionality.`, 'success');
-                            };
-                            reader.readAsText(file);
-                        } else {
-                            this.showToast('Excel import requires server-side processing.', 'success');
+                        if (format !== 'csv') {
+                            this.showToast('Please use CSV format for import.', 'error');
+                            event.target.value = '';
+                            return;
                         }
 
-                        event.target.value = '';
+                        this.isImporting = true;
+                        this.showToast(`Importing ${file.name}... Please wait.`, 'success');
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        try {
+                            const res = await fetch('/api/pju-report/import', {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            const result = await res.json();
+
+                            this.importResult = {
+                                imported: result.imported || 0,
+                                duplicates: result.duplicates || 0,
+                                errors: result.errors || 0
+                            };
+
+                            // Show result modal if there are duplicates or the import succeeded
+                            if (result.duplicates > 0 || result.imported > 0) {
+                                this.showImportResultModal = true;
+                            }
+
+                            // Reload data after import
+                            if (result.imported > 0) {
+                                await this.loadData();
+                            }
+
+                        } catch (e) {
+                            console.error('Import error:', e);
+                            this.showToast('Import failed. Please check your file format.', 'error');
+                        } finally {
+                            this.isImporting = false;
+                            event.target.value = '';
+                        }
                     },
 
                     // Export to Excel/CSV

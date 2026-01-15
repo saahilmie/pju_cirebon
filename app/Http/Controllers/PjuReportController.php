@@ -106,4 +106,143 @@ class PjuReportController extends Controller
 
         return response()->json(['success' => true, 'message' => 'Data successfully deleted']);
     }
+
+    /**
+     * Import CSV with duplicate detection
+     */
+    public function importCsv(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|file|mimes:csv,txt|max:51200', // 50MB max
+        ]);
+
+        $file = $request->file('file');
+        $handle = fopen($file->getPathname(), 'r');
+
+        // Get headers from first row
+        $headers = fgetcsv($handle);
+        $headers = array_map(function ($h) {
+            return strtolower(trim(str_replace(['"', ' '], ['', '_'], $h)));
+        }, $headers);
+
+        // Get all existing IDPELs for duplicate checking
+        $existingIdpels = PjuData::pluck('idpel')->toArray();
+        $existingIdpelsFlipped = array_flip($existingIdpels);
+
+        $imported = 0;
+        $duplicates = 0;
+        $errors = 0;
+        $duplicateList = [];
+
+        while (($row = fgetcsv($handle)) !== false) {
+            if (count($row) !== count($headers)) {
+                $errors++;
+                continue;
+            }
+
+            $data = array_combine($headers, $row);
+
+            // Get IDPEL - try common column names
+            $idpel = $data['idpel'] ?? $data['id_pel'] ?? $data['idpelanggan'] ?? null;
+
+            if (!$idpel) {
+                $errors++;
+                continue;
+            }
+
+            // Check for duplicate
+            if (isset($existingIdpelsFlipped[$idpel])) {
+                $duplicates++;
+                if (count($duplicateList) < 10) {
+                    $duplicateList[] = $idpel;
+                }
+                continue;
+            }
+
+            // Parse coordinates - handle various formats
+            $koordinatX = $this->parseCoordinate($data['koordinat_x'] ?? $data['x'] ?? $data['longitude'] ?? $data['lon'] ?? null);
+            $koordinatY = $this->parseCoordinate($data['koordinat_y'] ?? $data['y'] ?? $data['latitude'] ?? $data['lat'] ?? null);
+
+            // Prepare data for insert
+            $insertData = [
+                'idpel' => $idpel,
+                'nama' => $data['nama'] ?? $data['name'] ?? null,
+                'namapnj' => $data['namapnj'] ?? $data['nama_pnj'] ?? null,
+                'rt' => $data['rt'] ?? null,
+                'rw' => $data['rw'] ?? null,
+                'tarif' => $data['tarif'] ?? null,
+                'daya' => $data['daya'] ?? $data['power'] ?? null,
+                'jenislayanan' => $data['jenislayanan'] ?? $data['jenis_layanan'] ?? null,
+                'nomor_meter_kwh' => $data['nomor_meter_kwh'] ?? $data['no_meter_kwh'] ?? null,
+                'nomor_gardu' => $data['nomor_gardu'] ?? $data['no_gardu'] ?? null,
+                'nomor_jurusan_tiang' => $data['nomor_jurusan_tiang'] ?? $data['no_jurusan'] ?? null,
+                'nama_gardu' => $data['nama_gardu'] ?? null,
+                'nomor_meter_prepaid' => $data['nomor_meter_prepaid'] ?? $data['no_meter_prepaid'] ?? null,
+                'koordinat_x' => $koordinatX,
+                'koordinat_y' => $koordinatY,
+                'kdam' => $data['kdam'] ?? $data['status_meter'] ?? null,
+                'nama_kabupaten' => $data['nama_kabupaten'] ?? $data['kabupaten'] ?? null,
+                'nama_kecamatan' => $data['nama_kecamatan'] ?? $data['kecamatan'] ?? null,
+                'nama_kelurahan' => $data['nama_kelurahan'] ?? $data['kelurahan'] ?? null,
+            ];
+
+            try {
+                PjuData::create($insertData);
+                $imported++;
+                // Add to existing list to catch duplicates within same file
+                $existingIdpelsFlipped[$idpel] = true;
+            } catch (\Exception $e) {
+                $errors++;
+            }
+        }
+
+        fclose($handle);
+
+        return response()->json([
+            'success' => true,
+            'imported' => $imported,
+            'duplicates' => $duplicates,
+            'errors' => $errors,
+            'duplicate_sample' => $duplicateList,
+            'message' => "Successfully imported {$imported} records."
+        ]);
+    }
+
+    /**
+     * Parse coordinate from various formats
+     */
+    private function parseCoordinate($value)
+    {
+        if (!$value)
+            return null;
+
+        // Remove any non-numeric characters except . - ,
+        $value = trim($value);
+
+        // Handle comma as decimal separator
+        if (preg_match('/^\d+,\d+$/', $value)) {
+            $value = str_replace(',', '.', $value);
+        }
+
+        // Handle format like "107°41'35.4" (degrees minutes seconds)
+        if (preg_match('/(\d+)[°](\d+)[\'′](\d+\.?\d*)[\"″]?([NSEW])?/i', $value, $matches)) {
+            $degrees = floatval($matches[1]);
+            $minutes = floatval($matches[2]);
+            $seconds = floatval($matches[3]);
+            $decimal = $degrees + ($minutes / 60) + ($seconds / 3600);
+
+            // Handle south or west
+            if (isset($matches[4]) && in_array(strtoupper($matches[4]), ['S', 'W'])) {
+                $decimal = -$decimal;
+            }
+            return $decimal;
+        }
+
+        // Standard decimal format
+        if (is_numeric($value)) {
+            return floatval($value);
+        }
+
+        return null;
+    }
 }
