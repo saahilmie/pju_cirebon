@@ -122,40 +122,82 @@
             </div>
 
             <!-- Popup on marker click -->
-            <div x-show="hoveredPoint" x-transition class="fixed bg-white rounded-xl shadow-2xl p-4 z-[1002] min-w-[220px]"
+            <div x-show="hoveredPoint" x-transition
+                class="fixed bg-white rounded-xl shadow-2xl z-[1002] min-w-[260px] max-w-[300px] overflow-hidden"
                 :style="'left:' + popupX + 'px; top:' + popupY + 'px'">
-                <div class="flex items-center gap-2 mb-2">
-                    <div class="w-5 h-5 border-2 rounded-full"
-                        :class="hoveredPoint?.kdam === 'M' ? 'border-[#17C353]' : hoveredPoint?.kdam === 'A' ? 'border-[#FBED21]' : 'border-[#EB2027]'">
+
+                <!-- Image Carousel (like Google Maps) -->
+                <div class="relative" x-show="relatedPhotos.length > 0">
+                    <div class="w-full h-40 bg-gray-100 overflow-hidden">
+                        <img :src="'/storage/' + relatedPhotos[currentPhotoIndex]?.photo" class="w-full h-full object-cover"
+                            x-show="relatedPhotos[currentPhotoIndex]?.photo">
                     </div>
-                    <span class="font-bold text-gray-800">ID Pel - <span x-text="hoveredPoint?.idpel"></span></span>
+                    <!-- Prev/Next Buttons -->
+                    <template x-if="relatedPhotos.length > 1">
+                        <div>
+                            <button @click.stop="prevPhoto()"
+                                class="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 19l-7-7 7-7" />
+                                </svg>
+                            </button>
+                            <button @click.stop="nextPhoto()"
+                                class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-lg">
+                                <svg class="w-4 h-4 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M9 5l7 7-7 7" />
+                                </svg>
+                            </button>
+                            <!-- Photo Counter -->
+                            <div
+                                class="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+                                <span x-text="(currentPhotoIndex + 1) + ' / ' + relatedPhotos.length"></span>
+                            </div>
+                        </div>
+                    </template>
                 </div>
-                <p class="text-sm text-gray-600 mb-2" x-text="hoveredPoint?.nama_kabupaten"></p>
-                <div class="flex justify-between text-sm mb-3">
-                    <div>
-                        <p class="text-gray-500">Jumlah</p>
-                        <p class="font-bold text-gray-800" x-text="hoveredPoint?.jumlah_lampu || 1"></p>
-                    </div>
-                    <div class="text-right">
-                        <p class="text-gray-500">Status</p>
-                        <p class="font-bold"
-                            :class="hoveredPoint?.kdam === 'M' ? 'text-[#17C353]' : hoveredPoint?.kdam === 'A' ? 'text-[#FBED21]' : 'text-[#EB2027]'"
-                            x-text="hoveredPoint?.kdam === 'M' ? 'Meterisasi' : hoveredPoint?.kdam === 'A' ? 'Abonemen' : 'Unclear'">
-                        </p>
-                    </div>
+
+                <!-- No Photo Placeholder -->
+                <div x-show="relatedPhotos.length === 0" class="w-full h-24 bg-gray-100 flex items-center justify-center">
+                    <span class="text-gray-400 text-sm">No photos available</span>
                 </div>
-                <!-- Quick Google Maps Link -->
-                <a :href="'https://www.google.com/maps?q=' + hoveredPoint?.koordinat_x + ',' + hoveredPoint?.koordinat_y"
-                    target="_blank" rel="noopener noreferrer"
-                    class="flex items-center justify-center gap-1.5 w-full bg-[#29AAE1] hover:bg-[#1E8CC0] text-white py-2 px-3 rounded-lg text-sm transition-colors">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                    View in Google Maps
-                </a>
+
+                <!-- Popup Content -->
+                <div class="p-4">
+                    <div class="flex items-center gap-2 mb-2">
+                        <div class="w-5 h-5 border-2 rounded-full"
+                            :class="hoveredPoint?.kdam === 'M' ? 'border-[#17C353]' : hoveredPoint?.kdam === 'A' ? 'border-[#FBED21]' : 'border-[#EB2027]'">
+                        </div>
+                        <span class="font-bold text-gray-800">ID Pel - <span x-text="hoveredPoint?.idpel"></span></span>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-2" x-text="hoveredPoint?.nama_kabupaten"></p>
+                    <div class="flex justify-between text-sm mb-3">
+                        <div>
+                            <p class="text-gray-500">Jumlah</p>
+                            <p class="font-bold text-gray-800" x-text="getJumlahLampu(hoveredPoint?.idpel)"></p>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-gray-500">Status</p>
+                            <p class="font-bold"
+                                :class="hoveredPoint?.kdam === 'M' ? 'text-[#17C353]' : hoveredPoint?.kdam === 'A' ? 'text-[#FBED21]' : 'text-[#EB2027]'"
+                                x-text="hoveredPoint?.kdam === 'M' ? 'Meterisasi' : hoveredPoint?.kdam === 'A' ? 'Abonemen' : 'Unclear'">
+                            </p>
+                        </div>
+                    </div>
+                    <!-- Quick Google Maps Link -->
+                    <a :href="'https://www.google.com/maps?q=' + hoveredPoint?.koordinat_x + ',' + hoveredPoint?.koordinat_y"
+                        target="_blank" rel="noopener noreferrer"
+                        class="flex items-center justify-center gap-1.5 w-full bg-[#29AAE1] hover:bg-[#1E8CC0] text-white py-2 px-3 rounded-lg text-sm transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        View in Google Maps
+                    </a>
+                </div>
             </div>
         </div>
 
@@ -275,6 +317,9 @@
                     markerLayer: null,
                     selectedPoint: null,
                     hoveredPoint: null,
+                    hoveredLatLng: null,
+                    currentPhotoIndex: 0,
+                    relatedPhotos: [],
                     popupX: 0,
                     popupY: 0,
                     searchQuery: '',
@@ -362,6 +407,19 @@
 
                         this.addRegionalOverlays();
                         this.loadMarkers();
+
+                        // Update popup position when map moves to keep it attached to marker
+                        this.map.on('move zoom', () => {
+                            this.updatePopupPosition();
+                        });
+                    },
+
+                    updatePopupPosition() {
+                        if (this.hoveredLatLng && this.map) {
+                            const point = this.map.latLngToContainerPoint(this.hoveredLatLng);
+                            this.popupX = point.x + 20;
+                            this.popupY = point.y - 50;
+                        }
                     },
 
                     addRegionalOverlays() {
@@ -495,14 +553,40 @@
                         marker.on('click', (e) => {
                             this.selectedPoint = point;
                             this.hoveredPoint = point;
+                            this.hoveredLatLng = L.latLng(point.koordinat_x, point.koordinat_y);
                             this.popupX = e.containerPoint.x + 20;
                             this.popupY = e.containerPoint.y - 50;
+                            this.loadRelatedPhotos(point.idpel);
                             this.map.panTo([point.koordinat_x, point.koordinat_y]);
                         });
 
                         // Popup only appears on click, not hover
 
                         this.markers.push({ marker, data: point });
+                    },
+
+                    loadRelatedPhotos(idpel) {
+                        // Get all photos from markers with same IDPEL
+                        this.relatedPhotos = this.markers
+                            .filter(m => m.data.idpel === idpel && m.data.photo)
+                            .map(m => ({
+                                photo: m.data.photo,
+                                koordinat_x: m.data.koordinat_x,
+                                koordinat_y: m.data.koordinat_y
+                            }));
+                        this.currentPhotoIndex = 0;
+                    },
+
+                    nextPhoto() {
+                        if (this.relatedPhotos.length > 0) {
+                            this.currentPhotoIndex = (this.currentPhotoIndex + 1) % this.relatedPhotos.length;
+                        }
+                    },
+
+                    prevPhoto() {
+                        if (this.relatedPhotos.length > 0) {
+                            this.currentPhotoIndex = (this.currentPhotoIndex - 1 + this.relatedPhotos.length) % this.relatedPhotos.length;
+                        }
                     },
 
                     closeDetail() {
