@@ -1,13 +1,10 @@
-<!-- Sidebar - Blue gradient, no logo (logo is in navbar now) -->
+<!-- Sidebar - Blue gradient, starts below navbar (T-Shape Layout) -->
 <aside
-    class="sidebar fixed left-0 top-0 h-full bg-gradient-to-b from-[#29AAE1] to-[#1E8CC0] z-50 shadow-xl transition-all duration-300 flex flex-col"
-    :class="sidebarOpen ? 'w-[180px]' : 'w-[60px]'">
-
-    <!-- Spacer for navbar height -->
-    <div class="h-14"></div>
+    class="sidebar fixed left-0 top-14 bg-gradient-to-b from-[#29AAE1] to-[#1E8CC0] z-40 shadow-xl transition-all duration-300 flex flex-col"
+    :class="sidebarOpen ? 'w-[180px]' : 'w-[60px]'" style="height: calc(100vh - 56px);">
 
     <!-- Navigation -->
-    <nav class="flex-1 py-3 px-2 space-y-1">
+    <nav class="flex-1 py-4 px-2 space-y-1 overflow-y-auto">
         <a href="{{ route('dashboard') }}"
             class="flex items-center gap-3 px-3 py-2.5 text-white rounded-lg transition-all duration-200 hover:bg-white/15 {{ request()->routeIs('dashboard') ? 'bg-white/20' : '' }}"
             :class="!sidebarOpen && 'justify-center'">
@@ -63,7 +60,7 @@
         @endif
     </nav>
 
-    <!-- Bottom -->
+    <!-- Bottom Actions -->
     <div class="border-t border-white/20 p-2 space-y-1">
         <button @click="toggleSidebar()"
             class="flex items-center gap-3 px-3 py-2 text-white rounded-lg transition-all duration-200 hover:bg-white/15 w-full"

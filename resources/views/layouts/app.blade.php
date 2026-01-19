@@ -1,4 +1,4 @@
-<!-- Main Layout - White navbar, logo in navbar, font 14px -->
+<!-- Main Layout - T-Shape: Navbar full width, Sidebar below navbar -->
 <!DOCTYPE html>
 <html lang="id" x-data="appState()" :class="{ 'dark': darkMode }">
 
@@ -10,13 +10,12 @@
 
     <link rel="icon" type="image/png" href="{{ asset('images/pln-sipju-logo.png') }}">
 
-    <!-- Critical CSS - must load before Alpine.js -->
+    <!-- Critical CSS -->
     <style>
         html {
             font-size: 14px;
         }
 
-        /* Prevent flash of unstyled content for Alpine.js elements */
         [x-cloak] {
             display: none !important;
         }
@@ -32,20 +31,21 @@
 </head>
 
 <body class="min-h-screen bg-gray-100 dark:bg-gray-900">
-    <div class="flex min-h-screen">
+    <!-- T-Shape Layout: Navbar on top (full width), then Sidebar + Content below -->
+
+    <!-- Navbar - Full Width at Top -->
+    @include('components.navbar')
+
+    <!-- Container for Sidebar + Content (below navbar) -->
+    <div class="flex pt-14 min-h-screen">
         <!-- Sidebar -->
         @include('components.sidebar')
 
         <!-- Main Content -->
-        <div class="flex-1 flex flex-col transition-all duration-300" :class="sidebarOpen ? 'ml-[180px]' : 'ml-[60px]'">
-            <!-- Navbar -->
-            @include('components.navbar')
-
-            <!-- Page Content -->
-            <main class="flex-1 @yield('main-class', 'p-6') mt-14 overflow-auto">
-                @yield('content')
-            </main>
-        </div>
+        <main class="flex-1 @yield('main-class', 'p-6') overflow-auto transition-all duration-300"
+            :class="sidebarOpen ? 'ml-[180px]' : 'ml-[60px]'">
+            @yield('content')
+        </main>
     </div>
 
     <!-- Logout Modal -->

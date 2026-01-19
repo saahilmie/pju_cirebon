@@ -122,7 +122,7 @@
             </div>
 
             <!-- Popup on marker click -->
-            <div x-show="hoveredPoint" x-transition class="fixed bg-white rounded-xl shadow-2xl p-4 z-[1002] min-w-[200px]"
+            <div x-show="hoveredPoint" x-transition class="fixed bg-white rounded-xl shadow-2xl p-4 z-[1002] min-w-[220px]"
                 :style="'left:' + popupX + 'px; top:' + popupY + 'px'">
                 <div class="flex items-center gap-2 mb-2">
                     <div class="w-5 h-5 border-2 rounded-full"
@@ -131,7 +131,7 @@
                     <span class="font-bold text-gray-800">ID Pel - <span x-text="hoveredPoint?.idpel"></span></span>
                 </div>
                 <p class="text-sm text-gray-600 mb-2" x-text="hoveredPoint?.nama_kabupaten"></p>
-                <div class="flex justify-between text-sm">
+                <div class="flex justify-between text-sm mb-3">
                     <div>
                         <p class="text-gray-500">Jumlah</p>
                         <p class="font-bold text-gray-800" x-text="hoveredPoint?.jumlah_lampu || 1"></p>
@@ -144,6 +144,18 @@
                         </p>
                     </div>
                 </div>
+                <!-- Quick Google Maps Link -->
+                <a :href="'https://www.google.com/maps?q=' + hoveredPoint?.koordinat_x + ',' + hoveredPoint?.koordinat_y"
+                    target="_blank" rel="noopener noreferrer"
+                    class="flex items-center justify-center gap-1.5 w-full bg-[#29AAE1] hover:bg-[#1E8CC0] text-white py-2 px-3 rounded-lg text-sm transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    </svg>
+                    View in Google Maps
+                </a>
             </div>
         </div>
 
@@ -222,10 +234,34 @@
                     <tr class="h-8">
                         <td class="text-gray-600">Titik Koordinat</td>
                         <td>:</td>
-                        <td class="font-mono text-xs text-gray-700"
-                            x-text="(selectedPoint?.koordinat_x || '-') + ', ' + (selectedPoint?.koordinat_y || '-')"></td>
+                        <td>
+                            <a :href="'https://www.google.com/maps?q=' + selectedPoint?.koordinat_x + ',' + selectedPoint?.koordinat_y"
+                                target="_blank" rel="noopener noreferrer"
+                                class="font-mono text-xs text-[#29AAE1] hover:underline cursor-pointer"
+                                x-text="(selectedPoint?.koordinat_x || '-') + ', ' + (selectedPoint?.koordinat_y || '-')">
+                            </a>
+                        </td>
                     </tr>
                 </table>
+
+                <!-- Google Maps Street View Button -->
+                <div class="mt-4 pt-4 border-t">
+                    <a :href="'https://www.google.com/maps/@' + selectedPoint?.koordinat_x + ',' + selectedPoint?.koordinat_y + ',3a,75y,90t/data=!3m6!1e1!3m4!1s-!2e0!7i16384!8i8192'"
+                        target="_blank" rel="noopener noreferrer"
+                        class="flex items-center justify-center gap-2 w-full bg-[#29AAE1] hover:bg-[#1E8CC0] text-white py-2.5 px-4 rounded-lg transition-colors">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                        </svg>
+                        <span>View in Google Maps</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                        </svg>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
