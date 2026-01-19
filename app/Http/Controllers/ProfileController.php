@@ -27,7 +27,6 @@ class ProfileController extends Controller
         $request->validate([
             'first_name' => 'required|string|max:255',
             'last_name' => 'nullable|string|max:255',
-            'email' => 'required|email|unique:users,email,' . $user->id,
             'password' => 'nullable|min:8|confirmed',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg|max:15360', // 15MB
         ]);
@@ -35,7 +34,7 @@ class ProfileController extends Controller
         // Update name (combine first and last name)
         $fullName = trim($request->first_name . ' ' . $request->last_name);
         $user->name = $fullName;
-        $user->email = $request->email;
+        // Note: Email is read-only and cannot be changed
 
         // Update password if provided
         if ($request->filled('password')) {
