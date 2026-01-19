@@ -193,15 +193,31 @@
             <div class="p-4 flex items-center justify-between" style="border-bottom: 1px solid #C8BFBF;">
                 <h3 class="text-lg font-bold text-gray-800">All Report</h3>
                 <div class="flex items-center gap-3">
-                    <div class="relative">
+                    <div class="relative flex items-center gap-1">
                         <svg class="w-5 h-5 text-[#29AAE1] absolute left-3 top-1/2 -translate-y-1/2" fill="none"
                             stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                         </svg>
-                        <input type="text" placeholder="Find ID Pel and Status" x-model="searchTable"
-                            class="pl-10 pr-4 py-2 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-[#29AAE1]"
+                        <input type="text" placeholder="Search IDPEL (min 3 chars, Enter to search all)"
+                            x-model="searchTable" @keyup.enter="searchServer()"
+                            class="pl-10 pr-4 py-2 rounded-lg text-sm w-80 focus:outline-none focus:ring-2 focus:ring-[#29AAE1]"
                             style="border: 1px solid #C8BFBF;">
+                        <button @click="searchServer()"
+                            class="px-3 py-2 bg-[#29AAE1] text-white rounded-lg text-sm hover:bg-[#1E8CC0]"
+                            title="Search entire database">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                            </svg>
+                        </button>
+                        <button x-show="searchTable" @click="searchTable = ''; loadData()"
+                            class="px-2 py-2 text-gray-400 hover:text-gray-600 rounded-lg text-sm" title="Clear search">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
 
                     <!-- Hidden file inputs for import -->
@@ -656,414 +672,441 @@
         </div>
 
         <!-- View-Only Modal (Read-only for all users) -->
-            <div x-show="showViewModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
-                x-transition>
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
-                    @click.away="showViewModal = false">
-                    <div class="flex items-center justify-between p-6" style="border-bottom: 1px solid #C8BFBF;">
-                        <h3 class="text-xl font-bold text-gray-800">View PJU Data</h3>
-                        <button @click="showViewModal = false" class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                    </div>
-                    <div class="p-6">
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            <div class="space-y-3">
+        <div x-show="showViewModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+            x-transition>
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
+                @click.away="showViewModal = false">
+                <div class="flex items-center justify-between p-6" style="border-bottom: 1px solid #C8BFBF;">
+                    <h3 class="text-xl font-bold text-gray-800">View PJU Data</h3>
+                    <button @click="showViewModal = false"
+                        class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">IDPEL</span>
+                                <p class="text-gray-800 font-medium" x-text="viewingItem?.idpel || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NAMA</span>
+                                <p class="text-gray-800" x-text="viewingItem?.nama || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NAMAPNJ</span>
+                                <p class="text-gray-800" x-text="viewingItem?.namapnj || '-'"></p>
+                            </div>
+                            <div class="flex gap-4">
                                 <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">IDPEL</span>
-                                    <p class="text-gray-800 font-medium" x-text="viewingItem?.idpel || '-'"></p>
+                                    <span class="text-xs font-medium text-gray-500 uppercase">RT</span>
+                                    <p class="text-gray-800" x-text="viewingItem?.rt || '-'"></p>
                                 </div>
                                 <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NAMA</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.nama || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NAMAPNJ</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.namapnj || '-'"></p>
-                                </div>
-                                <div class="flex gap-4">
-                                    <div>
-                                        <span class="text-xs font-medium text-gray-500 uppercase">RT</span>
-                                        <p class="text-gray-800" x-text="viewingItem?.rt || '-'"></p>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs font-medium text-gray-500 uppercase">RW</span>
-                                        <p class="text-gray-800" x-text="viewingItem?.rw || '-'"></p>
-                                    </div>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">TARIF</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.tarif || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">DAYA</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.daya || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">JENISLAYANAN</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.jenis_layanan || viewingItem?.jenislayanan || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_METER_KWH</span>
-                                    <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_meter_kwh || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_GARDU</span>
-                                    <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_gardu || '-'"></p>
+                                    <span class="text-xs font-medium text-gray-500 uppercase">RW</span>
+                                    <p class="text-gray-800" x-text="viewingItem?.rw || '-'"></p>
                                 </div>
                             </div>
-                            <div class="space-y-3">
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_JURUSAN_TIANG</span>
-                                    <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_jurusan_tiang || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NAMA_GARDU</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.nama_gardu || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_METER_PREPAID</span>
-                                    <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_meter_prepaid || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">KOORDINAT_X</span>
-                                    <p class="text-gray-800 font-mono text-sm" x-text="viewingItem?.koordinat_x || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">KOORDINAT_Y</span>
-                                    <p class="text-gray-800 font-mono text-sm" x-text="viewingItem?.koordinat_y || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">KDAM</span>
-                                    <p class="text-gray-800">
-                                        <span x-show="viewingItem?.kdam === 'M'" class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">M (Meterisasi)</span>
-                                        <span x-show="viewingItem?.kdam === 'A'" class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">A (Abonemen)</span>
-                                        <span x-show="!viewingItem?.kdam || (viewingItem?.kdam !== 'M' && viewingItem?.kdam !== 'A')" class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Unclear</span>
-                                    </p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NAMA_KABUPATEN</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.nama_kabupaten || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NAMA_KECAMATAN</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.nama_kecamatan || '-'"></p>
-                                </div>
-                                <div>
-                                    <span class="text-xs font-medium text-gray-500 uppercase">NAMA_KELURAHAN</span>
-                                    <p class="text-gray-800" x-text="viewingItem?.nama_kelurahan || '-'"></p>
-                                </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">TARIF</span>
+                                <p class="text-gray-800" x-text="viewingItem?.tarif || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">DAYA</span>
+                                <p class="text-gray-800" x-text="viewingItem?.daya || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">JENISLAYANAN</span>
+                                <p class="text-gray-800"
+                                    x-text="viewingItem?.jenis_layanan || viewingItem?.jenislayanan || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_METER_KWH</span>
+                                <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_meter_kwh || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_GARDU</span>
+                                <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_gardu || '-'"></p>
                             </div>
                         </div>
+                        <div class="space-y-3">
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_JURUSAN_TIANG</span>
+                                <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_jurusan_tiang || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NAMA_GARDU</span>
+                                <p class="text-gray-800" x-text="viewingItem?.nama_gardu || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NOMOR_METER_PREPAID</span>
+                                <p class="text-gray-800 font-mono" x-text="viewingItem?.nomor_meter_prepaid || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">KOORDINAT_X</span>
+                                <p class="text-gray-800 font-mono text-sm" x-text="viewingItem?.koordinat_x || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">KOORDINAT_Y</span>
+                                <p class="text-gray-800 font-mono text-sm" x-text="viewingItem?.koordinat_y || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">KDAM</span>
+                                <p class="text-gray-800">
+                                    <span x-show="viewingItem?.kdam === 'M'"
+                                        class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs">M
+                                        (Meterisasi)</span>
+                                    <span x-show="viewingItem?.kdam === 'A'"
+                                        class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs">A
+                                        (Abonemen)</span>
+                                    <span
+                                        x-show="!viewingItem?.kdam || (viewingItem?.kdam !== 'M' && viewingItem?.kdam !== 'A')"
+                                        class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs">Unclear</span>
+                                </p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NAMA_KABUPATEN</span>
+                                <p class="text-gray-800" x-text="viewingItem?.nama_kabupaten || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NAMA_KECAMATAN</span>
+                                <p class="text-gray-800" x-text="viewingItem?.nama_kecamatan || '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">NAMA_KELURAHAN</span>
+                                <p class="text-gray-800" x-text="viewingItem?.nama_kelurahan || '-'"></p>
+                            </div>
+                        </div>
+                    </div>
 
-                        <!-- Photo Section -->
-                        <div x-show="viewingItem?.photo" class="border-t pt-4">
-                            <span class="text-xs font-medium text-gray-500 uppercase block mb-2">PJU DOCUMENTATION PHOTO</span>
-                            <img :src="viewingItem?.photo ? '/storage/' + viewingItem.photo : ''" class="max-w-full max-h-64 rounded-lg shadow-md object-contain">
-                        </div>
-                        <div x-show="!viewingItem?.photo" class="border-t pt-4">
-                            <span class="text-xs font-medium text-gray-500 uppercase block mb-2">PJU DOCUMENTATION PHOTO</span>
-                            <div class="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
-                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <span class="ml-2">No photo uploaded</span>
-                            </div>
-                        </div>
+                    <!-- Photo Section -->
+                    <div x-show="viewingItem?.photo" class="border-t pt-4">
+                        <span class="text-xs font-medium text-gray-500 uppercase block mb-2">PJU DOCUMENTATION PHOTO</span>
+                        <img :src="viewingItem?.photo ? '/storage/' + viewingItem.photo : ''"
+                            class="max-w-full max-h-64 rounded-lg shadow-md object-contain">
                     </div>
-                    <div class="flex justify-end gap-3 p-6" style="border-top: 1px solid #C8BFBF;">
-                        <button @click="showViewModal = false" class="px-6 py-2 bg-[#29AAE1] text-white rounded-lg">Close</button>
+                    <div x-show="!viewingItem?.photo" class="border-t pt-4">
+                        <span class="text-xs font-medium text-gray-500 uppercase block mb-2">PJU DOCUMENTATION PHOTO</span>
+                        <div class="w-full h-32 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                            <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
+                            <span class="ml-2">No photo uploaded</span>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Photo Upload Modal (Employee Only) -->
-            <div x-show="showPhotoUploadModal" x-cloak
-                class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
-                <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" @click.away="showPhotoUploadModal = false">
-                    <div class="flex items-center justify-between p-5" style="border-bottom: 1px solid #C8BFBF;">
-                        <div>
-                            <h3 class="text-lg font-bold text-gray-800">Upload Photo</h3>
-                            <p class="text-sm text-gray-500" x-text="'IDPEL: ' + (photoUploadItem?.idpel || '')"></p>
-                        </div>
-                        <button @click="showPhotoUploadModal = false"
-                            class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                    </div>
-                    <div class="p-5">
-                        <!-- Photo Upload Area -->
-                        <div class="border-2 border-dashed rounded-xl p-6 text-center transition-colors"
-                            :class="isDragging ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]'"
-                            @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false"
-                            @drop.prevent="handleDrop($event)">
-                            <template x-if="photoPreview">
-                                <div class="flex flex-col items-center gap-3">
-                                    <img :src="photoPreview" class="w-32 h-32 object-cover rounded-lg">
-                                    <p class="text-sm text-gray-600" x-text="photoName || 'Current photo'"></p>
-                                    <button type="button" @click="removePhoto()"
-                                        class="text-red-500 text-sm hover:underline">Remove</button>
-                                </div>
-                            </template>
-                            <template x-if="!photoPreview">
-                                <div>
-                                    <svg class="w-10 h-10 mx-auto text-[#29AAE1] mb-2" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                    </svg>
-                                    <p class="text-gray-600 text-sm mb-1">Drag and drop or click to upload</p>
-                                    <p class="text-gray-400 text-xs">JPG, PNG (Max 20MB)</p>
-                                    <input type="file" accept="image/jpeg,image/png" @change="handleFileSelect($event)"
-                                        class="hidden" x-ref="photoFileInput">
-                                    <button type="button" @click="$refs.photoFileInput.click()"
-                                        class="mt-3 px-4 py-2 bg-[#29AAE1] text-white rounded-lg text-sm">Choose File</button>
-                                </div>
-                            </template>
-                        </div>
-                    </div>
-                    <div class="flex justify-end gap-3 p-5" style="border-top: 1px solid #C8BFBF;">
-                        <button @click="showPhotoUploadModal = false" class="px-5 py-2 rounded-lg"
-                            style="border: 1px solid #C8BFBF;">Cancel</button>
-                        <button @click="savePhotoOnly()" class="px-5 py-2 bg-[#29AAE1] text-white rounded-lg">Upload
-                            Photo</button>
-                    </div>
+                <div class="flex justify-end gap-3 p-6" style="border-top: 1px solid #C8BFBF;">
+                    <button @click="showViewModal = false"
+                        class="px-6 py-2 bg-[#29AAE1] text-white rounded-lg">Close</button>
                 </div>
             </div>
         </div>
 
-        @push('scripts')
-            <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
-            <script>
-                function pjuReport() {
-                    return {
-                        activeDropdown: null, searchRegional: '', searchStatus: '', searchIdpel: '', searchTable: '',
-                        selectedRegionals: [], selectedStatuses: [], selectedIdpels: [],
-                        regionals: ['Kab. Cirebon', 'Kota Cirebon', 'Kab. Kuningan', 'Majalengka', 'Indramayu'],
-                        statuses: ['M', 'A', 'Unclear'], idpels: [], pjuData: [],
-                        currentPage: 1, perPage: 10,
-                        showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
-                        showViewModal: false, viewingItem: null,
-                        showPhotoUploadModal: false, photoUploadItem: null,
-                        showImportResultModal: false, importResult: { imported: 0, duplicates: 0, errors: 0 },
-                        isImporting: false, importStatus: '',
-                        isDragging: false, photoPreview: null, photoName: '', photoFile: null,
-                        toast: { show: false, message: '', type: 'success' },
-                        form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '' },
-                        get isAllSelected() { return !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length; },
-                        get hasActiveFilters() { return this.selectedRegionals.length || this.selectedStatuses.length || this.selectedIdpels.length; },
-                        get filteredRegionals() { return this.searchRegional ? this.regionals.filter(r => r.toLowerCase().includes(this.searchRegional.toLowerCase())) : this.regionals; },
-                        get filteredStatuses() { return this.searchStatus ? this.statuses.filter(s => s.toLowerCase().includes(this.searchStatus.toLowerCase())) : this.statuses; },
-                        get filteredIdpels() { return this.searchIdpel ? this.idpels.filter(i => i.includes(this.searchIdpel)) : this.idpels; },
-                        get filteredData() {
-                            let data = this.pjuData;
-                            if (this.searchTable) data = data.filter(item => item.idpel?.includes(this.searchTable) || item.nama?.toLowerCase().includes(this.searchTable.toLowerCase()));
-                            if (this.selectedRegionals.length) data = data.filter(item => this.selectedRegionals.some(r => item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''))));
-                            if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
-                            if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
-                            return data.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
-                        },
-                        get totalPages() { return Math.ceil(this.pjuData.length / this.perPage) || 1; },
-                        get visiblePages() { const p = []; for (let i = 1; i <= Math.min(3, this.totalPages); i++) p.push(i); return p; },
-                        init() { this.loadData(); },
-                        async loadData() {
-                            try {
-                                const res = await fetch('/api/pju-report/data?limit=5000');
-                                const json = await res.json();
-                                this.pjuData = json.data || [];
-                                this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
-                            } catch (e) { console.error(e); }
-                        },
-                        toggleDropdown(name) { this.activeDropdown = this.activeDropdown === name ? null : name; },
-                        selectAll() { this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = []; },
-                        toggleAllRegionals() { this.selectedRegionals = this.selectedRegionals.length === this.regionals.length ? [] : [...this.regionals]; },
-                        toggleAllStatuses() { this.selectedStatuses = this.selectedStatuses.length === this.statuses.length ? [] : [...this.statuses]; },
-                        toggleAllIdpels() { this.selectedIdpels = this.selectedIdpels.length === this.idpels.length ? [] : [...this.idpels]; },
-                        clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; },
-                        clearAllFilters() { this.selectAll(); },
-                        applyFilter() { this.currentPage = 1; },
-                        openAddModal() { this.isEditing = false; this.resetForm(); this.showModal = true; },
-                        openEditModal(item) { this.isEditing = true; this.form = { ...item }; this.editingId = item.id; if (item.photo) { this.photoPreview = '/storage/' + item.photo; } this.showModal = true; },
-                        openDeleteModal(item) { this.deleteItem = item; this.showDeleteModal = true; },
-                        viewItem(item) { this.viewingItem = item; this.showViewModal = true; },
-                        resetForm() { Object.keys(this.form).forEach(k => this.form[k] = ''); this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
-                        handleFileSelect(e) { const file = e.target.files[0]; if (file) this.processFile(file); },
-                        handleDrop(e) { this.isDragging = false; const file = e.dataTransfer.files[0]; if (file) this.processFile(file); },
-                        processFile(file) {
-                            if (!['image/jpeg', 'image/png'].includes(file.type)) { this.showToast('Only JPG and PNG files are allowed', 'error'); return; }
-                            if (file.size > 20 * 1024 * 1024) { this.showToast('File size must be less than 20MB', 'error'); return; }
-                            this.photoFile = file; this.photoName = file.name;
-                            const reader = new FileReader(); reader.onload = e => this.photoPreview = e.target.result; reader.readAsDataURL(file);
-                        },
-                        removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
-                        async saveData() {
-                            const formData = new FormData();
-                            Object.keys(this.form).forEach(k => { if (this.form[k]) formData.append(k, this.form[k]); });
-                            if (this.photoFile) formData.append('photo', this.photoFile);
-                            try {
-                                const url = this.isEditing ? `/api/pju-report/${this.editingId}` : '/api/pju-report';
-                                const method = this.isEditing ? 'PUT' : 'POST';
-                                if (this.isEditing) formData.append('_method', 'PUT');
-                                const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
-                                const json = await res.json();
-                                if (json.success) { this.showToast(json.message, 'success'); this.showModal = false; this.loadData(); }
-                            } catch (e) { this.showToast('Error saving data', 'error'); }
-                        },
-                        async deleteData() {
-                            try {
-                                const res = await fetch(`/api/pju-report/${this.deleteItem.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
-                                const json = await res.json();
-                                if (json.success) { this.showToast('Data successfully deleted', 'success'); this.showDeleteModal = false; this.loadData(); }
-                            } catch (e) { this.showToast('Error deleting data', 'error'); }
-                        },
-                        showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); },
+        <!-- Photo Upload Modal (Employee Only) -->
+        <div x-show="showPhotoUploadModal" x-cloak
+            class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
+            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" @click.away="showPhotoUploadModal = false">
+                <div class="flex items-center justify-between p-5" style="border-bottom: 1px solid #C8BFBF;">
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">Upload Photo</h3>
+                        <p class="text-sm text-gray-500" x-text="'IDPEL: ' + (photoUploadItem?.idpel || '')"></p>
+                    </div>
+                    <button @click="showPhotoUploadModal = false"
+                        class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
+                </div>
+                <div class="p-5">
+                    <!-- Photo Upload Area -->
+                    <div class="border-2 border-dashed rounded-xl p-6 text-center transition-colors"
+                        :class="isDragging ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]'"
+                        @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false"
+                        @drop.prevent="handleDrop($event)">
+                        <template x-if="photoPreview">
+                            <div class="flex flex-col items-center gap-3">
+                                <img :src="photoPreview" class="w-32 h-32 object-cover rounded-lg">
+                                <p class="text-sm text-gray-600" x-text="photoName || 'Current photo'"></p>
+                                <button type="button" @click="removePhoto()"
+                                    class="text-red-500 text-sm hover:underline">Remove</button>
+                            </div>
+                        </template>
+                        <template x-if="!photoPreview">
+                            <div>
+                                <svg class="w-10 h-10 mx-auto text-[#29AAE1] mb-2" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                </svg>
+                                <p class="text-gray-600 text-sm mb-1">Drag and drop or click to upload</p>
+                                <p class="text-gray-400 text-xs">JPG, PNG (Max 20MB)</p>
+                                <input type="file" accept="image/jpeg,image/png" @change="handleFileSelect($event)"
+                                    class="hidden" x-ref="photoFileInput">
+                                <button type="button" @click="$refs.photoFileInput.click()"
+                                    class="mt-3 px-4 py-2 bg-[#29AAE1] text-white rounded-lg text-sm">Choose File</button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                <div class="flex justify-end gap-3 p-5" style="border-top: 1px solid #C8BFBF;">
+                    <button @click="showPhotoUploadModal = false" class="px-5 py-2 rounded-lg"
+                        style="border: 1px solid #C8BFBF;">Cancel</button>
+                    <button @click="savePhotoOnly()" class="px-5 py-2 bg-[#29AAE1] text-white rounded-lg">Upload
+                        Photo</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                        // Photo Upload Modal for Employee
-                        openPhotoUploadModal(item) {
-                            this.photoUploadItem = item;
-                            this.photoPreview = item.photo ? '/storage/' + item.photo : null;
-                            this.photoFile = null;
-                            this.photoName = '';
-                            this.showPhotoUploadModal = true;
-                        },
-                        async savePhotoOnly() {
-                            if (!this.photoFile) {
-                                this.showToast('Please select a photo to upload', 'error');
-                                return;
+    @push('scripts')
+        <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+        <script>
+            function pjuReport() {
+                return {
+                    activeDropdown: null, searchRegional: '', searchStatus: '', searchIdpel: '', searchTable: '',
+                    selectedRegionals: [], selectedStatuses: [], selectedIdpels: [],
+                    regionals: ['Kab. Cirebon', 'Kota Cirebon', 'Kab. Kuningan', 'Majalengka', 'Indramayu'],
+                    statuses: ['M', 'A', 'Unclear'], idpels: [], pjuData: [],
+                    currentPage: 1, perPage: 10,
+                    showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
+                    showViewModal: false, viewingItem: null,
+                    showPhotoUploadModal: false, photoUploadItem: null,
+                    showImportResultModal: false, importResult: { imported: 0, duplicates: 0, errors: 0 },
+                    isImporting: false, importStatus: '',
+                    isDragging: false, photoPreview: null, photoName: '', photoFile: null,
+                    toast: { show: false, message: '', type: 'success' },
+                    form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '' },
+                    get isAllSelected() { return !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length; },
+                    get hasActiveFilters() { return this.selectedRegionals.length || this.selectedStatuses.length || this.selectedIdpels.length; },
+                    get filteredRegionals() { return this.searchRegional ? this.regionals.filter(r => r.toLowerCase().includes(this.searchRegional.toLowerCase())) : this.regionals; },
+                    get filteredStatuses() { return this.searchStatus ? this.statuses.filter(s => s.toLowerCase().includes(this.searchStatus.toLowerCase())) : this.statuses; },
+                    get filteredIdpels() { return this.searchIdpel ? this.idpels.filter(i => i.includes(this.searchIdpel)) : this.idpels; },
+                    get filteredData() {
+                        let data = this.pjuData;
+                        if (this.searchTable) data = data.filter(item => item.idpel?.includes(this.searchTable) || item.nama?.toLowerCase().includes(this.searchTable.toLowerCase()));
+                        if (this.selectedRegionals.length) data = data.filter(item => this.selectedRegionals.some(r => item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''))));
+                        if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
+                        if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
+                        return data.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
+                    },
+                    get totalPages() { return Math.ceil(this.pjuData.length / this.perPage) || 1; },
+                    get visiblePages() { const p = []; for (let i = 1; i <= Math.min(3, this.totalPages); i++) p.push(i); return p; },
+                    init() { this.loadData(); },
+                    async loadData(search = '') {
+                        try {
+                            let url = '/api/pju-report/data?limit=5000';
+                            if (search) {
+                                url = `/api/pju-report/data?limit=5000&search=${encodeURIComponent(search)}`;
                             }
-                            const formData = new FormData();
-                            formData.append('photo', this.photoFile);
-                            formData.append('_method', 'PUT');
-                            try {
-                                const res = await fetch(`/api/pju-report/${this.photoUploadItem.id}/photo`, {
-                                    method: 'POST',
-                                    body: formData,
-                                    headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-                                });
-                                const json = await res.json();
-                                if (json.success) {
-                                    this.showToast('Photo uploaded successfully', 'success');
-                                    this.showPhotoUploadModal = false;
-                                    this.loadData();
-                                } else {
-                                    this.showToast(json.message || 'Error uploading photo', 'error');
-                                }
-                            } catch (e) { this.showToast('Error uploading photo', 'error'); }
-                        },
-
-                        // Import CSV/Excel
-                        async handleImport(event, format) {
-                            const file = event.target.files[0];
-                            if (!file) return;
-
-                            if (format !== 'csv') {
-                                this.showToast('Please use CSV format for import.', 'error');
-                                event.target.value = '';
-                                return;
+                            const res = await fetch(url);
+                            const json = await res.json();
+                            this.pjuData = json.data || [];
+                            this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
+                            if (search && this.pjuData.length > 0) {
+                                this.showToast(`Found ${this.pjuData.length} results for "${search}"`, 'success');
+                            } else if (search && this.pjuData.length === 0) {
+                                this.showToast(`No results found for "${search}"`, 'error');
                             }
-
-                            this.isImporting = true;
-                            this.importStatus = `Uploading ${file.name}...`;
-
-                            const formData = new FormData();
-                            formData.append('file', file);
-
-                            try {
-                                this.importStatus = `Processing ${file.name}... This may take several minutes for large files.`;
-
-                                const res = await fetch('/api/pju-report/import', {
-                                    method: 'POST',
-                                    body: formData,
-                                    headers: {
-                                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                        'Accept': 'application/json'
-                                    }
-                                });
-
-                                const result = await res.json();
-
-                                this.importResult = {
-                                    imported: result.imported || 0,
-                                    duplicates: result.duplicates || 0,
-                                    errors: result.errors || 0,
-                                    processed: result.processed || 0
-                                };
-
-                                // Show result modal if there are duplicates or the import succeeded
-                                if (result.duplicates > 0 || result.imported > 0) {
-                                    this.showImportResultModal = true;
-                                }
-
-                                // Reload data after import
-                                if (result.imported > 0) {
-                                    await this.loadData();
-                                }
-
-                            } catch (e) {
-                                console.error('Import error:', e);
-                                this.showToast('Import failed. Please check your file format.', 'error');
-                            } finally {
-                                this.isImporting = false;
-                                event.target.value = '';
-                            }
-                        },
-
-                        // Export to Excel/CSV
-                        exportData(format = 'csv') {
-                            if (!this.filteredData.length) {
-                                this.showToast('No data to export', 'error');
-                                return;
-                            }
-
-                            const headers = ['IDPEL', 'NAMA', 'NAMAPNJ', 'RT', 'RW', 'TARIF', 'DAYA', 'JENISLAYANAN',
-                                'NOMOR_METER_KWH', 'NOMOR_GARDU', 'NOMOR_JURUSAN_TIANG', 'NAMA_GARDU',
-                                'NOMOR_METER_PREPAID', 'KOORDINAT_X', 'KOORDINAT_Y', 'KDAM',
-                                'NAMA_KABUPATEN', 'NAMA_KECAMATAN', 'NAMA_KELURAHAN'];
-
-                            const rows = this.filteredData.map(item => [
-                                item.idpel || '',
-                                item.nama || '',
-                                item.namapnj || '',
-                                item.rt || '',
-                                item.rw || '',
-                                item.tarif || '',
-                                item.daya || '',
-                                item.jenislayanan || item.jenis_layanan || '',
-                                item.nomor_meter_kwh || '',
-                                item.nomor_gardu || '',
-                                item.nomor_jurusan_tiang || '',
-                                item.nama_gardu || '',
-                                item.nomor_meter_prepaid || '',
-                                item.koordinat_x || '',
-                                item.koordinat_y || '',
-                                item.kdam || '',
-                                item.nama_kabupaten || '',
-                                item.nama_kecamatan || '',
-                                item.nama_kelurahan || ''
-                            ]);
-
-                            if (format === 'excel' && typeof XLSX !== 'undefined') {
-                                // Export as Excel using SheetJS
-                                const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-                                const wb = XLSX.utils.book_new();
-                                XLSX.utils.book_append_sheet(wb, ws, 'PJU Report');
-                                XLSX.writeFile(wb, `pju-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
-                            } else {
-                                // Export as CSV
-                                let csv = headers.join(',') + '\n';
-                                rows.forEach(row => {
-                                    csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
-                                });
-
-                                const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                                const url = URL.createObjectURL(blob);
-                                const link = document.createElement('a');
-                                link.href = url;
-                                link.download = `pju-report-${new Date().toISOString().slice(0, 10)}.csv`;
-                                link.click();
-                                URL.revokeObjectURL(url);
-                            }
-
-                            this.showToast(`Exported ${this.filteredData.length} records as ${format.toUpperCase()}`, 'success');
+                        } catch (e) { console.error(e); }
+                    },
+                    searchServer() {
+                        if (this.searchTable.length >= 3) {
+                            this.loadData(this.searchTable);
+                        } else if (this.searchTable.length === 0) {
+                            this.loadData();
                         }
-                    };
-                }
-            </script>
-        @endpush
+                    },
+                    toggleDropdown(name) { this.activeDropdown = this.activeDropdown === name ? null : name; },
+                    selectAll() { this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = []; },
+                    toggleAllRegionals() { this.selectedRegionals = this.selectedRegionals.length === this.regionals.length ? [] : [...this.regionals]; },
+                    toggleAllStatuses() { this.selectedStatuses = this.selectedStatuses.length === this.statuses.length ? [] : [...this.statuses]; },
+                    toggleAllIdpels() { this.selectedIdpels = this.selectedIdpels.length === this.idpels.length ? [] : [...this.idpels]; },
+                    clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; },
+                    clearAllFilters() { this.selectAll(); },
+                    applyFilter() { this.currentPage = 1; },
+                    openAddModal() { this.isEditing = false; this.resetForm(); this.showModal = true; },
+                    openEditModal(item) { this.isEditing = true; this.form = { ...item }; this.editingId = item.id; if (item.photo) { this.photoPreview = '/storage/' + item.photo; } this.showModal = true; },
+                    openDeleteModal(item) { this.deleteItem = item; this.showDeleteModal = true; },
+                    viewItem(item) { this.viewingItem = item; this.showViewModal = true; },
+                    resetForm() { Object.keys(this.form).forEach(k => this.form[k] = ''); this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
+                    handleFileSelect(e) { const file = e.target.files[0]; if (file) this.processFile(file); },
+                    handleDrop(e) { this.isDragging = false; const file = e.dataTransfer.files[0]; if (file) this.processFile(file); },
+                    processFile(file) {
+                        if (!['image/jpeg', 'image/png'].includes(file.type)) { this.showToast('Only JPG and PNG files are allowed', 'error'); return; }
+                        if (file.size > 20 * 1024 * 1024) { this.showToast('File size must be less than 20MB', 'error'); return; }
+                        this.photoFile = file; this.photoName = file.name;
+                        const reader = new FileReader(); reader.onload = e => this.photoPreview = e.target.result; reader.readAsDataURL(file);
+                    },
+                    removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
+                    async saveData() {
+                        const formData = new FormData();
+                        Object.keys(this.form).forEach(k => { if (this.form[k]) formData.append(k, this.form[k]); });
+                        if (this.photoFile) formData.append('photo', this.photoFile);
+                        try {
+                            const url = this.isEditing ? `/api/pju-report/${this.editingId}` : '/api/pju-report';
+                            const method = this.isEditing ? 'PUT' : 'POST';
+                            if (this.isEditing) formData.append('_method', 'PUT');
+                            const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                            const json = await res.json();
+                            if (json.success) { this.showToast(json.message, 'success'); this.showModal = false; this.loadData(); }
+                        } catch (e) { this.showToast('Error saving data', 'error'); }
+                    },
+                    async deleteData() {
+                        try {
+                            const res = await fetch(`/api/pju-report/${this.deleteItem.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                            const json = await res.json();
+                            if (json.success) { this.showToast('Data successfully deleted', 'success'); this.showDeleteModal = false; this.loadData(); }
+                        } catch (e) { this.showToast('Error deleting data', 'error'); }
+                    },
+                    showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); },
+
+                    // Photo Upload Modal for Employee
+                    openPhotoUploadModal(item) {
+                        this.photoUploadItem = item;
+                        this.photoPreview = item.photo ? '/storage/' + item.photo : null;
+                        this.photoFile = null;
+                        this.photoName = '';
+                        this.showPhotoUploadModal = true;
+                    },
+                    async savePhotoOnly() {
+                        if (!this.photoFile) {
+                            this.showToast('Please select a photo to upload', 'error');
+                            return;
+                        }
+                        const formData = new FormData();
+                        formData.append('photo', this.photoFile);
+                        formData.append('_method', 'PUT');
+                        try {
+                            const res = await fetch(`/api/pju-report/${this.photoUploadItem.id}/photo`, {
+                                method: 'POST',
+                                body: formData,
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                            });
+                            const json = await res.json();
+                            if (json.success) {
+                                this.showToast('Photo uploaded successfully', 'success');
+                                this.showPhotoUploadModal = false;
+                                this.loadData();
+                            } else {
+                                this.showToast(json.message || 'Error uploading photo', 'error');
+                            }
+                        } catch (e) { this.showToast('Error uploading photo', 'error'); }
+                    },
+
+                    // Import CSV/Excel
+                    async handleImport(event, format) {
+                        const file = event.target.files[0];
+                        if (!file) return;
+
+                        if (format !== 'csv') {
+                            this.showToast('Please use CSV format for import.', 'error');
+                            event.target.value = '';
+                            return;
+                        }
+
+                        this.isImporting = true;
+                        this.importStatus = `Uploading ${file.name}...`;
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        try {
+                            this.importStatus = `Processing ${file.name}... This may take several minutes for large files.`;
+
+                            const res = await fetch('/api/pju-report/import', {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            const result = await res.json();
+
+                            this.importResult = {
+                                imported: result.imported || 0,
+                                duplicates: result.duplicates || 0,
+                                errors: result.errors || 0,
+                                processed: result.processed || 0
+                            };
+
+                            // Show result modal if there are duplicates or the import succeeded
+                            if (result.duplicates > 0 || result.imported > 0) {
+                                this.showImportResultModal = true;
+                            }
+
+                            // Reload data after import
+                            if (result.imported > 0) {
+                                await this.loadData();
+                            }
+
+                        } catch (e) {
+                            console.error('Import error:', e);
+                            this.showToast('Import failed. Please check your file format.', 'error');
+                        } finally {
+                            this.isImporting = false;
+                            event.target.value = '';
+                        }
+                    },
+
+                    // Export to Excel/CSV
+                    exportData(format = 'csv') {
+                        if (!this.filteredData.length) {
+                            this.showToast('No data to export', 'error');
+                            return;
+                        }
+
+                        const headers = ['IDPEL', 'NAMA', 'NAMAPNJ', 'RT', 'RW', 'TARIF', 'DAYA', 'JENISLAYANAN',
+                            'NOMOR_METER_KWH', 'NOMOR_GARDU', 'NOMOR_JURUSAN_TIANG', 'NAMA_GARDU',
+                            'NOMOR_METER_PREPAID', 'KOORDINAT_X', 'KOORDINAT_Y', 'KDAM',
+                            'NAMA_KABUPATEN', 'NAMA_KECAMATAN', 'NAMA_KELURAHAN'];
+
+                        const rows = this.filteredData.map(item => [
+                            item.idpel || '',
+                            item.nama || '',
+                            item.namapnj || '',
+                            item.rt || '',
+                            item.rw || '',
+                            item.tarif || '',
+                            item.daya || '',
+                            item.jenislayanan || item.jenis_layanan || '',
+                            item.nomor_meter_kwh || '',
+                            item.nomor_gardu || '',
+                            item.nomor_jurusan_tiang || '',
+                            item.nama_gardu || '',
+                            item.nomor_meter_prepaid || '',
+                            item.koordinat_x || '',
+                            item.koordinat_y || '',
+                            item.kdam || '',
+                            item.nama_kabupaten || '',
+                            item.nama_kecamatan || '',
+                            item.nama_kelurahan || ''
+                        ]);
+
+                        if (format === 'excel' && typeof XLSX !== 'undefined') {
+                            // Export as Excel using SheetJS
+                            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, 'PJU Report');
+                            XLSX.writeFile(wb, `pju-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                        } else {
+                            // Export as CSV
+                            let csv = headers.join(',') + '\n';
+                            rows.forEach(row => {
+                                csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+                            });
+
+                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `pju-report-${new Date().toISOString().slice(0, 10)}.csv`;
+                            link.click();
+                            URL.revokeObjectURL(url);
+                        }
+
+                        this.showToast(`Exported ${this.filteredData.length} records as ${format.toUpperCase()}`, 'success');
+                    }
+                };
+            }
+        </script>
+    @endpush
 @endsection

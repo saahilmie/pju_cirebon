@@ -16,8 +16,9 @@ class PjuReportController extends Controller
     public function getData(Request $request)
     {
         $limit = $request->get('limit', 100);
+        $search = $request->get('search', '');
 
-        $data = PjuData::select([
+        $query = PjuData::select([
             'id',
             'idpel',
             'nama',
@@ -39,15 +40,26 @@ class PjuReportController extends Controller
             'nama_kecamatan',
             'nama_kelurahan',
             'photo',
-        ])
-            ->limit($limit)
+        ]);
+
+        // If search parameter is provided, search across entire database
+        if (!empty($search)) {
+            $query->where(function ($q) use ($search) {
+                $q->where('idpel', 'ILIKE', "%{$search}%")
+                    ->orWhere('nama', 'ILIKE', "%{$search}%");
+            });
+            // When searching, don't apply limit or apply higher limit
+            $limit = min($request->get('limit', 1000), 5000);
+        }
+
+        $data = $query->limit($limit)
             ->get()
             ->map(function ($item) {
                 $item->jenis_layanan = $item->jenislayanan ?: ($item->nomor_meter_prepaid ? 'PRABAYAR' : 'PASKABAYAR');
                 return $item;
             });
 
-        return response()->json(['data' => $data]);
+        return response()->json(['data' => $data, 'search' => $search, 'total' => $data->count()]);
     }
 
     public function store(Request $request)
