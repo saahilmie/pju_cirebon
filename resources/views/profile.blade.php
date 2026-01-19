@@ -4,14 +4,35 @@
 @section('page-title', 'Account Setting')
 
 @push('styles')
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css">
 <style>
-    .cropper-view-box,
-    .cropper-face {
-        border-radius: 50%;
+    .crop-overlay {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        background: #000;
     }
-    .cropper-container {
-        max-height: 400px;
+    .crop-circle-mask {
+        position: absolute;
+        border-radius: 50%;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        pointer-events: none;
+    }
+    .crop-image-container {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        cursor: grab;
+    }
+    .crop-image-container:active {
+        cursor: grabbing;
+    }
+    .crop-image-container img {
+        user-select: none;
+        -webkit-user-drag: none;
     }
 </style>
 @endpush
@@ -34,31 +55,61 @@
         </div>
     </div>
 
-    <!-- Image Cropper Modal -->
-    <div x-show="showCropperModal" x-cloak class="fixed inset-0 bg-black/70 flex items-center justify-center z-[70] p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden" @click.away="closeCropper()">
-            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-                <h3 class="text-lg font-bold text-gray-800">Crop Profile Picture</h3>
-                <button @click="closeCropper()" class="text-gray-400 hover:text-gray-600">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                </button>
-            </div>
-            <div class="p-4 bg-gray-100">
-                <div class="max-h-[350px] overflow-hidden">
-                    <img id="cropperImage" src="" alt="Crop preview" class="max-w-full">
-                </div>
-            </div>
-            <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
-                <button @click="closeCropper()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                    Cancel
-                </button>
-                <button @click="applyCrop()" class="px-4 py-2 bg-[#29AAE1] text-white rounded-lg hover:bg-[#1E8CC0]">
-                    Apply Crop
-                </button>
-            </div>
+    <!-- Fullscreen Image Cropper Modal - WhatsApp Style -->
+    <div x-show="showCropperModal" x-cloak class="crop-overlay" 
+         @mousedown="startDrag($event)" 
+         @mousemove="onDrag($event)" 
+         @mouseup="endDrag()"
+         @mouseleave="endDrag()"
+         @touchstart="startDrag($event)"
+         @touchmove="onDrag($event)"
+         @touchend="endDrag()"
+         @wheel="onZoom($event)">
+        
+        <!-- Header -->
+        <div class="absolute top-0 left-0 right-0 z-10 flex items-center justify-between px-4 py-4">
+            <button @click="closeCropper()" class="text-white hover:text-gray-300 p-2">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+            </button>
+            <span class="text-white font-medium">Drag the image to adjust</span>
+            <span class="w-10"></span>
         </div>
+
+        <!-- Image Container -->
+        <div class="crop-image-container" id="cropImageContainer">
+            <img id="cropperImage" src="" alt="Crop preview" 
+                 :style="'transform: translate(' + cropTranslateX + 'px, ' + cropTranslateY + 'px) scale(' + cropScale + '); transition: ' + (isDragging ? 'none' : 'transform 0.1s')"
+                 class="max-w-none">
+        </div>
+
+        <!-- Circle Mask -->
+        <div class="crop-circle-mask" id="cropCircleMask"
+             :style="'width: ' + circleSize + 'px; height: ' + circleSize + 'px; top: 50%; left: 50%; transform: translate(-50%, -50%)'">
+        </div>
+
+        <!-- Zoom Controls -->
+        <div class="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex flex-col gap-2">
+            <button @click="zoomIn()" class="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                </svg>
+            </button>
+            <button @click="zoomOut()" class="w-10 h-10 bg-white/20 backdrop-blur rounded-lg flex items-center justify-center text-white hover:bg-white/30 transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                </svg>
+            </button>
+        </div>
+
+        <!-- Apply Button -->
+        <button @click="applyCrop()" 
+                class="absolute bottom-8 right-8 z-10 w-14 h-14 bg-[#29AAE1] rounded-full flex items-center justify-center shadow-lg hover:bg-[#1E8CC0] transition-all hover:scale-105">
+            <svg class="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+        </button>
     </div>
 
     <div class="max-w-4xl mx-auto">
@@ -85,11 +136,11 @@
                 </div>
                 <div class="flex-1">
                     <h3 class="font-semibold text-gray-800">Profile picture</h3>
-                    <p class="text-sm text-gray-500 mb-3">PNG, JPEG under 15MB (will be cropped to square)</p>
+                    <p class="text-sm text-gray-500 mb-3">PNG, JPEG under 15MB (will be cropped to circle)</p>
                     <div class="flex flex-wrap gap-2">
                         <label class="px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors">
                             Upload new picture
-                            <input type="file" class="hidden" accept="image/png,image/jpeg,image/jpg" @change="handleAvatarChange($event)" ref="avatarInput">
+                            <input type="file" class="hidden" accept="image/png,image/jpeg,image/jpg" @change="handleAvatarChange($event)">
                         </label>
                         <button @click="deleteAvatar()" x-show="user.avatar || avatarPreview"
                             class="px-4 py-2 bg-[#EB2027] text-white rounded-lg text-sm font-medium hover:bg-red-600 transition-colors">
@@ -215,7 +266,6 @@
 </div>
 
 @push('scripts')
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
 function profilePage() {
     return {
@@ -234,18 +284,39 @@ function profilePage() {
         toastMessage: '',
         toastType: 'success',
         isSaving: false,
+        
+        // Cropper state
         showCropperModal: false,
-        cropper: null,
-        originalFile: null,
+        originalImageSrc: null,
+        cropScale: 1,
+        cropTranslateX: 0,
+        cropTranslateY: 0,
+        isDragging: false,
+        dragStartX: 0,
+        dragStartY: 0,
+        lastTranslateX: 0,
+        lastTranslateY: 0,
+        circleSize: 280,
+        imageNaturalWidth: 0,
+        imageNaturalHeight: 0,
 
         init() {
             const nameParts = this.user.name ? this.user.name.split(' ') : [''];
             this.form.first_name = nameParts[0] || '';
             this.form.last_name = nameParts.slice(1).join(' ') || '';
+            
+            // Set circle size based on viewport
+            this.updateCircleSize();
+            window.addEventListener('resize', () => this.updateCircleSize());
 
             @if(session('success'))
                 this.showSuccessToast("{{ session('success') }}");
             @endif
+        },
+
+        updateCircleSize() {
+            const minDimension = Math.min(window.innerWidth, window.innerHeight);
+            this.circleSize = Math.min(300, minDimension * 0.7);
         },
 
         handleAvatarChange(event) {
@@ -264,53 +335,122 @@ function profilePage() {
                 return;
             }
 
-            this.originalFile = file;
+            this.avatarFile = file;
             const reader = new FileReader();
             reader.onload = (e) => {
-                const img = document.getElementById('cropperImage');
-                img.src = e.target.result;
-                this.showCropperModal = true;
+                this.originalImageSrc = e.target.result;
                 
-                setTimeout(() => {
-                    if (this.cropper) {
-                        this.cropper.destroy();
-                    }
-                    this.cropper = new Cropper(img, {
-                        aspectRatio: 1,
-                        viewMode: 1,
-                        dragMode: 'move',
-                        autoCropArea: 1,
-                        cropBoxResizable: true,
-                        cropBoxMovable: true,
-                        guides: true,
-                        center: true,
-                        highlight: false,
-                        background: false,
-                    });
-                }, 100);
+                // Load image to get dimensions
+                const img = new Image();
+                img.onload = () => {
+                    this.imageNaturalWidth = img.naturalWidth;
+                    this.imageNaturalHeight = img.naturalHeight;
+                    
+                    // Set initial scale so image fills the circle
+                    const minImageDim = Math.min(img.naturalWidth, img.naturalHeight);
+                    this.cropScale = (this.circleSize / minImageDim) * 1.2;
+                    this.cropTranslateX = 0;
+                    this.cropTranslateY = 0;
+                    this.lastTranslateX = 0;
+                    this.lastTranslateY = 0;
+                    
+                    // Show cropper
+                    document.getElementById('cropperImage').src = e.target.result;
+                    this.showCropperModal = true;
+                };
+                img.src = e.target.result;
             };
             reader.readAsDataURL(file);
             event.target.value = '';
         },
 
+        startDrag(event) {
+            if (event.target.tagName === 'BUTTON' || event.target.closest('button')) return;
+            
+            this.isDragging = true;
+            const point = event.touches ? event.touches[0] : event;
+            this.dragStartX = point.clientX - this.cropTranslateX;
+            this.dragStartY = point.clientY - this.cropTranslateY;
+        },
+
+        onDrag(event) {
+            if (!this.isDragging) return;
+            event.preventDefault();
+            
+            const point = event.touches ? event.touches[0] : event;
+            this.cropTranslateX = point.clientX - this.dragStartX;
+            this.cropTranslateY = point.clientY - this.dragStartY;
+        },
+
+        endDrag() {
+            this.isDragging = false;
+            this.lastTranslateX = this.cropTranslateX;
+            this.lastTranslateY = this.cropTranslateY;
+        },
+
+        onZoom(event) {
+            event.preventDefault();
+            const delta = event.deltaY > 0 ? -0.1 : 0.1;
+            this.cropScale = Math.max(0.5, Math.min(5, this.cropScale + delta));
+        },
+
+        zoomIn() {
+            this.cropScale = Math.min(5, this.cropScale + 0.2);
+        },
+
+        zoomOut() {
+            this.cropScale = Math.max(0.5, this.cropScale - 0.2);
+        },
+
         closeCropper() {
-            if (this.cropper) {
-                this.cropper.destroy();
-                this.cropper = null;
-            }
             this.showCropperModal = false;
-            this.originalFile = null;
+            this.cropScale = 1;
+            this.cropTranslateX = 0;
+            this.cropTranslateY = 0;
         },
 
         applyCrop() {
-            if (!this.cropper) return;
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const size = 400; // Output size
+            canvas.width = size;
+            canvas.height = size;
 
-            const canvas = this.cropper.getCroppedCanvas({
-                width: 400,
-                height: 400,
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
+            const img = document.getElementById('cropperImage');
+            
+            // Calculate the crop area
+            const containerRect = document.getElementById('cropImageContainer').getBoundingClientRect();
+            const imgRect = img.getBoundingClientRect();
+            
+            // Center of the circle mask in container coords
+            const circleCenterX = containerRect.width / 2;
+            const circleCenterY = containerRect.height / 2;
+            
+            // Calculate what part of the original image is in the circle
+            const imgDisplayWidth = img.naturalWidth * this.cropScale;
+            const imgDisplayHeight = img.naturalHeight * this.cropScale;
+            
+            // Image position in container
+            const imgCenterX = containerRect.width / 2 + this.cropTranslateX;
+            const imgCenterY = containerRect.height / 2 + this.cropTranslateY;
+            const imgLeft = imgCenterX - imgDisplayWidth / 2;
+            const imgTop = imgCenterY - imgDisplayHeight / 2;
+            
+            // Circle area in image coordinates
+            const circleLeft = circleCenterX - this.circleSize / 2;
+            const circleTop = circleCenterY - this.circleSize / 2;
+            
+            // Source coordinates in original image
+            const srcX = (circleLeft - imgLeft) / this.cropScale;
+            const srcY = (circleTop - imgTop) / this.cropScale;
+            const srcSize = this.circleSize / this.cropScale;
+
+            // Draw the cropped area
+            ctx.drawImage(
+                img,
+                srcX, srcY, srcSize, srcSize,
+                0, 0, size, size
+            );
 
             canvas.toBlob((blob) => {
                 this.avatarFile = new File([blob], 'avatar.jpg', { type: 'image/jpeg' });
@@ -397,7 +537,6 @@ function profilePage() {
                         }
                     }
                     
-                    // Reload page after short delay to update navbar
                     setTimeout(() => {
                         window.location.reload();
                     }, 1000);
