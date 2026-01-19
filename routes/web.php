@@ -42,4 +42,9 @@ Route::middleware('auth')->group(function () {
 
     // User Management (Admin only)
     Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
+
+    // Profile Settings
+    Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile');
+    Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile/avatar', [App\Http\Controllers\ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
 });
