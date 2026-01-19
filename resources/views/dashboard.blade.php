@@ -67,18 +67,20 @@
                     <p class="text-lg font-bold text-gray-800">{{ number_format($stats['total_unclear']) }}</p>
                 </div>
             </div>
-            <div class="bg-white rounded-lg shadow p-3 flex items-center gap-3">
-                <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                            d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                    </svg>
+            @if(auth()->user() && auth()->user()->isAdmin())
+                <div class="bg-white rounded-lg shadow p-3 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-[10px] text-gray-500 uppercase">Users</p>
+                        <p class="text-lg font-bold text-gray-800">{{ $stats['total_users'] }}</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-[10px] text-gray-500 uppercase">Users</p>
-                    <p class="text-lg font-bold text-gray-800">{{ $stats['total_users'] }}</p>
-                </div>
-            </div>
+            @endif
         </section>
 
         <!-- Charts Row -->
@@ -182,52 +184,100 @@
                 </div>
             </div>
 
-            <!-- Users Details -->
-            <div class="bg-white rounded-lg shadow p-4">
-                <h3 class="text-sm font-semibold text-gray-700 mb-3">Users Details</h3>
-                <div class="flex gap-4">
-                    <div class="flex-1 space-y-1.5">
-                        <p class="text-[10px] text-gray-500 uppercase mb-2">Users Roles</p>
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-[#B51CEC]"></span>
-                            <span class="text-gray-700 text-xs flex-1">Super Admin</span>
-                            <span class="text-xs font-semibold text-gray-800">{{ $userRoles['super_admin'] }}%</span>
+            @if(auth()->user() && auth()->user()->isAdmin())
+                <!-- Users Details - Admin/Super Admin only -->
+                <div class="bg-white rounded-lg shadow p-4">
+                    <h3 class="text-sm font-semibold text-gray-700 mb-3">Users Details</h3>
+                    <div class="flex gap-4">
+                        <div class="flex-1 space-y-1.5">
+                            <p class="text-[10px] text-gray-500 uppercase mb-2">Users Roles</p>
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="w-2 h-2 rounded-full bg-[#B51CEC]"></span>
+                                <span class="text-gray-700 text-xs flex-1">Super Admin</span>
+                                <span class="text-xs font-semibold text-gray-800">{{ $userRoles['super_admin'] }}%</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="w-2 h-2 rounded-full bg-[#FBED21]"></span>
+                                <span class="text-gray-700 text-xs flex-1">Admin</span>
+                                <span class="text-xs font-semibold text-gray-800">{{ $userRoles['admin'] }}%</span>
+                            </div>
+                            <div class="flex items-center gap-2 text-sm">
+                                <span class="w-2 h-2 rounded-full bg-[#29AAE1]"></span>
+                                <span class="text-gray-700 text-xs flex-1">Employee</span>
+                                <span class="text-xs font-semibold text-gray-800">{{ $userRoles['employee'] }}%</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-[#FBED21]"></span>
-                            <span class="text-gray-700 text-xs flex-1">Admin</span>
-                            <span class="text-xs font-semibold text-gray-800">{{ $userRoles['admin'] }}%</span>
-                        </div>
-                        <div class="flex items-center gap-2 text-sm">
-                            <span class="w-2 h-2 rounded-full bg-[#29AAE1]"></span>
-                            <span class="text-gray-700 text-xs flex-1">Employee</span>
-                            <span class="text-xs font-semibold text-gray-800">{{ $userRoles['employee'] }}%</span>
-                        </div>
-                    </div>
-                    <div class="relative w-28 h-28 flex-shrink-0">
-                        <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                            <circle cx="18" cy="18" r="14" fill="none" stroke="#B51CEC" stroke-width="4"
-                                stroke-dasharray="{{ $userRoles['super_admin'] }} {{ 100 - $userRoles['super_admin'] }}">
-                                <title>Super Admin: {{ $userRoles['super_admin'] }}%</title>
-                            </circle>
-                            <circle cx="18" cy="18" r="14" fill="none" stroke="#FBED21" stroke-width="4"
-                                stroke-dasharray="{{ $userRoles['admin'] }} {{ 100 - $userRoles['admin'] }}"
-                                stroke-dashoffset="-{{ $userRoles['super_admin'] }}">
-                                <title>Admin: {{ $userRoles['admin'] }}%</title>
-                            </circle>
-                            <circle cx="18" cy="18" r="14" fill="none" stroke="#29AAE1" stroke-width="4"
-                                stroke-dasharray="{{ $userRoles['employee'] }} {{ 100 - $userRoles['employee'] }}"
-                                stroke-dashoffset="-{{ $userRoles['super_admin'] + $userRoles['admin'] }}">
-                                <title>Employee: {{ $userRoles['employee'] }}%</title>
-                            </circle>
-                        </svg>
-                        <div class="absolute inset-0 flex flex-col items-center justify-center">
-                            <span class="text-lg font-bold text-gray-800">{{ $stats['total_users'] }}</span>
-                            <span class="text-[9px] text-gray-500 uppercase">Users</span>
+                        <div class="relative w-28 h-28 flex-shrink-0">
+                            <svg class="w-full h-full -rotate-90" viewBox="0 0 36 36">
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#B51CEC" stroke-width="4"
+                                    stroke-dasharray="{{ $userRoles['super_admin'] }} {{ 100 - $userRoles['super_admin'] }}">
+                                    <title>Super Admin: {{ $userRoles['super_admin'] }}%</title>
+                                </circle>
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#FBED21" stroke-width="4"
+                                    stroke-dasharray="{{ $userRoles['admin'] }} {{ 100 - $userRoles['admin'] }}"
+                                    stroke-dashoffset="-{{ $userRoles['super_admin'] }}">
+                                    <title>Admin: {{ $userRoles['admin'] }}%</title>
+                                </circle>
+                                <circle cx="18" cy="18" r="14" fill="none" stroke="#29AAE1" stroke-width="4"
+                                    stroke-dasharray="{{ $userRoles['employee'] }} {{ 100 - $userRoles['employee'] }}"
+                                    stroke-dashoffset="-{{ $userRoles['super_admin'] + $userRoles['admin'] }}">
+                                    <title>Employee: {{ $userRoles['employee'] }}%</title>
+                                </circle>
+                            </svg>
+                            <div class="absolute inset-0 flex flex-col items-center justify-center">
+                                <span class="text-lg font-bold text-gray-800">{{ $stats['total_users'] }}</span>
+                                <span class="text-[9px] text-gray-500 uppercase">Users</span>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
+            @else
+                <!-- Administrative Team - Employee only -->
+                <div class="bg-white rounded-lg shadow p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-sm font-semibold text-gray-700">Administrative Team</h3>
+                            <p class="text-xs text-gray-500">Reach out to our administrative team for assistance</p>
+                        </div>
+                        <div class="w-8 h-8 bg-[#29AAE1]/10 rounded-full flex items-center justify-center">
+                            <svg class="w-4 h-4 text-[#29AAE1]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        @foreach($adminTeam as $admin)
+                            <div
+                                class="flex items-center gap-3 p-2 rounded-lg {{ $admin->role === 'super_admin' ? 'bg-[#29AAE1]/5 border border-[#29AAE1]/20' : 'hover:bg-gray-50' }}">
+                                <div
+                                    class="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 {{ $admin->role === 'super_admin' ? 'bg-[#29AAE1] text-white' : 'bg-gray-200 text-gray-600' }}">
+                                    @if($admin->profile_photo)
+                                        <img src="{{ asset('storage/' . $admin->profile_photo) }}"
+                                            class="w-10 h-10 rounded-full object-cover">
+                                    @else
+                                        <span class="text-sm font-bold">{{ $admin->initials }}</span>
+                                    @endif
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2">
+                                        <p class="text-sm font-medium text-gray-800 truncate">{{ $admin->name }}</p>
+                                        @if($admin->role === 'super_admin')
+                                            <span
+                                                class="px-2 py-0.5 bg-[#29AAE1] text-white text-[10px] font-medium rounded-full uppercase">Super
+                                                Admin</span>
+                                        @else
+                                            <span
+                                                class="px-2 py-0.5 bg-gray-200 text-gray-600 text-[10px] font-medium rounded-full uppercase">Admin</span>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-[#29AAE1] truncate">{{ $admin->email }}</p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                </div>
+            @endif
         </section>
     </div>
 
@@ -250,7 +300,7 @@
                             }, 100);
                         @endif
 
-                    if (document.getElementById('mini-map')) {
+                            if (document.getElementById('mini-map')) {
                             const miniMap = L.map('mini-map', {
                                 zoomControl: true, dragging: true, scrollWheelZoom: true
                             }).setView([-6.7066, 108.5570], 9);

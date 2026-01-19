@@ -108,6 +108,31 @@ class PjuReportController extends Controller
     }
 
     /**
+     * Update only the photo for a PJU record (for employees)
+     */
+    public function updatePhoto(Request $request, $id)
+    {
+        $pju = PjuData::findOrFail($id);
+
+        $request->validate([
+            'photo' => 'required|image|mimes:jpeg,png|max:20480',
+        ]);
+
+        if ($request->hasFile('photo')) {
+            // Delete old photo if exists
+            if ($pju->photo) {
+                Storage::disk('public')->delete($pju->photo);
+            }
+            // Store new photo
+            $path = $request->file('photo')->store('pju-photos', 'public');
+            $pju->photo = $path;
+            $pju->save();
+        }
+
+        return response()->json(['success' => true, 'message' => 'Photo uploaded successfully', 'data' => $pju]);
+    }
+
+    /**
      * Import CSV with duplicate detection and auto-delimiter detection
      */
     public function importCsv(Request $request)
