@@ -375,6 +375,13 @@
                                             </svg>
                                         </button>
                                         @if(auth()->user() && auth()->user()->isAdmin())
+                                            <button @click="copyAsNew(item)" class="text-gray-400 hover:text-green-500"
+                                                title="Copy as New (same IDPEL, new location)">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                        d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                                                </svg>
+                                            </button>
                                             <button @click="openEditModal(item)" class="text-gray-400 hover:text-yellow-500"
                                                 title="Edit">
                                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -921,6 +928,19 @@
                     clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; },
                     clearAllFilters() { this.selectAll(); },
                     applyFilter() { this.currentPage = 1; },
+                    copyAsNew(item) {
+                        // Copy all data except id, coordinates, and photo
+                        this.isEditing = false;
+                        this.form = { ...item };
+                        delete this.form.id;
+                        this.form.koordinat_x = '';  // Clear for new location
+                        this.form.koordinat_y = '';  // Clear for new location
+                        this.photoPreview = null;    // Clear photo
+                        this.photoFile = null;
+                        this.photoName = '';
+                        this.showModal = true;
+                        this.showToast('Data copied! Fill new coordinates and photo, then save.', 'success');
+                    },
                     openAddModal() { this.isEditing = false; this.resetForm(); this.showModal = true; },
                     openEditModal(item) { this.isEditing = true; this.form = { ...item }; this.editingId = item.id; if (item.photo) { this.photoPreview = '/storage/' + item.photo; } this.showModal = true; },
                     openDeleteModal(item) { this.deleteItem = item; this.showDeleteModal = true; },
