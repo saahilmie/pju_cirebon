@@ -193,8 +193,16 @@
             <div class="p-4 flex items-center justify-between" style="border-bottom: 1px solid #C8BFBF;">
                 <h3 class="text-lg font-bold text-gray-800">All Report</h3>
                 <div class="flex items-center gap-3">
-                    <input type="text" placeholder="Find ID Pel and Status" x-model="searchTable"
-                        class="px-4 py-2 rounded-lg text-sm w-64 focus:outline-none" style="border: 1px solid #C8BFBF;">
+                    <div class="relative">
+                        <svg class="w-5 h-5 text-[#29AAE1] absolute left-3 top-1/2 -translate-y-1/2" fill="none"
+                            stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input type="text" placeholder="Find ID Pel and Status" x-model="searchTable"
+                            class="pl-10 pr-4 py-2 rounded-lg text-sm w-64 focus:outline-none focus:ring-2 focus:ring-[#29AAE1]"
+                            style="border: 1px solid #C8BFBF;">
+                    </div>
 
                     <!-- Hidden file inputs for import -->
                     <input type="file" id="importFileCSV" accept=".csv" @change="handleImport($event, 'csv')"
