@@ -23,9 +23,9 @@ class UserController extends Controller
         // Search filter
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('email', 'ILIKE', "%{$search}%");
+                    ->orWhere('email', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -50,9 +50,9 @@ class UserController extends Controller
 
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('name', 'ILIKE', "%{$search}%")
-                  ->orWhere('email', 'ILIKE', "%{$search}%");
+                    ->orWhere('email', 'ILIKE', "%{$search}%");
             });
         }
 
@@ -102,9 +102,9 @@ class UserController extends Controller
         }
 
         $filename = 'users_export_' . date('Y-m-d_His') . '.xlsx';
-        
+
         // Use Symfony StreamedResponse for proper file download
-        return response()->streamDownload(function() use ($spreadsheet) {
+        return response()->streamDownload(function () use ($spreadsheet) {
             $writer = new Xlsx($spreadsheet);
             $writer->save('php://output');
         }, $filename, [
@@ -120,21 +120,32 @@ class UserController extends Controller
             'email' => 'required|email|unique:users,email',
             'role' => 'required|in:super_admin,admin,employee',
             'status' => 'required|in:active,deactive',
-            'password' => 'required|min:6',
+            'password' => 'nullable|min:6', // Made optional - will use default if not provided
         ]);
 
         // Validate email domain
         $emailDomain = substr(strrchr($request->email, "@"), 1);
         $allowedDomains = ['pln.co.id', 'mhs.unsoed.ac.id'];
-        
+
         if (!in_array($emailDomain, $allowedDomains)) {
             return back()->withErrors(['email' => 'Only @pln.co.id or @mhs.unsoed.ac.id emails are allowed.']);
+        }
+
+        // Set default password based on role if not provided
+        $password = $request->password;
+        if (empty($password)) {
+            $defaultPasswords = [
+                'employee' => 'employee123',
+                'admin' => 'admin123',
+                'super_admin' => 'super123',
+            ];
+            $password = $defaultPasswords[$request->role] ?? 'password123';
         }
 
         User::create([
             'name' => $request->name,
             'email' => $request->email,
-            'password' => Hash::make($request->password),
+            'password' => Hash::make($password),
             'role' => $request->role,
             'status' => $request->status,
         ]);
@@ -152,7 +163,7 @@ class UserController extends Controller
         ]);
 
         $data = $request->only(['name', 'email', 'role', 'status']);
-        
+
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }

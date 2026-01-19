@@ -209,9 +209,8 @@
                         <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                         <div class="relative">
                             <input :type="showPasswordField ? 'text' : 'password'" name="password"
-                                x-model="formData.password" placeholder="Enter password"
-                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#29AAE1]"
-                                :required="!editingUser">
+                                x-model="formData.password" :placeholder="getDefaultPasswordPlaceholder()"
+                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#29AAE1]">
                             <button type="button" @click="showPasswordField = !showPasswordField"
                                 class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
                                 <svg x-show="!showPasswordField" class="w-5 h-5" fill="none" stroke="currentColor"
@@ -228,6 +227,12 @@
                                 </svg>
                             </button>
                         </div>
+                        <p x-show="!editingUser" class="text-xs text-gray-500 mt-1">
+                            <span class="text-[#29AAE1] font-medium">Default:</span>
+                            <span
+                                x-text="formData.role === 'employee' ? 'employee123' : formData.role === 'admin' ? 'admin123' : formData.role === 'super_admin' ? 'super123' : 'Select role first'"></span>
+                            <span class="text-gray-400">(leave empty to use default)</span>
+                        </p>
                         <p x-show="editingUser" class="text-xs text-gray-500 mt-1">Leave empty to keep current password</p>
                     </div>
 
@@ -433,6 +438,15 @@
                                 clearInterval(this.toastInterval);
                             }
                         }, 100);
+                    },
+
+                    getDefaultPasswordPlaceholder() {
+                        const defaults = {
+                            'employee': 'Default: employee123',
+                            'admin': 'Default: admin123',
+                            'super_admin': 'Default: super123'
+                        };
+                        return this.formData.role ? defaults[this.formData.role] || 'Select role first' : 'Select role first';
                     }
                 };
             }
