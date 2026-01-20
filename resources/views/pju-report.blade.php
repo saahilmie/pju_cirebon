@@ -194,14 +194,9 @@
                 <h3 class="text-lg font-bold text-gray-800">All Report</h3>
                 <div class="flex items-center gap-3">
                     <div class="relative flex items-center gap-1">
-                        <svg class="w-5 h-5 text-[#29AAE1] absolute left-3 top-1/2 -translate-y-1/2" fill="none"
-                            stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                        </svg>
-                        <input type="text" placeholder="Search IDPEL (min 3 chars, Enter to search all)"
+                        <input type="text" placeholder="Search IDPEL (min 3 chars, Enter to search)"
                             x-model="searchTable" @keyup.enter="searchServer()"
-                            class="pl-10 pr-4 py-2 rounded-lg text-sm w-80 focus:outline-none focus:ring-2 focus:ring-[#29AAE1]"
+                            class="px-4 py-2 rounded-lg text-sm w-80 focus:outline-none focus:ring-2 focus:ring-[#29AAE1]"
                             style="border: 1px solid #C8BFBF;">
                         <button @click="searchServer()"
                             class="px-3 py-2 bg-[#29AAE1] text-white rounded-lg text-sm hover:bg-[#1E8CC0]"
@@ -211,7 +206,7 @@
                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                             </svg>
                         </button>
-                        <button x-show="searchTable" @click="searchTable = ''; loadData()"
+                        <button x-show="searchTable" @click="searchTable = ''; currentSearch = ''; loadData()"
                             class="px-2 py-2 text-gray-400 hover:text-gray-600 rounded-lg text-sm" title="Clear search">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -529,14 +524,21 @@
                             </div>
                         </div>
                         <div class="col-span-2">
-                            <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-colors"
-                                :class="form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]'">
+                            <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
+                                            form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                            hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                        ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
+                                    :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
                                 <div>
                                     <span class="text-sm font-medium text-gray-700">IDPEL Main (Ada Gardu)</span>
-                                    <p class="text-xs text-gray-500">Centang jika titik ini memiliki gardu/sumber listrik
-                                        utama</p>
+                                    <p class="text-xs text-gray-500" x-show="!hasExistingIdpelMain() || form.is_idpel_main">
+                                        Centang jika titik ini memiliki gardu/sumber listrik utama
+                                    </p>
+                                    <p class="text-xs text-red-500" x-show="hasExistingIdpelMain() && !form.is_idpel_main">
+                                        IDPEL ini sudah ada yang ditandai sebagai IDPEL Main
+                                    </p>
                                 </div>
                             </label>
                         </div>
@@ -891,7 +893,20 @@
                     isImporting: false, importStatus: '',
                     isDragging: false, photoPreview: null, photoName: '', photoFile: null,
                     toast: { show: false, message: '', type: 'success' },
+                    currentSearch: '', // Persist search after edit
                     form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '', is_idpel_main: false },
+
+                    // Check if another entry with same IDPEL already has is_idpel_main=true
+                    hasExistingIdpelMain() {
+                        if (!this.form.idpel) return false;
+                        const currentId = this.isEditing ? this.editingId : null;
+                        return this.pjuData.some(item =>
+                            item.idpel === this.form.idpel &&
+                            item.is_idpel_main &&
+                            item.id !== currentId
+                        );
+                    },
+
                     get isAllSelected() { return !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length; },
                     get hasActiveFilters() { return this.selectedRegionals.length || this.selectedStatuses.length || this.selectedIdpels.length; },
                     get filteredRegionals() { return this.searchRegional ? this.regionals.filter(r => r.toLowerCase().includes(this.searchRegional.toLowerCase())) : this.regionals; },
@@ -927,8 +942,10 @@
                     },
                     searchServer() {
                         if (this.searchTable.length >= 3) {
+                            this.currentSearch = this.searchTable;
                             this.loadData(this.searchTable);
                         } else if (this.searchTable.length === 0) {
+                            this.currentSearch = '';
                             this.loadData();
                         }
                     },
@@ -983,7 +1000,12 @@
                             if (this.isEditing) formData.append('_method', 'PUT');
                             const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
                             const json = await res.json();
-                            if (json.success) { this.showToast(json.message, 'success'); this.showModal = false; this.loadData(); }
+                            if (json.success) {
+                                this.showToast(json.message, 'success');
+                                this.showModal = false;
+                                // Persist search after edit
+                                this.loadData(this.currentSearch);
+                            }
                             else { this.showToast(json.message || 'Error saving data', 'error'); }
                         } catch (e) { console.error(e); this.showToast('Error saving data', 'error'); }
                     },
