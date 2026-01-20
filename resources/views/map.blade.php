@@ -507,10 +507,13 @@
                                     p.koordinat_x = lat;
                                     p.koordinat_y = lng;
                                     this.addMarker(p);
-                                    // Group by IDPEL for connecting lines
+                                    // Group by IDPEL for connecting lines (store coords and is_idpel_main)
                                     if (p.idpel) {
                                         if (!idpelGroups[p.idpel]) idpelGroups[p.idpel] = [];
-                                        idpelGroups[p.idpel].push([lat, lng]);
+                                        idpelGroups[p.idpel].push({
+                                            coords: [lat, lng],
+                                            is_idpel_main: p.is_idpel_main
+                                        });
                                     }
                                 }
                             });
@@ -523,16 +526,34 @@
                     },
 
                     drawConnectingLines(idpelGroups) {
-                        Object.entries(idpelGroups).forEach(([idpel, coords]) => {
-                            if (coords.length > 1) {
-                                // Draw polyline connecting all points with same IDPEL
+                        Object.entries(idpelGroups).forEach(([idpel, points]) => {
+                            if (points.length > 1) {
+                                // Find IDPEL Main point (center hub)
+                                const mainPoint = points.find(p => p.is_idpel_main);
+                                const branchPoints = points.filter(p => !p.is_idpel_main);
+                                
                                 const lineColor = '#29AAE1'; // Blue color for connections
-                                L.polyline(coords, {
-                                    color: lineColor,
-                                    weight: 2,
-                                    opacity: 0.7,
-                                    dashArray: '5, 5'
-                                }).addTo(this.markerLayer);
+                                
+                                if (mainPoint && branchPoints.length > 0) {
+                                    // Star pattern: Connect IDPEL Main to each branch
+                                    branchPoints.forEach(branch => {
+                                        L.polyline([mainPoint.coords, branch.coords], {
+                                            color: lineColor,
+                                            weight: 2,
+                                            opacity: 0.7,
+                                            dashArray: '5, 5'
+                                        }).addTo(this.markerLayer);
+                                    });
+                                } else {
+                                    // Fallback: Connect all points in chain
+                                    const coords = points.map(p => p.coords);
+                                    L.polyline(coords, {
+                                        color: lineColor,
+                                        weight: 2,
+                                        opacity: 0.7,
+                                        dashArray: '5, 5'
+                                    }).addTo(this.markerLayer);
+                                }
                             }
                         });
                     },
