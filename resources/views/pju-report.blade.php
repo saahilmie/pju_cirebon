@@ -969,7 +969,13 @@
                     removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
                     async saveData() {
                         const formData = new FormData();
-                        Object.keys(this.form).forEach(k => { if (this.form[k]) formData.append(k, this.form[k]); });
+                        Object.keys(this.form).forEach(k => {
+                            // Skip is_idpel_main here, handle separately
+                            if (k === 'is_idpel_main') return;
+                            if (this.form[k]) formData.append(k, this.form[k]);
+                        });
+                        // Handle is_idpel_main as 1/0 for Laravel
+                        formData.append('is_idpel_main', this.form.is_idpel_main ? '1' : '0');
                         if (this.photoFile) formData.append('photo', this.photoFile);
                         try {
                             const url = this.isEditing ? `/api/pju-report/${this.editingId}` : '/api/pju-report';
@@ -978,7 +984,8 @@
                             const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
                             const json = await res.json();
                             if (json.success) { this.showToast(json.message, 'success'); this.showModal = false; this.loadData(); }
-                        } catch (e) { this.showToast('Error saving data', 'error'); }
+                            else { this.showToast(json.message || 'Error saving data', 'error'); }
+                        } catch (e) { console.error(e); this.showToast('Error saving data', 'error'); }
                     },
                     async deleteData() {
                         try {

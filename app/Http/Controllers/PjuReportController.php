@@ -75,7 +75,8 @@ class PjuReportController extends Controller
         $data = $request->except('photo');
 
         // Handle is_idpel_main - ensure only one per IDPEL
-        if ($request->has('is_idpel_main') && $request->is_idpel_main) {
+        $isMain = $request->input('is_idpel_main') == '1' || $request->input('is_idpel_main') === true;
+        if ($isMain) {
             // Unset any existing IDPEL Main for this IDPEL
             PjuData::where('idpel', $request->idpel)
                 ->where('is_idpel_main', true)
@@ -108,7 +109,8 @@ class PjuReportController extends Controller
         $data = $request->except('photo');
 
         // Handle is_idpel_main - ensure only one per IDPEL
-        if ($request->has('is_idpel_main') && $request->is_idpel_main) {
+        $isMain = $request->input('is_idpel_main') == '1' || $request->input('is_idpel_main') === true;
+        if ($isMain) {
             // Unset any existing IDPEL Main for this IDPEL (except current)
             PjuData::where('idpel', $request->idpel)
                 ->where('id', '!=', $id)
