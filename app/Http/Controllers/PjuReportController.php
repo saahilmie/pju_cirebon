@@ -40,6 +40,7 @@ class PjuReportController extends Controller
             'nama_kecamatan',
             'nama_kelurahan',
             'photo',
+            'is_idpel_main',
         ]);
 
         // If search parameter is provided, search across entire database
@@ -68,9 +69,21 @@ class PjuReportController extends Controller
             'idpel' => 'required|string|max:20',
             'nama' => 'nullable|string|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png|max:20480',
+            'is_idpel_main' => 'nullable|boolean',
         ]);
 
         $data = $request->except('photo');
+
+        // Handle is_idpel_main - ensure only one per IDPEL
+        if ($request->has('is_idpel_main') && $request->is_idpel_main) {
+            // Unset any existing IDPEL Main for this IDPEL
+            PjuData::where('idpel', $request->idpel)
+                ->where('is_idpel_main', true)
+                ->update(['is_idpel_main' => false]);
+            $data['is_idpel_main'] = true;
+        } else {
+            $data['is_idpel_main'] = false;
+        }
 
         if ($request->hasFile('photo')) {
             $path = $request->file('photo')->store('pju-photos', 'public');
@@ -89,9 +102,22 @@ class PjuReportController extends Controller
         $request->validate([
             'idpel' => 'required|string|max:20',
             'photo' => 'nullable|image|mimes:jpeg,png|max:20480',
+            'is_idpel_main' => 'nullable|boolean',
         ]);
 
         $data = $request->except('photo');
+
+        // Handle is_idpel_main - ensure only one per IDPEL
+        if ($request->has('is_idpel_main') && $request->is_idpel_main) {
+            // Unset any existing IDPEL Main for this IDPEL (except current)
+            PjuData::where('idpel', $request->idpel)
+                ->where('id', '!=', $id)
+                ->where('is_idpel_main', true)
+                ->update(['is_idpel_main' => false]);
+            $data['is_idpel_main'] = true;
+        } else {
+            $data['is_idpel_main'] = false;
+        }
 
         if ($request->hasFile('photo')) {
             if ($pju->photo) {

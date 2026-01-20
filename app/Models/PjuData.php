@@ -33,12 +33,14 @@ class PjuData extends Model
         'nama_kelurahan',
         'no_meter',
         'photo',
+        'is_idpel_main',
     ];
 
     protected $casts = [
         'koordinat_x' => 'decimal:14',
         'koordinat_y' => 'decimal:14',
         'daya' => 'integer',
+        'is_idpel_main' => 'boolean',
     ];
 
     // Get status meter label

@@ -528,6 +528,18 @@
                                         value="KAB. INDRAMAYU" class="text-[#29AAE1]"> Indramayu</label>
                             </div>
                         </div>
+                        <div class="col-span-2">
+                            <label class="flex items-center gap-3 cursor-pointer p-3 rounded-lg border transition-colors"
+                                :class="form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]'">
+                                <input type="checkbox" x-model="form.is_idpel_main"
+                                    class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">IDPEL Main (Ada Gardu)</span>
+                                    <p class="text-xs text-gray-500">Centang jika titik ini memiliki gardu/sumber listrik
+                                        utama</p>
+                                </div>
+                            </label>
+                        </div>
                     </div>
 
                     <!-- Photo Upload -->
@@ -879,7 +891,7 @@
                     isImporting: false, importStatus: '',
                     isDragging: false, photoPreview: null, photoName: '', photoFile: null,
                     toast: { show: false, message: '', type: 'success' },
-                    form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '' },
+                    form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '', is_idpel_main: false },
                     get isAllSelected() { return !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length; },
                     get hasActiveFilters() { return this.selectedRegionals.length || this.selectedStatuses.length || this.selectedIdpels.length; },
                     get filteredRegionals() { return this.searchRegional ? this.regionals.filter(r => r.toLowerCase().includes(this.searchRegional.toLowerCase())) : this.regionals; },

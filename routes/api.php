@@ -29,7 +29,8 @@ Route::get('/pju-markers', function (Request $request) {
             'nomor_jurusan_tiang',
             'koordinat_x',
             'koordinat_y',
-            'photo'
+            'photo',
+            'is_idpel_main'
         ])
         ->limit($limit)
         ->get();
@@ -68,7 +69,8 @@ Route::get('/pju-markers/search', function (Request $request) {
             'nomor_jurusan_tiang',
             'koordinat_x',
             'koordinat_y',
-            'photo'
+            'photo',
+            'is_idpel_main'
         ])
         ->limit(100)
         ->get();

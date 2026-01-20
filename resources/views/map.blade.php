@@ -548,11 +548,21 @@
                     addMarker(point) {
                         const color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
                         let html;
-                        if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
+
+                        // IDPEL Main (with gardu) - circle outline
+                        if (point.is_idpel_main) {
+                            html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};"></div>`;
+                        }
+                        // Unclear status - star shape
+                        else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
                             html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
-                        } else if (point.kdam === 'A') {
+                        }
+                        // Abonemen - triangle
+                        else if (point.kdam === 'A') {
                             html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
-                        } else {
+                        }
+                        // Meterisasi - filled circle
+                        else {
                             html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
                         }
                         const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
@@ -610,17 +620,17 @@
 
                     async searchIdpel() {
                         if (!this.searchQuery) return;
-                        
+
                         // First try to find in already loaded markers
                         let found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
                             this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
-                        
+
                         // If not found locally, search from server
                         if (!found) {
                             try {
                                 const response = await fetch(`/api/pju-markers/search?q=${encodeURIComponent(this.searchQuery)}`);
                                 const data = await response.json();
-                                
+
                                 if (data.length > 0) {
                                     // Add searched markers to map
                                     data.forEach(p => {
@@ -630,9 +640,9 @@
                                             p.koordinat_x = lat;
                                             p.koordinat_y = lng;
                                             // Check if marker already exists
-                                            const exists = this.markers.find(m => 
-                                                m.data.idpel === p.idpel && 
-                                                m.data.koordinat_x === lat && 
+                                            const exists = this.markers.find(m =>
+                                                m.data.idpel === p.idpel &&
+                                                m.data.koordinat_x === lat &&
                                                 m.data.koordinat_y === lng
                                             );
                                             if (!exists) {
@@ -650,7 +660,7 @@
                                 console.error('Search error:', e);
                             }
                         }
-                        
+
                         if (found) {
                             this.selectedPoint = found.data;
                             this.hoveredPoint = found.data;
