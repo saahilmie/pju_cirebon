@@ -121,10 +121,16 @@
                 </div>
             </div>
 
+            <!-- Focus Mode Blur Overlay - Click to close popup -->
+            <div x-show="isFocused" x-transition:enter="transition-opacity ease-out duration-200"
+                x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" @click="closeDetail()"
+                class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[1001] cursor-pointer" style="pointer-events: auto;">
+            </div>
+
             <!-- Popup on marker click -->
             <div x-show="hoveredPoint" x-transition
-                class="fixed bg-white rounded-xl shadow-2xl z-[1002] min-w-[260px] max-w-[300px] overflow-hidden"
-                :style="'left:' + popupX + 'px; top:' + popupY + 'px'">
+                class="fixed bg-white rounded-xl shadow-2xl z-[1003] min-w-[260px] max-w-[300px] overflow-hidden"
+                :style="'left:' + popupX + 'px; top:' + popupY + 'px'" @click.stop>
 
                 <!-- Image Carousel (like Google Maps) -->
                 <div class="relative" x-show="relatedPhotos.length > 0">
@@ -318,6 +324,7 @@
                     selectedPoint: null,
                     hoveredPoint: null,
                     hoveredLatLng: null,
+                    isFocused: false,
                     currentPhotoIndex: 0,
                     relatedPhotos: [],
                     popupX: 0,
@@ -554,10 +561,14 @@
                             this.selectedPoint = point;
                             this.hoveredPoint = point;
                             this.hoveredLatLng = L.latLng(point.koordinat_x, point.koordinat_y);
-                            this.popupX = e.containerPoint.x + 20;
-                            this.popupY = e.containerPoint.y - 50;
+                            this.isFocused = true;
+                            // Position popup near center of map container, not following mouse
+                            const mapContainer = document.getElementById('main-map');
+                            const rect = mapContainer.getBoundingClientRect();
+                            this.popupX = Math.min(Math.max(e.containerPoint.x + 20, 20), rect.width - 320);
+                            this.popupY = Math.min(Math.max(e.containerPoint.y - 100, 20), rect.height - 350);
                             this.loadRelatedPhotos(point.idpel);
-                            this.map.panTo([point.koordinat_x, point.koordinat_y]);
+                            // Don't panTo - let user see marker without jumping
                         });
 
                         // Popup only appears on click, not hover
@@ -592,14 +603,29 @@
                     closeDetail() {
                         this.selectedPoint = null;
                         this.hoveredPoint = null;
+                        this.isFocused = false;
+                        this.hoveredLatLng = null;
                     },
 
                     searchIdpel() {
                         if (!this.searchQuery) return;
-                        const found = this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
+                        // Search for exact or partial IDPEL match
+                        const found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
+                            this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
                         if (found) {
                             this.selectedPoint = found.data;
+                            this.hoveredPoint = found.data;
+                            this.hoveredLatLng = L.latLng(found.data.koordinat_x, found.data.koordinat_y);
+                            this.isFocused = true;
+                            // Center popup on screen
+                            const mapContainer = document.getElementById('main-map');
+                            const rect = mapContainer.getBoundingClientRect();
+                            this.popupX = rect.width / 2 - 130;
+                            this.popupY = 100;
+                            this.loadRelatedPhotos(found.data.idpel);
                             this.map.setView([found.data.koordinat_x, found.data.koordinat_y], 16);
+                        } else {
+                            alert('IDPEL not found: ' + this.searchQuery);
                         }
                     },
 
