@@ -588,14 +588,31 @@
                     },
 
                     loadRelatedPhotos(idpel) {
-                        // Get all photos from markers with same IDPEL
-                        this.relatedPhotos = this.markers
-                            .filter(m => m.data.idpel === idpel && m.data.photo)
-                            .map(m => ({
-                                photo: m.data.photo,
-                                koordinat_x: m.data.koordinat_x,
-                                koordinat_y: m.data.koordinat_y
-                            }));
+                        const clickedPoint = this.hoveredPoint;
+
+                        // If clicked point is IDPEL Main, show carousel with all photos from same IDPEL
+                        if (clickedPoint && clickedPoint.is_idpel_main) {
+                            this.relatedPhotos = this.markers
+                                .filter(m => m.data.idpel === idpel && m.data.photo)
+                                .map(m => ({
+                                    photo: m.data.photo,
+                                    koordinat_x: m.data.koordinat_x,
+                                    koordinat_y: m.data.koordinat_y,
+                                    is_idpel_main: m.data.is_idpel_main
+                                }));
+                        } else {
+                            // For non-main markers, show only this point's photo
+                            if (clickedPoint && clickedPoint.photo) {
+                                this.relatedPhotos = [{
+                                    photo: clickedPoint.photo,
+                                    koordinat_x: clickedPoint.koordinat_x,
+                                    koordinat_y: clickedPoint.koordinat_y,
+                                    is_idpel_main: clickedPoint.is_idpel_main
+                                }];
+                            } else {
+                                this.relatedPhotos = [];
+                            }
+                        }
                         this.currentPhotoIndex = 0;
                     },
 

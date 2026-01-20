@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\PjuData;
+use App\Events\PjuDataUpdated;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -93,6 +94,9 @@ class PjuReportController extends Controller
 
         $pju = PjuData::create($data);
 
+        // Broadcast event for real-time updates
+        event(new PjuDataUpdated('created', $pju->idpel, auth()->user()->name, $pju->id));
+
         return response()->json(['success' => true, 'message' => 'Data successfully added', 'data' => $pju]);
     }
 
@@ -131,18 +135,25 @@ class PjuReportController extends Controller
 
         $pju->update($data);
 
+        // Broadcast event for real-time updates
+        event(new PjuDataUpdated('updated', $pju->idpel, auth()->user()->name, $pju->id));
+
         return response()->json(['success' => true, 'message' => 'Data successfully updated', 'data' => $pju]);
     }
 
     public function destroy($id)
     {
         $pju = PjuData::findOrFail($id);
+        $idpel = $pju->idpel;
 
         if ($pju->photo) {
             Storage::disk('public')->delete($pju->photo);
         }
 
         $pju->delete();
+
+        // Broadcast event for real-time updates
+        event(new PjuDataUpdated('deleted', $idpel, auth()->user()->name, $id));
 
         return response()->json(['success' => true, 'message' => 'Data successfully deleted']);
     }
@@ -167,6 +178,9 @@ class PjuReportController extends Controller
             $path = $request->file('photo')->store('pju-photos', 'public');
             $pju->photo = $path;
             $pju->save();
+
+            // Broadcast event for real-time updates
+            event(new PjuDataUpdated('photo_uploaded', $pju->idpel, auth()->user()->name, $pju->id));
         }
 
         return response()->json(['success' => true, 'message' => 'Photo uploaded successfully', 'data' => $pju]);

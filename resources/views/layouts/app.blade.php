@@ -75,6 +75,39 @@
         </div>
     </div>
 
+    <!-- Real-Time Update Toast Notification -->
+    <div x-data="realtimeUpdates()" x-init="initEcho()" x-cloak>
+        <template x-for="(toast, index) in toasts" :key="index">
+            <div x-show="toast.show" x-transition
+                class="fixed bottom-4 right-4 bg-white border-l-4 shadow-lg rounded-lg p-4 max-w-sm z-[200]"
+                :class="toast.action === 'deleted' ? 'border-red-500' : 'border-[#29AAE1]'"
+                :style="'bottom:' + (20 + index * 80) + 'px'">
+                <div class="flex items-start gap-3">
+                    <div class="flex-shrink-0">
+                        <svg class="w-5 h-5" :class="toast.action === 'deleted' ? 'text-red-500' : 'text-[#29AAE1]'"
+                            fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-sm font-medium text-gray-800" x-text="toast.message"></p>
+                        <p class="text-xs text-gray-500 mt-1">Click to refresh data</p>
+                    </div>
+                    <button @click="dismissToast(index)" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <button @click="refreshPage()" class="mt-2 text-xs text-[#29AAE1] hover:underline">
+                    Refresh Now
+                </button>
+            </div>
+        </template>
+    </div>
+
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
 
@@ -94,6 +127,47 @@
                 },
                 openLogoutModal() {
                     this.showLogoutModal = true;
+                }
+            };
+        }
+
+        // Real-time updates handler
+        function realtimeUpdates() {
+            return {
+                toasts: [],
+                initEcho() {
+                    if (typeof window.Echo !== 'undefined') {
+                        window.Echo.channel('pju-updates')
+                            .listen('.pju.updated', (e) => {
+                                // Don't show notification if current user made the change
+                                const currentUser = '{{ auth()->check() ? auth()->user()->name : "" }}';
+                                if (e.updatedBy !== currentUser) {
+                                    this.showToast(e);
+                                }
+                            });
+                    }
+                },
+                showToast(event) {
+                    this.toasts.push({
+                        show: true,
+                        message: event.message,
+                        action: event.action,
+                        idpel: event.idpel
+                    });
+                    // Auto dismiss after 8 seconds
+                    setTimeout(() => {
+                        if (this.toasts.length > 0) {
+                            this.toasts[0].show = false;
+                            setTimeout(() => this.toasts.shift(), 300);
+                        }
+                    }, 8000);
+                },
+                dismissToast(index) {
+                    this.toasts[index].show = false;
+                    setTimeout(() => this.toasts.splice(index, 1), 300);
+                },
+                refreshPage() {
+                    window.location.reload();
                 }
             };
         }
