@@ -404,13 +404,9 @@
                         this.map = L.map('main-map', { zoomControl: true }).setView([-6.7320, 108.5523], 11);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: ' OpenStreetMap' }).addTo(this.map);
 
-                        // Use MarkerClusterGroup for better performance
-                        this.markerLayer = L.markerClusterGroup({
-                            maxClusterRadius: 50,
-                            spiderfyOnMaxZoom: true,
-                            showCoverageOnHover: false,
-                            zoomToBoundsOnClick: true
-                        }).addTo(this.map);
+                        // Use regular FeatureGroup instead of MarkerCluster for accurate positioning
+                        // Markers will stay at exact coordinates without shifting
+                        this.markerLayer = L.featureGroup().addTo(this.map);
 
                         this.addRegionalOverlays();
                         this.loadMarkers();

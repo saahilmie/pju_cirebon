@@ -194,8 +194,8 @@
                 <h3 class="text-lg font-bold text-gray-800">All Report</h3>
                 <div class="flex items-center gap-3">
                     <div class="relative flex items-center gap-1">
-                        <input type="text" placeholder="Search IDPEL (min 3 chars, Enter to search)"
-                            x-model="searchTable" @keyup.enter="searchServer()"
+                        <input type="text" placeholder="Search IDPEL (min 3 chars, Enter to search)" x-model="searchTable"
+                            @keyup.enter="searchServer()"
                             class="px-4 py-2 rounded-lg text-sm w-80 focus:outline-none focus:ring-2 focus:ring-[#29AAE1]"
                             style="border: 1px solid #C8BFBF;">
                         <button @click="searchServer()"
@@ -525,9 +525,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                            form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                            hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                        ]">
+                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                            ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -698,7 +698,18 @@
             <div class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
                 @click.away="showViewModal = false">
                 <div class="flex items-center justify-between p-6" style="border-bottom: 1px solid #C8BFBF;">
-                    <h3 class="text-xl font-bold text-gray-800">View PJU Data</h3>
+                    <div class="flex items-center gap-3">
+                        <h3 class="text-xl font-bold text-gray-800">View PJU Data</h3>
+                        <span x-show="viewingItem?.is_idpel_main"
+                            class="px-3 py-1 bg-green-100 text-green-800 text-xs font-bold rounded-full flex items-center gap-1">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path fill-rule="evenodd"
+                                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                    clip-rule="evenodd" />
+                            </svg>
+                            IDPEL MAIN
+                        </span>
+                    </div>
                     <button @click="showViewModal = false"
                         class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
                 </div>
