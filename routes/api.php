@@ -28,9 +28,49 @@ Route::get('/pju-markers', function (Request $request) {
             'nama_gardu',
             'nomor_jurusan_tiang',
             'koordinat_x',
-            'koordinat_y'
+            'koordinat_y',
+            'photo'
         ])
         ->limit($limit)
+        ->get();
+
+    return response()->json($points);
+});
+
+// Server-side search for map markers by IDPEL
+Route::get('/pju-markers/search', function (Request $request) {
+    $search = $request->get('q', '');
+
+    if (empty($search)) {
+        return response()->json([]);
+    }
+
+    $points = PjuData::whereNotNull('koordinat_x')
+        ->whereNotNull('koordinat_y')
+        ->where('idpel', 'LIKE', "%{$search}%")
+        ->select([
+            'idpel',
+            'nama',
+            'namapnj',
+            'rt',
+            'rw',
+            'tarif',
+            'daya',
+            'kdam',
+            'nama_kabupaten',
+            'nama_kecamatan',
+            'nama_kelurahan',
+            'jenislayanan',
+            'nomor_meter_kwh',
+            'nomor_meter_prepaid',
+            'nomor_gardu',
+            'nama_gardu',
+            'nomor_jurusan_tiang',
+            'koordinat_x',
+            'koordinat_y',
+            'photo'
+        ])
+        ->limit(100)
         ->get();
 
     return response()->json($points);

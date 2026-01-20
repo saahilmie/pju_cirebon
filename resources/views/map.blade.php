@@ -487,7 +487,8 @@
 
                     async loadMarkers() {
                         try {
-                            const response = await fetch('/api/pju-markers?limit=50000');
+                            // Load 20k markers initially for faster page load
+                            const response = await fetch('/api/pju-markers?limit=20000');
                             const data = await response.json();
 
                             // Count IDPEL occurrences for Jumlah Lampu
@@ -607,11 +608,49 @@
                         this.hoveredLatLng = null;
                     },
 
-                    searchIdpel() {
+                    async searchIdpel() {
                         if (!this.searchQuery) return;
-                        // Search for exact or partial IDPEL match
-                        const found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
+                        
+                        // First try to find in already loaded markers
+                        let found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
                             this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
+                        
+                        // If not found locally, search from server
+                        if (!found) {
+                            try {
+                                const response = await fetch(`/api/pju-markers/search?q=${encodeURIComponent(this.searchQuery)}`);
+                                const data = await response.json();
+                                
+                                if (data.length > 0) {
+                                    // Add searched markers to map
+                                    data.forEach(p => {
+                                        const lat = parseFloat(p.koordinat_x);
+                                        const lng = parseFloat(p.koordinat_y);
+                                        if (!isNaN(lat) && !isNaN(lng)) {
+                                            p.koordinat_x = lat;
+                                            p.koordinat_y = lng;
+                                            // Check if marker already exists
+                                            const exists = this.markers.find(m => 
+                                                m.data.idpel === p.idpel && 
+                                                m.data.koordinat_x === lat && 
+                                                m.data.koordinat_y === lng
+                                            );
+                                            if (!exists) {
+                                                this.addMarker(p);
+                                                // Update IDPEL counts
+                                                this.idpelCounts[p.idpel] = (this.idpelCounts[p.idpel] || 0) + 1;
+                                            }
+                                        }
+                                    });
+                                    // Now find the marker
+                                    found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
+                                        this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
+                                }
+                            } catch (e) {
+                                console.error('Search error:', e);
+                            }
+                        }
+                        
                         if (found) {
                             this.selectedPoint = found.data;
                             this.hoveredPoint = found.data;
@@ -625,7 +664,7 @@
                             this.loadRelatedPhotos(found.data.idpel);
                             this.map.setView([found.data.koordinat_x, found.data.koordinat_y], 16);
                         } else {
-                            alert('IDPEL not found: ' + this.searchQuery);
+                            alert('IDPEL tidak ditemukan: ' + this.searchQuery);
                         }
                     },
 
