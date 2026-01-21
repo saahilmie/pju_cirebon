@@ -238,16 +238,12 @@ class PjuReportController extends Controller
 
             $data = array_combine($headers, $row);
 
-            // Get IDPEL - try common column names
+            // Get IDPEL - try common column names (can be empty for unregistered lamps)
             $idpel = $data['idpel'] ?? $data['id_pel'] ?? $data['idpelanggan'] ?? null;
+            $idpel = $idpel ?: null; // Convert empty string to null
 
-            if (!$idpel) {
-                $errors++;
-                continue;
-            }
-
-            // Check for duplicate
-            if (isset($existingIdpelsFlipped[$idpel])) {
+            // Check for duplicate only if IDPEL exists
+            if ($idpel && isset($existingIdpelsFlipped[$idpel])) {
                 $duplicates++;
                 continue;
             }
