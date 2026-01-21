@@ -9,6 +9,8 @@ Route::get('/pju-markers', function (Request $request) {
 
     $points = PjuData::whereNotNull('koordinat_x')
         ->whereNotNull('koordinat_y')
+        ->whereNotNull('photo') // Only load markers with photos for faster loading
+        ->where('photo', '!=', '')
         ->select([
             'idpel',
             'nama',
