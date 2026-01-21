@@ -507,12 +507,13 @@
                                     p.koordinat_x = lat;
                                     p.koordinat_y = lng;
                                     this.addMarker(p);
-                                    // Group by IDPEL for connecting lines (store coords and is_idpel_main)
+                                    // Group by IDPEL for connecting lines (store coords, is_idpel_main, and kdam)
                                     if (p.idpel) {
                                         if (!idpelGroups[p.idpel]) idpelGroups[p.idpel] = [];
                                         idpelGroups[p.idpel].push({
                                             coords: [lat, lng],
-                                            is_idpel_main: p.is_idpel_main
+                                            is_idpel_main: p.is_idpel_main,
+                                            kdam: p.kdam
                                         });
                                     }
                                 }
@@ -531,17 +532,18 @@
                                 // Find IDPEL Main point (center hub)
                                 const mainPoint = points.find(p => p.is_idpel_main);
                                 const branchPoints = points.filter(p => !p.is_idpel_main);
-                                
-                                const lineColor = '#29AAE1'; // Blue color for connections
-                                
+
+                                // Get line color from status (kdam) - use first point's status
+                                const kdam = points[0]?.kdam || 'M';
+                                const lineColor = kdam === 'M' ? '#17C353' : kdam === 'A' ? '#FBED21' : '#EB2027';
+
                                 if (mainPoint && branchPoints.length > 0) {
                                     // Star pattern: Connect IDPEL Main to each branch
                                     branchPoints.forEach(branch => {
                                         L.polyline([mainPoint.coords, branch.coords], {
                                             color: lineColor,
                                             weight: 2,
-                                            opacity: 0.7,
-                                            dashArray: '5, 5'
+                                            opacity: 0.8
                                         }).addTo(this.markerLayer);
                                     });
                                 } else {
@@ -550,8 +552,7 @@
                                     L.polyline(coords, {
                                         color: lineColor,
                                         weight: 2,
-                                        opacity: 0.7,
-                                        dashArray: '5, 5'
+                                        opacity: 0.8
                                     }).addTo(this.markerLayer);
                                 }
                             }
