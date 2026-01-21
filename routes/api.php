@@ -5,35 +5,48 @@ use Illuminate\Support\Facades\Route;
 use App\Models\PjuData;
 
 Route::get('/pju-markers', function (Request $request) {
-    $limit = $request->get('limit', 500);
+    $limit = $request->get('limit', 1000);
 
-    $points = PjuData::whereNotNull('koordinat_x')
+    // Viewport bounds for optimized loading
+    $minLat = $request->get('minLat');
+    $maxLat = $request->get('maxLat');
+    $minLng = $request->get('minLng');
+    $maxLng = $request->get('maxLng');
+
+    $query = PjuData::whereNotNull('koordinat_x')
         ->whereNotNull('koordinat_y')
-        ->whereNotNull('photo') // Only load markers with photos for faster loading
-        ->where('photo', '!=', '')
-        ->select([
-            'idpel',
-            'nama',
-            'namapnj',
-            'rt',
-            'rw',
-            'tarif',
-            'daya',
-            'kdam',
-            'nama_kabupaten',
-            'nama_kecamatan',
-            'nama_kelurahan',
-            'jenislayanan',
-            'nomor_meter_kwh',
-            'nomor_meter_prepaid',
-            'nomor_gardu',
-            'nama_gardu',
-            'nomor_jurusan_tiang',
-            'koordinat_x',
-            'koordinat_y',
-            'photo',
-            'is_idpel_main'
-        ])
+        ->whereNotNull('photo') // Only load markers with photos
+        ->where('photo', '!=', '');
+
+    // Filter by viewport if bounds are provided
+    if ($minLat && $maxLat && $minLng && $maxLng) {
+        $query->whereBetween('koordinat_x', [(float) $minLat, (float) $maxLat])
+            ->whereBetween('koordinat_y', [(float) $minLng, (float) $maxLng]);
+    }
+
+    $points = $query->select([
+        'idpel',
+        'nama',
+        'namapnj',
+        'rt',
+        'rw',
+        'tarif',
+        'daya',
+        'kdam',
+        'nama_kabupaten',
+        'nama_kecamatan',
+        'nama_kelurahan',
+        'jenislayanan',
+        'nomor_meter_kwh',
+        'nomor_meter_prepaid',
+        'nomor_gardu',
+        'nama_gardu',
+        'nomor_jurusan_tiang',
+        'koordinat_x',
+        'koordinat_y',
+        'photo',
+        'is_idpel_main'
+    ])
         ->limit($limit)
         ->get();
 

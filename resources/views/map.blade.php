@@ -423,9 +423,19 @@
                         // Use regular FeatureGroup instead of MarkerCluster for accurate positioning
                         // Markers will stay at exact coordinates without shifting
                         this.markerLayer = L.featureGroup().addTo(this.map);
+                        this.lineLayer = L.featureGroup().addTo(this.map);
 
                         this.addRegionalOverlays();
                         this.loadMarkers();
+                        
+                        // Debounced reload on map move/zoom for viewport-based loading
+                        let reloadTimeout;
+                        this.map.on('moveend zoomend', () => {
+                            clearTimeout(reloadTimeout);
+                            reloadTimeout = setTimeout(() => {
+                                this.reloadViewportMarkers();
+                            }, 300); // Wait 300ms after map stops moving
+                        });
 
                         // Update popup position when map moves to keep it attached to marker
                         this.map.on('move zoom', () => {
@@ -499,8 +509,17 @@
 
                     async loadMarkers() {
                         try {
-                            // Load 20k markers initially for faster page load
-                            const response = await fetch('/api/pju-markers?limit=20000');
+                            // Get current viewport bounds for optimized loading
+                            const bounds = this.map.getBounds();
+                            const params = new URLSearchParams({
+                                limit: 5000,
+                                minLat: bounds.getSouth(),
+                                maxLat: bounds.getNorth(),
+                                minLng: bounds.getWest(),
+                                maxLng: bounds.getEast()
+                            });
+                            
+                            const response = await fetch(`/api/pju-markers?${params.toString()}`);
                             const data = await response.json();
 
                             // Count IDPEL occurrences for Jumlah Lampu
@@ -540,6 +559,17 @@
                         } catch (e) {
                             console.error('Error loading markers:', e);
                         }
+                    },
+
+                    async reloadViewportMarkers() {
+                        // Clear existing markers and lines
+                        this.markerLayer.clearLayers();
+                        if (this.lineLayer) {
+                            this.lineLayer.clearLayers();
+                        }
+                        // Keep cached data for search and don't clear allMarkers
+                        // Reload markers for current viewport
+                        await this.loadMarkers();
                     },
 
                     drawConnectingLines(idpelGroups) {
