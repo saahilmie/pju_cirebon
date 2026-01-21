@@ -293,6 +293,7 @@ class PjuReportController extends Controller
                     PjuData::insert($batchData);
                     $imported += count($batchData);
                 } catch (\Exception $e) {
+                    \Log::error('Batch insert error: ' . $e->getMessage());
                     $errors += count($batchData);
                 }
                 $batchData = [];
@@ -305,6 +306,7 @@ class PjuReportController extends Controller
                 PjuData::insert($batchData);
                 $imported += count($batchData);
             } catch (\Exception $e) {
+                \Log::error('Final batch insert error: ' . $e->getMessage());
                 $errors += count($batchData);
             }
         }
