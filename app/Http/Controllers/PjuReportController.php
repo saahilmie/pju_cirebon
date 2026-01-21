@@ -231,9 +231,16 @@ class PjuReportController extends Controller
         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
             $processed++;
 
-            if (count($row) !== count($headers)) {
-                $errors++;
-                continue;
+            // Handle column count mismatch gracefully
+            $headerCount = count($headers);
+            $rowCount = count($row);
+
+            if ($rowCount < $headerCount) {
+                // Pad row with empty values if it has fewer columns
+                $row = array_pad($row, $headerCount, '');
+            } elseif ($rowCount > $headerCount) {
+                // Trim extra columns if row has more
+                $row = array_slice($row, 0, $headerCount);
             }
 
             $data = array_combine($headers, $row);
