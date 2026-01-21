@@ -121,10 +121,10 @@
                 </div>
             </div>
 
-            <!-- Focus Mode Blur Overlay - Click to close popup -->
+            <!-- Focus Mode Blur Overlay - Only covers content area, not navbar/sidebar -->
             <div x-show="isFocused" x-transition:enter="transition-opacity ease-out duration-200"
                 x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100" @click="closeDetail()"
-                class="fixed inset-0 bg-black/30 backdrop-blur-sm z-[1001] cursor-pointer" style="pointer-events: auto;">
+                class="absolute inset-0 bg-black/30 backdrop-blur-sm z-[1001] cursor-pointer" style="pointer-events: auto;">
             </div>
 
             <!-- Popup on marker click -->
@@ -219,9 +219,16 @@
                 <button @click="closeDetail()" class="text-gray-400 hover:text-red-500 text-xl font-bold">&times;</button>
             </div>
 
-            <!-- Photo Section -->
-            <div class="relative h-44 bg-gray-100 flex items-center justify-center">
-                <span class="text-gray-400 text-sm">Photo akan ditampilkan di sini</span>
+            <!-- Photo Section - Single photo per location -->
+            <div class="relative h-44 bg-gray-100 flex items-center justify-center overflow-hidden">
+                <template x-if="selectedPoint?.photo">
+                    <img :src="'/storage/' + selectedPoint.photo" 
+                        class="w-full h-full object-cover"
+                        :alt="'Photo ' + selectedPoint.idpel">
+                </template>
+                <template x-if="!selectedPoint?.photo">
+                    <span class="text-gray-400 text-sm">No photo available</span>
+                </template>
             </div>
 
             <!-- Info Content -->
