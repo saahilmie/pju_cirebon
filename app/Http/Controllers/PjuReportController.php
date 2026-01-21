@@ -303,8 +303,17 @@ class PjuReportController extends Controller
                     PjuData::insert($batchData);
                     $imported += count($batchData);
                 } catch (\Exception $e) {
-                    \Log::error('Batch insert error: ' . $e->getMessage());
-                    $errors += count($batchData);
+                    // Fallback: insert one by one when batch fails
+                    \Log::warning('Batch insert failed, falling back to single inserts');
+                    foreach ($batchData as $row) {
+                        try {
+                            PjuData::insert([$row]);
+                            $imported++;
+                        } catch (\Exception $e2) {
+                            \Log::error('Single insert error: ' . $e2->getMessage());
+                            $errors++;
+                        }
+                    }
                 }
                 $batchData = [];
             }
@@ -316,8 +325,17 @@ class PjuReportController extends Controller
                 PjuData::insert($batchData);
                 $imported += count($batchData);
             } catch (\Exception $e) {
-                \Log::error('Final batch insert error: ' . $e->getMessage());
-                $errors += count($batchData);
+                // Fallback: insert one by one when batch fails
+                \Log::warning('Final batch insert failed, falling back to single inserts');
+                foreach ($batchData as $row) {
+                    try {
+                        PjuData::insert([$row]);
+                        $imported++;
+                    } catch (\Exception $e2) {
+                        \Log::error('Single insert error: ' . $e2->getMessage());
+                        $errors++;
+                    }
+                }
             }
         }
 
