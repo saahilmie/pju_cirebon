@@ -215,7 +215,16 @@
 
             <!-- Header: View IDPEL -->
             <div class="flex items-center justify-between px-4 py-3 border-b">
-                <span class="font-semibold text-gray-800">View <span x-text="selectedPoint?.idpel"></span></span>
+                <div class="flex items-center gap-2">
+                    <span class="font-semibold text-gray-800">View <span x-text="selectedPoint?.idpel"></span></span>
+                    <span x-show="selectedPoint?.is_idpel_main" 
+                        class="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-bold rounded-full flex items-center gap-1">
+                        <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                        </svg>
+                        MAIN
+                    </span>
+                </div>
                 <button @click="closeDetail()" class="text-gray-400 hover:text-red-500 text-xl font-bold">&times;</button>
             </div>
 
