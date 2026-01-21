@@ -259,6 +259,16 @@ class PjuReportController extends Controller
             $koordinatX = $this->parseCoordinate($data['koordinat_x'] ?? $data['x'] ?? $data['longitude'] ?? $data['lon'] ?? null);
             $koordinatY = $this->parseCoordinate($data['koordinat_y'] ?? $data['y'] ?? $data['latitude'] ?? $data['lat'] ?? null);
 
+            // Parse daya safely - handle overflow
+            $daya = $data['daya'] ?? $data['power'] ?? null;
+            if ($daya !== null && $daya !== '') {
+                $daya = (int) preg_replace('/[^\d]/', '', $daya);
+                if ($daya > 2147483647)
+                    $daya = null; // Max integer
+            } else {
+                $daya = null;
+            }
+
             // Prepare data for insert
             $batchData[] = [
                 'idpel' => $idpel,
@@ -267,7 +277,7 @@ class PjuReportController extends Controller
                 'rt' => $data['rt'] ?? null,
                 'rw' => $data['rw'] ?? null,
                 'tarif' => $data['tarif'] ?? null,
-                'daya' => $data['daya'] ?? $data['power'] ?? null,
+                'daya' => $daya,
                 'jenislayanan' => $data['jenislayanan'] ?? $data['jenis_layanan'] ?? null,
                 'nomor_meter_kwh' => $data['nomor_meter_kwh'] ?? $data['no_meter_kwh'] ?? null,
                 'nomor_gardu' => $data['nomor_gardu'] ?? $data['no_gardu'] ?? null,
