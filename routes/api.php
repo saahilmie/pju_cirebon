@@ -106,3 +106,29 @@ Route::get('/pju-data', function (Request $request) {
 
     return response()->json(['data' => $data]);
 });
+
+// Get region boundaries based on marker coordinates for dynamic polygons
+Route::get('/region-bounds', function () {
+    $regions = PjuData::whereNotNull('nama_kabupaten')
+        ->whereNotNull('koordinat_x')
+        ->whereNotNull('koordinat_y')
+        ->where('koordinat_x', '!=', 0)
+        ->where('koordinat_y', '!=', 0)
+        ->select('nama_kabupaten', 'koordinat_x', 'koordinat_y')
+        ->get()
+        ->groupBy('nama_kabupaten')
+        ->map(function ($points, $region) {
+            $coords = $points->map(function ($p) {
+                return [(float) $p->koordinat_x, (float) $p->koordinat_y];
+            })->values()->toArray();
+
+            return [
+                'name' => $region,
+                'points' => $coords,
+                'count' => count($coords)
+            ];
+        })
+        ->values();
+
+    return response()->json($regions);
+});

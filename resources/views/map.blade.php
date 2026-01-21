@@ -217,10 +217,12 @@
             <div class="flex items-center justify-between px-4 py-3 border-b">
                 <div class="flex items-center gap-2">
                     <span class="font-semibold text-gray-800">View <span x-text="selectedPoint?.idpel"></span></span>
-                    <span x-show="selectedPoint?.is_idpel_main" 
+                    <span x-show="selectedPoint?.is_idpel_main"
                         class="px-2 py-0.5 bg-green-100 text-green-800 text-xs font-bold rounded-full flex items-center gap-1">
                         <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                            <path fill-rule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                                clip-rule="evenodd" />
                         </svg>
                         MAIN
                     </span>
@@ -231,8 +233,7 @@
             <!-- Photo Section - Single photo per location -->
             <div class="relative h-44 bg-gray-100 flex items-center justify-center overflow-hidden">
                 <template x-if="selectedPoint?.photo">
-                    <img :src="'/storage/' + selectedPoint.photo" 
-                        class="w-full h-full object-cover"
+                    <img :src="'/storage/' + selectedPoint.photo" class="w-full h-full object-cover"
                         :alt="'Photo ' + selectedPoint.idpel">
                 </template>
                 <template x-if="!selectedPoint?.photo">
@@ -427,7 +428,7 @@
 
                         this.addRegionalOverlays();
                         this.loadMarkers();
-                        
+
                         // Debounced reload on map move/zoom for viewport-based loading
                         let reloadTimeout;
                         this.map.on('moveend zoomend', () => {
@@ -451,60 +452,83 @@
                         }
                     },
 
-                    addRegionalOverlays() {
-                        const regionData = [
-                            // Kota Cirebon - proper polygon boundary
-                            {
-                                name: 'KOTA CIREBON', color: '#29AAE1', coords: [
-                                    [-6.6850, 108.5150], [-6.6750, 108.5400], [-6.6800, 108.5650],
-                                    [-6.7050, 108.5800], [-6.7250, 108.5750], [-6.7400, 108.5550],
-                                    [-6.7350, 108.5300], [-6.7150, 108.5100], [-6.6850, 108.5150]
-                                ]
-                            },
-                            // Kab. Cirebon - proper polygon boundary (surrounding Kota Cirebon)
-                            {
-                                name: 'KAB. CIREBON', color: '#B51CEC', coords: [
-                                    [-6.5800, 108.3500], [-6.5600, 108.4500], [-6.5800, 108.5500],
-                                    [-6.6200, 108.6200], [-6.6500, 108.6500], [-6.7200, 108.6800],
-                                    [-6.8000, 108.6800], [-6.8500, 108.6500], [-6.8800, 108.5800],
-                                    [-6.8800, 108.5000], [-6.8500, 108.4200], [-6.8000, 108.3500],
-                                    [-6.7200, 108.3200], [-6.6500, 108.3200], [-6.5800, 108.3500]
-                                ]
-                            },
-                            // Kab. Indramayu - proper polygon boundary
-                            {
-                                name: 'KAB. INDRAMAYU', color: '#EB2027', coords: [
-                                    [-6.2000, 107.8500], [-6.1800, 108.0000], [-6.2000, 108.1500],
-                                    [-6.2500, 108.2800], [-6.3200, 108.3800], [-6.4000, 108.4200],
-                                    [-6.4800, 108.4000], [-6.5500, 108.3500], [-6.5800, 108.2500],
-                                    [-6.5500, 108.1000], [-6.5000, 107.9500], [-6.4200, 107.8500],
-                                    [-6.3200, 107.8000], [-6.2000, 107.8500]
-                                ]
-                            },
-                            // Majalengka - proper polygon boundary
-                            {
-                                name: 'MAJALENGKA', color: '#FBED21', coords: [
-                                    [-6.6500, 108.0500], [-6.6200, 108.1500], [-6.6500, 108.2500],
-                                    [-6.7000, 108.3200], [-6.7800, 108.3500], [-6.8500, 108.3500],
-                                    [-6.9200, 108.3000], [-6.9500, 108.2200], [-6.9500, 108.1200],
-                                    [-6.9000, 108.0500], [-6.8200, 108.0000], [-6.7200, 108.0000],
-                                    [-6.6500, 108.0500]
-                                ]
-                            },
-                            // Kab. Kuningan - proper polygon boundary
-                            {
-                                name: 'KAB. KUNINGAN', color: '#17C353', coords: [
-                                    [-6.8500, 108.4000], [-6.8200, 108.4800], [-6.8500, 108.5500],
-                                    [-6.9000, 108.6200], [-6.9800, 108.6500], [-7.0500, 108.6200],
-                                    [-7.1000, 108.5500], [-7.1000, 108.4500], [-7.0500, 108.3800],
-                                    [-6.9800, 108.3500], [-6.9000, 108.3800], [-6.8500, 108.4000]
-                                ]
+                    async addRegionalOverlays() {
+                        // Define colors for each region
+                        const regionColors = {
+                            'KOTA CIREBON': '#29AAE1',
+                            'KAB. CIREBON': '#B51CEC',
+                            'KAB. INDRAMAYU': '#EB2027',
+                            'MAJALENGKA': '#FBED21',
+                            'KAB. KUNINGAN': '#17C353',
+                            'KAB. MAJALENGKA': '#FBED21'
+                        };
+
+                        try {
+                            // Fetch region bounds from API
+                            const response = await fetch('/api/region-bounds');
+                            const regions = await response.json();
+
+                            regions.forEach(region => {
+                                if (region.points.length < 3) return; // Need at least 3 points for polygon
+
+                                // Calculate convex hull for polygon
+                                const hull = this.convexHull(region.points);
+                                if (hull.length < 3) return;
+
+                                const color = regionColors[region.name] || '#888888';
+
+                                L.polygon(hull, {
+                                    color: color,
+                                    weight: 2,
+                                    fillColor: color,
+                                    fillOpacity: 0.15
+                                }).bindTooltip(region.name + ' (' + region.count + ' titik)', {
+                                    permanent: false
+                                }).addTo(this.map);
+                            });
+                        } catch (e) {
+                            console.error('Error loading region overlays:', e);
+                        }
+                    },
+
+                    // Convex Hull algorithm (Graham Scan) for dynamic polygon generation
+                    convexHull(points) {
+                        if (points.length < 3) return points;
+
+                        // Find the bottom-most point (or left most point in case of tie)
+                        let start = 0;
+                        for (let i = 1; i < points.length; i++) {
+                            if (points[i][0] < points[start][0] ||
+                                (points[i][0] === points[start][0] && points[i][1] < points[start][1])) {
+                                start = i;
                             }
-                        ];
-                        regionData.forEach(r => {
-                            L.polygon(r.coords, { color: r.color, weight: 2, fillColor: r.color, fillOpacity: 0.15 })
-                                .bindTooltip(r.name, { permanent: false }).addTo(this.map);
+                        }
+                        [points[0], points[start]] = [points[start], points[0]];
+                        const pivot = points[0];
+
+                        // Sort points by polar angle with respect to pivot
+                        points.sort((a, b) => {
+                            if (a === pivot) return -1;
+                            if (b === pivot) return 1;
+                            const angle1 = Math.atan2(a[0] - pivot[0], a[1] - pivot[1]);
+                            const angle2 = Math.atan2(b[0] - pivot[0], b[1] - pivot[1]);
+                            return angle1 - angle2;
                         });
+
+                        // Build hull
+                        const hull = [points[0], points[1]];
+                        for (let i = 2; i < points.length; i++) {
+                            while (hull.length > 1 && this.cross(hull[hull.length - 2], hull[hull.length - 1], points[i]) <= 0) {
+                                hull.pop();
+                            }
+                            hull.push(points[i]);
+                        }
+                        return hull;
+                    },
+
+                    // Cross product for convex hull calculation
+                    cross(o, a, b) {
+                        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
                     },
 
                     async loadMarkers() {
@@ -518,7 +542,7 @@
                                 minLng: bounds.getWest(),
                                 maxLng: bounds.getEast()
                             });
-                            
+
                             const response = await fetch(`/api/pju-markers?${params.toString()}`);
                             const data = await response.json();
 
