@@ -525,9 +525,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                            ]">
+                                                        form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                        hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                    ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -888,6 +888,7 @@
     </div>
 
     @push('scripts')
+        <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
         <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
         <script>
             function pjuReport() {
@@ -993,6 +994,38 @@
                         if (file.size > 20 * 1024 * 1024) { this.showToast('File size must be less than 20MB', 'error'); return; }
                         this.photoFile = file; this.photoName = file.name;
                         const reader = new FileReader(); reader.onload = e => this.photoPreview = e.target.result; reader.readAsDataURL(file);
+
+                        // Extract GPS coordinates from EXIF data
+                        this.extractGPSFromPhoto(file);
+                    },
+
+                    // Extract GPS coordinates from photo EXIF data
+                    extractGPSFromPhoto(file) {
+                        const self = this;
+                        EXIF.getData(file, function () {
+                            const lat = EXIF.getTag(this, 'GPSLatitude');
+                            const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+                            const lng = EXIF.getTag(this, 'GPSLongitude');
+                            const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+
+                            if (lat && lng) {
+                                // Convert DMS (degrees, minutes, seconds) to decimal
+                                let latitude = lat[0] + lat[1] / 60 + lat[2] / 3600;
+                                let longitude = lng[0] + lng[1] / 60 + lng[2] / 3600;
+
+                                // Apply reference (N/S for lat, E/W for lng)
+                                if (latRef === 'S') latitude = -latitude;
+                                if (lngRef === 'W') longitude = -longitude;
+
+                                // Auto-fill coordinates (koordinat_x = latitude, koordinat_y = longitude)
+                                self.form.koordinat_x = latitude.toFixed(8);
+                                self.form.koordinat_y = longitude.toFixed(8);
+
+                                self.showToast('📍 GPS coordinates extracted from photo!', 'success');
+                            } else {
+                                console.log('No GPS data found in photo');
+                            }
+                        });
                     },
                     removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
                     async saveData() {
