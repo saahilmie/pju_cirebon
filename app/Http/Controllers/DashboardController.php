@@ -14,7 +14,7 @@ class DashboardController extends Controller
         $totalPoints = PjuData::count();
         $totalMeterisasi = PjuData::where('kdam', 'M')->count();
         $totalAbonemen = PjuData::where('kdam', 'A')->count();
-        $totalUnclear = PjuData::where(function($q) {
+        $totalUnclear = PjuData::where(function ($q) {
             $q->whereNull('kdam')->orWhereNotIn('kdam', ['M', 'A']);
         })->count();
         $totalUsers = User::count();
@@ -27,25 +27,39 @@ class DashboardController extends Controller
             'total_users' => $totalUsers,
         ];
 
+        // Data completion stats for progress tracker
+        $withPhoto = PjuData::whereNotNull('photo')->where('photo', '!=', '')->count();
+        $withCoordinates = PjuData::whereNotNull('koordinat_x')->whereNotNull('koordinat_y')
+            ->where('koordinat_x', '!=', 0)->where('koordinat_y', '!=', 0)->count();
+        $withIdpel = PjuData::whereNotNull('idpel')->where('idpel', '!=', '')->count();
+        $withKabupaten = PjuData::whereNotNull('nama_kabupaten')->where('nama_kabupaten', '!=', '')->count();
+
+        $dataCompletion = [
+            'photo' => ['count' => $withPhoto, 'percent' => $totalPoints > 0 ? round(($withPhoto / $totalPoints) * 100, 1) : 0],
+            'coordinates' => ['count' => $withCoordinates, 'percent' => $totalPoints > 0 ? round(($withCoordinates / $totalPoints) * 100, 1) : 0],
+            'idpel' => ['count' => $withIdpel, 'percent' => $totalPoints > 0 ? round(($withIdpel / $totalPoints) * 100, 1) : 0],
+            'kabupaten' => ['count' => $withKabupaten, 'percent' => $totalPoints > 0 ? round(($withKabupaten / $totalPoints) * 100, 1) : 0],
+        ];
+
         // Get regional statistics - using exact database values (uppercase)
         $regions = [
             'KAB. CIREBON' => ['name' => 'Kab. Cirebon', 'color' => '#B51CEC'],
-            'KOTA CIREBON' => ['name' => 'Kota Cirebon', 'color' => '#29AAE1'], 
+            'KOTA CIREBON' => ['name' => 'Kota Cirebon', 'color' => '#29AAE1'],
             'KAB. KUNINGAN' => ['name' => 'Kab. Kuningan', 'color' => '#17C353'],
             'MAJALENGKA' => ['name' => 'Majalengka', 'color' => '#FBED21'],
             'KAB. INDRAMAYU' => ['name' => 'Indramayu', 'color' => '#EB2027']
         ];
-        
+
         $regionalStats = [];
         foreach ($regions as $dbName => $info) {
             $total = PjuData::where('nama_kabupaten', $dbName)->count();
             $mCount = PjuData::where('nama_kabupaten', $dbName)->where('kdam', 'M')->count();
             $aCount = PjuData::where('nama_kabupaten', $dbName)->where('kdam', 'A')->count();
             $unclearCount = PjuData::where('nama_kabupaten', $dbName)
-                ->where(function($q) {
+                ->where(function ($q) {
                     $q->whereNull('kdam')->orWhereNotIn('kdam', ['M', 'A']);
                 })->count();
-            
+
             $regionalStats[$info['name']] = [
                 'total' => $total,
                 'M' => $mCount,
@@ -73,6 +87,6 @@ class DashboardController extends Controller
                 return $user;
             });
 
-        return view('dashboard', compact('stats', 'regionalStats', 'userRoles', 'adminTeam'));
+        return view('dashboard', compact('stats', 'regionalStats', 'userRoles', 'adminTeam', 'dataCompletion'));
     }
 }

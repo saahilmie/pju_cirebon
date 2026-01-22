@@ -83,6 +83,75 @@
             @endif
         </section>
 
+        <!-- Data Completion Progress Tracker -->
+        <section class="bg-white rounded-lg shadow p-4">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-700">Data Completion Progress</h3>
+                    <p class="text-xs text-gray-500">Track how complete your PJU data is</p>
+                </div>
+                <div class="text-right">
+                    <span class="text-2xl font-bold text-[#29AAE1]">{{ number_format($stats['total_points']) }}</span>
+                    <span class="text-xs text-gray-500 block">Total Records</span>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- Photo Progress -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-gray-600">📸 Photo</span>
+                        <span class="text-xs font-bold text-[#17C353]">{{ $dataCompletion['photo']['percent'] }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#17C353] h-2 rounded-full transition-all"
+                            style="width: {{ $dataCompletion['photo']['percent'] }}%"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1">{{ number_format($dataCompletion['photo']['count']) }} records
+                    </p>
+                </div>
+                <!-- Coordinates Progress -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-gray-600">📍 Coordinates</span>
+                        <span
+                            class="text-xs font-bold text-[#29AAE1]">{{ $dataCompletion['coordinates']['percent'] }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#29AAE1] h-2 rounded-full transition-all"
+                            style="width: {{ $dataCompletion['coordinates']['percent'] }}%"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1">{{ number_format($dataCompletion['coordinates']['count']) }}
+                        records</p>
+                </div>
+                <!-- IDPEL Progress -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-gray-600">🔢 IDPEL</span>
+                        <span class="text-xs font-bold text-[#B51CEC]">{{ $dataCompletion['idpel']['percent'] }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#B51CEC] h-2 rounded-full transition-all"
+                            style="width: {{ $dataCompletion['idpel']['percent'] }}%"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1">{{ number_format($dataCompletion['idpel']['count']) }} records
+                    </p>
+                </div>
+                <!-- Kabupaten Progress -->
+                <div class="bg-gray-50 rounded-lg p-3">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-gray-600">🏛️ Kabupaten</span>
+                        <span class="text-xs font-bold text-[#FBED21]">{{ $dataCompletion['kabupaten']['percent'] }}%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-[#FBED21] h-2 rounded-full transition-all"
+                            style="width: {{ $dataCompletion['kabupaten']['percent'] }}%"></div>
+                    </div>
+                    <p class="text-[10px] text-gray-500 mt-1">{{ number_format($dataCompletion['kabupaten']['count']) }}
+                        records</p>
+                </div>
+            </div>
+        </section>
+
         <!-- Charts Row -->
         <section class="grid grid-cols-1 lg:grid-cols-2 gap-4">
             <!-- Stats Progress -->
@@ -300,7 +369,7 @@
                             }, 100);
                         @endif
 
-                            if (document.getElementById('mini-map')) {
+                                    if (document.getElementById('mini-map')) {
                             const miniMap = L.map('mini-map', {
                                 zoomControl: true, dragging: true, scrollWheelZoom: true
                             }).setView([-6.7066, 108.5570], 9);
