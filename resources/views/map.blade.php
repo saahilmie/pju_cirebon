@@ -472,8 +472,8 @@
                             regions.forEach(region => {
                                 if (region.points.length < 1) return; // Need at least 1 point
 
-                                // Create bounding box polygon from all points
-                                const polygon = this.getBoundingPolygon(region.points);
+                                // Create convex hull polygon from all points
+                                const polygon = this.getConvexHull(region.points);
                                 console.log('Region:', region.name, '- Points:', region.points.length, '- Polygon:', polygon.length);
                                 if (polygon.length < 4) return;
 
@@ -492,37 +492,44 @@
                             console.error('Error loading region overlays:', e);
                         }
                     },
+                    // Monotone Chain Convex Hull Algorithm - follows outer boundary of points
+                    getConvexHull(points) {
+                        if (points.length < 3) return points;
 
-                    // Create polygon from bounding box of all points
-                    getBoundingPolygon(points) {
-                        if (points.length < 1) return [];
+                        // Clone and sort points by x, then y
+                        const sorted = points.map(p => [...p]).sort((a, b) =>
+                            a[1] === b[1] ? a[0] - b[0] : a[1] - b[1]
+                        );
 
-                        // Find min/max coordinates
-                        let minLat = points[0][0], maxLat = points[0][0];
-                        let minLng = points[0][1], maxLng = points[0][1];
+                        // Cross product helper
+                        const cross = (o, a, b) =>
+                            (a[1] - o[1]) * (b[0] - o[0]) - (a[0] - o[0]) * (b[1] - o[1]);
 
-                        points.forEach(p => {
-                            minLat = Math.min(minLat, p[0]);
-                            maxLat = Math.max(maxLat, p[0]);
-                            minLng = Math.min(minLng, p[1]);
-                            maxLng = Math.max(maxLng, p[1]);
-                        });
+                        // Build lower hull
+                        const lower = [];
+                        for (const p of sorted) {
+                            while (lower.length >= 2 && cross(lower[lower.length - 2], lower[lower.length - 1], p) <= 0) {
+                                lower.pop();
+                            }
+                            lower.push(p);
+                        }
 
-                        // Add small padding (about 500m) for better visualization
-                        const padding = 0.005;
-                        minLat -= padding;
-                        maxLat += padding;
-                        minLng -= padding;
-                        maxLng += padding;
+                        // Build upper hull
+                        const upper = [];
+                        for (let i = sorted.length - 1; i >= 0; i--) {
+                            const p = sorted[i];
+                            while (upper.length >= 2 && cross(upper[upper.length - 2], upper[upper.length - 1], p) <= 0) {
+                                upper.pop();
+                            }
+                            upper.push(p);
+                        }
 
-                        // Return rectangle polygon
-                        return [
-                            [minLat, minLng],
-                            [minLat, maxLng],
-                            [maxLat, maxLng],
-                            [maxLat, minLng],
-                            [minLat, minLng] // Close the polygon
-                        ];
+                        // Remove last point of each half (it's the starting point of the other)
+                        lower.pop();
+                        upper.pop();
+
+                        // Concatenate to form full hull
+                        return lower.concat(upper);
                     },
 
                     async loadMarkers() {
