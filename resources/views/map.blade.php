@@ -119,6 +119,29 @@
                         <span class="text-gray-600">Unclear</span>
                     </div>
                 </div>
+                <div class="border-t mt-4 pt-3 space-y-2.5 text-sm">
+                    <p class="text-gray-500 font-semibold">Wilayah</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-sm bg-[#B51CEC] opacity-60"></div>
+                        <span class="text-gray-600">KAB. CIREBON</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-sm bg-[#29AAE1] opacity-60"></div>
+                        <span class="text-gray-600">KOTA CIREBON</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-sm bg-[#17C353] opacity-60"></div>
+                        <span class="text-gray-600">KAB. KUNINGAN</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-sm bg-[#FBED21] opacity-60"></div>
+                        <span class="text-gray-600">KAB. MAJALENGKA</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-sm bg-[#EB2027] opacity-60"></div>
+                        <span class="text-gray-600">KAB. INDRAMAYU</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Focus Mode Blur Overlay - Only covers content area, not navbar/sidebar -->
