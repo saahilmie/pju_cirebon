@@ -404,7 +404,7 @@
                         return this.idpelCounts[idpel] || 1;
                     },
 
-                    init() {
+                    async init() {
                         // Prevent double initialization - check if map already exists
                         if (this.map) {
                             console.log('Map already initialized, skipping');
