@@ -495,7 +495,8 @@
                             console.log('Regions loaded:', regions.length, 'regions');
 
                             regions.forEach(region => {
-                                if (region.points.length < 1) return; // Need at least 1 point
+                                // Skip regions with empty name or too few points
+                                if (!region.name || region.name.trim() === '' || region.points.length < 1) return;
 
                                 // Create convex hull polygon from all points
                                 const polygon = this.getConvexHull(region.points);
