@@ -426,448 +426,451 @@
                         this.markerLayer = L.featureGroup().addTo(this.map);
                         this.lineLayer = L.featureGroup().addTo(this.map);
 
-                        this.addRegionalOverlays();
-                        this.loadMarkers();
-                         // Debounced reload on map move/zoom for viewport-based loading
-                                let reloadTimeout;
-                                this.map.on('moveend zoomend', () => {
-                                    clearTimeout(reloadTimeout);
-                                    reloadTimeout = setTimeout(() => {
-                                        this.reloadViewportMarkers();
-                                    }, 300); // Wait 300ms after map stops moving
-                                });
+                        this.addRegionalOverlays(); // Load polygons (async, runs in background)
+                        await this.loadMarkers();
+                        // Debounced reload on map move/zoom for viewport-based loading
+                        let reloadTimeout;
+                        this.map.on('moveend zoomend', () => {
+                            clearTimeout(reloadTimeout);
+                            reloadTimeout = setTimeout(() => {
+                                this.reloadViewportMarkers();
+                            }, 300); // Wait 300ms after map stops moving
+                        });
 
-                                // Update popup position when map moves to keep it attached to marker
-                                this.map.on('move zoom', () => {
-                                    this.updatePopupPosition();
-                                });
-                            },
+                        // Update popup position when map moves to keep it attached to marker
+                        this.map.on('move zoom', () => {
+                            this.updatePopupPosition();
+                        });
+                    },
 
-                            updatePopupPosition() {
-                                if (this.hoveredLatLng && this.map) {
-                                    const point = this.map.latLngToContainerPoint(this.hoveredLatLng);
-                                    this.popupX = point.x + 20;
-                                    this.popupY = point.y - 50;
+                    updatePopupPosition() {
+                        if (this.hoveredLatLng && this.map) {
+                            const point = this.map.latLngToContainerPoint(this.hoveredLatLng);
+                            this.popupX = point.x + 20;
+                            this.popupY = point.y - 50;
+                        }
+                    },
+
+                    async addRegionalOverlays() {
+                        // Define colors for each region
+                        const regionColors = {
+                            'KOTA CIREBON': '#29AAE1',
+                            'KAB. CIREBON': '#B51CEC',
+                            'KAB. INDRAMAYU': '#EB2027',
+                            'MAJALENGKA': '#FBED21',
+                            'KAB. KUNINGAN': '#17C353',
+                            'KAB. MAJALENGKA': '#FBED21'
+                        };
+
+                        try {
+                            // Fetch region bounds from API
+                            console.log('Fetching region bounds...');
+                            const response = await fetch('/api/region-bounds');
+                            const regions = await response.json();
+                            console.log('Regions loaded:', regions.length, 'regions');
+
+                            regions.forEach(region => {
+                                if (region.points.length < 3) return; // Need at least 3 points for polygon
+
+                                // Calculate convex hull for polygon
+                                const hull = this.convexHull(region.points);
+                                console.log('Region:', region.name, '- Points:', region.points.length, '- Hull:', hull.length);
+                                if (hull.length < 3) return;
+
+                                const color = regionColors[region.name] || '#888888';
+
+                                L.polygon(hull, {
+                                    color: color,
+                                    weight: 2,
+                                    fillColor: color,
+                                    fillOpacity: 0.15
+                                }).bindTooltip(region.name + ' (' + region.count + ' titik)', {
+                                    permanent: false
+                                }).addTo(this.map);
+                            });
+                        } catch (e) {
+                            console.error('Error loading region overlays:', e);
+                        }
+                    },
+
+                    // Convex Hull algorithm (Graham Scan) for dynamic polygon generation
+                    convexHull(inputPoints) {
+                        try {
+                            if (inputPoints.length < 3) return inputPoints;
+
+                            // Clone array to avoid mutating original
+                            const points = inputPoints.map(p => [...p]);
+
+                            // Find the bottom-most point (or left most point in case of tie)
+                            let start = 0;
+                            for (let i = 1; i < points.length; i++) {
+                                if (points[i][0] < points[start][0] ||
+                                    (points[i][0] === points[start][0] && points[i][1] < points[start][1])) {
+                                    start = i;
                                 }
-                            },
+                            }
+                            [points[0], points[start]] = [points[start], points[0]];
+                            const pivot = points[0];
 
-                            async addRegionalOverlays() {
-                                // Define colors for each region
-                                const regionColors = {
-                                    'KOTA CIREBON': '#29AAE1',
-                                    'KAB. CIREBON': '#B51CEC',
-                                    'KAB. INDRAMAYU': '#EB2027',
-                                    'MAJALENGKA': '#FBED21',
-                                    'KAB. KUNINGAN': '#17C353',
-                                    'KAB. MAJALENGKA': '#FBED21'
-                                };
+                            // Sort points by polar angle with respect to pivot
+                            points.sort((a, b) => {
+                                if (a === pivot) return -1;
+                                if (b === pivot) return 1;
+                                const angle1 = Math.atan2(a[0] - pivot[0], a[1] - pivot[1]);
+                                const angle2 = Math.atan2(b[0] - pivot[0], b[1] - pivot[1]);
+                                return angle1 - angle2;
+                            });
 
-                                try {
-                                    // Fetch region bounds from API
-                                    const response = await fetch('/api/region-bounds');
-                                    const regions = await response.json();
+                            // Build hull
+                            const hull = [points[0], points[1]];
+                            for (let i = 2; i < points.length; i++) {
+                                while (hull.length > 1 && this.cross(hull[hull.length - 2], hull[hull.length - 1], points[i]) <= 0) {
+                                    hull.pop();
+                                }
+                                hull.push(points[i]);
+                            }
+                            return hull;
+                        } catch (e) {
+                            console.error('Convex hull error:', e);
+                            return [];
+                        }
+                    },
 
-                                    regions.forEach(region => {
-                                        if (region.points.length < 3) return; // Need at least 3 points for polygon
+                    // Cross product for convex hull calculation
+                    cross(o, a, b) {
+                        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+                    },
 
-                                        // Calculate convex hull for polygon
-                                        const hull = this.convexHull(region.points);
-                                        if (hull.length < 3) return;
+                    async loadMarkers() {
+                        try {
+                            // Get current viewport bounds for optimized loading
+                            const bounds = this.map.getBounds();
+                            const params = new URLSearchParams({
+                                limit: 5000,
+                                minLat: bounds.getSouth(),
+                                maxLat: bounds.getNorth(),
+                                minLng: bounds.getWest(),
+                                maxLng: bounds.getEast()
+                            });
 
-                                        const color = regionColors[region.name] || '#888888';
+                            const response = await fetch(`/api/pju-markers?${params.toString()}`);
+                            const data = await response.json();
 
-                                        L.polygon(hull, {
-                                            color: color,
+                            // Count IDPEL occurrences for Jumlah Lampu
+                            this.idpelCounts = {};
+                            data.forEach(p => {
+                                if (p.idpel) {
+                                    this.idpelCounts[p.idpel] = (this.idpelCounts[p.idpel] || 0) + 1;
+                                }
+                            });
+
+                            // Group markers by IDPEL for connecting lines
+                            const idpelGroups = {};
+                            console.log('Loaded markers:', data.length);
+                            data.forEach(p => {
+                                // Parse coordinates as floats (they come as strings from DB)
+                                const lat = parseFloat(p.koordinat_x);
+                                const lng = parseFloat(p.koordinat_y);
+
+                                if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                                    p.koordinat_x = lat;
+                                    p.koordinat_y = lng;
+                                    this.addMarker(p);
+                                    // Group by IDPEL for connecting lines (store coords, is_idpel_main, and kdam)
+                                    if (p.idpel) {
+                                        if (!idpelGroups[p.idpel]) idpelGroups[p.idpel] = [];
+                                        idpelGroups[p.idpel].push({
+                                            coords: [lat, lng],
+                                            is_idpel_main: p.is_idpel_main,
+                                            kdam: p.kdam
+                                        });
+                                    }
+                                }
+                            });
+
+                            // Draw connecting lines for same IDPEL (multiple lamps)
+                            this.drawConnectingLines(idpelGroups);
+                        } catch (e) {
+                            console.error('Error loading markers:', e);
+                        }
+                    },
+
+                    async reloadViewportMarkers() {
+                        // Clear existing markers and lines
+                        this.markerLayer.clearLayers();
+                        if (this.lineLayer) {
+                            this.lineLayer.clearLayers();
+                        }
+                        // Keep cached data for search and don't clear allMarkers
+                        // Reload markers for current viewport
+                        await this.loadMarkers();
+                    },
+
+                    drawConnectingLines(idpelGroups) {
+                        Object.entries(idpelGroups).forEach(([idpel, points]) => {
+                            if (points.length > 1) {
+                                // Find IDPEL Main point (center hub)
+                                const mainPoint = points.find(p => p.is_idpel_main);
+                                const branchPoints = points.filter(p => !p.is_idpel_main);
+
+                                // Get line color from status (kdam) - use first point's status
+                                const kdam = points[0]?.kdam || 'M';
+                                const lineColor = kdam === 'M' ? '#17C353' : kdam === 'A' ? '#FBED21' : '#EB2027';
+
+                                if (mainPoint && branchPoints.length > 0) {
+                                    // Star pattern: Connect IDPEL Main to each branch
+                                    branchPoints.forEach(branch => {
+                                        L.polyline([mainPoint.coords, branch.coords], {
+                                            color: lineColor,
                                             weight: 2,
-                                            fillColor: color,
-                                            fillOpacity: 0.15
-                                        }).bindTooltip(region.name + ' (' + region.count + ' titik)', {
-                                            permanent: false
-                                        }).addTo(this.map);
+                                            opacity: 0.8
+                                        }).addTo(this.markerLayer);
                                     });
-                                } catch (e) {
-                                    console.error('Error loading region overlays:', e);
+                                } else {
+                                    // Fallback: Connect all points in chain
+                                    const coords = points.map(p => p.coords);
+                                    L.polyline(coords, {
+                                        color: lineColor,
+                                        weight: 2,
+                                        opacity: 0.8
+                                    }).addTo(this.markerLayer);
                                 }
-                            },
+                            }
+                        });
+                    },
 
-                            // Convex Hull algorithm (Graham Scan) for dynamic polygon generation
-                            convexHull(inputPoints) {
-                                try {
-                                    if (inputPoints.length < 3) return inputPoints;
+                    loadSampleMarkers() {
+                        // Sample data - will be replaced by real database data
+                    },
 
-                                    // Clone array to avoid mutating original
-                                    const points = inputPoints.map(p => [...p]);
+                    addMarker(point) {
+                        const color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
+                        let html;
 
-                                    // Find the bottom-most point (or left most point in case of tie)
-                                    let start = 0;
-                                    for (let i = 1; i < points.length; i++) {
-                                        if (points[i][0] < points[start][0] ||
-                                            (points[i][0] === points[start][0] && points[i][1] < points[start][1])) {
-                                            start = i;
-                                        }
-                                    }
-                                    [points[0], points[start]] = [points[start], points[0]];
-                                    const pivot = points[0];
+                        // IDPEL Main (with gardu) - circle outline
+                        if (point.is_idpel_main) {
+                            html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};"></div>`;
+                        }
+                        // Unclear status - star shape
+                        else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
+                            html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
+                        }
+                        // Abonemen - triangle
+                        else if (point.kdam === 'A') {
+                            html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
+                        }
+                        // Meterisasi - filled circle
+                        else {
+                            html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
+                        }
+                        const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
+                        const marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
 
-                                    // Sort points by polar angle with respect to pivot
-                                    points.sort((a, b) => {
-                                        if (a === pivot) return -1;
-                                        if (b === pivot) return 1;
-                                        const angle1 = Math.atan2(a[0] - pivot[0], a[1] - pivot[1]);
-                                        const angle2 = Math.atan2(b[0] - pivot[0], b[1] - pivot[1]);
-                                        return angle1 - angle2;
-                                    });
+                        marker.on('click', (e) => {
+                            this.selectedPoint = point;
+                            this.hoveredPoint = point;
+                            this.hoveredLatLng = L.latLng(point.koordinat_x, point.koordinat_y);
+                            this.isFocused = true;
+                            // Position popup near center of map container, not following mouse
+                            const mapContainer = document.getElementById('main-map');
+                            const rect = mapContainer.getBoundingClientRect();
+                            this.popupX = Math.min(Math.max(e.containerPoint.x + 20, 20), rect.width - 320);
+                            this.popupY = Math.min(Math.max(e.containerPoint.y - 100, 20), rect.height - 350);
+                            this.loadRelatedPhotos(point.idpel);
+                            // Don't panTo - let user see marker without jumping
+                        });
 
-                                    // Build hull
-                                    const hull = [points[0], points[1]];
-                                    for (let i = 2; i < points.length; i++) {
-                                        while (hull.length > 1 && this.cross(hull[hull.length - 2], hull[hull.length - 1], points[i]) <= 0) {
-                                            hull.pop();
-                                        }
-                                        hull.push(points[i]);
-                                    }
-                                    return hull;
-                                } catch (e) {
-                                    console.error('Convex hull error:', e);
-                                    return [];
-                                }
-                            },
+                        // Popup only appears on click, not hover
 
-                            // Cross product for convex hull calculation
-                            cross(o, a, b) {
-                                return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
-                            },
+                        this.markers.push({ marker, data: point });
+                    },
 
-                            async loadMarkers() {
-                                try {
-                                    // Get current viewport bounds for optimized loading
-                                    const bounds = this.map.getBounds();
-                                    const params = new URLSearchParams({
-                                        limit: 5000,
-                                        minLat: bounds.getSouth(),
-                                        maxLat: bounds.getNorth(),
-                                        minLng: bounds.getWest(),
-                                        maxLng: bounds.getEast()
-                                    });
+                    loadRelatedPhotos(idpel) {
+                        const clickedPoint = this.hoveredPoint;
 
-                                    const response = await fetch(`/api/pju-markers?${params.toString()}`);
-                                    const data = await response.json();
+                        // If clicked point is IDPEL Main, show carousel with all photos from same IDPEL
+                        if (clickedPoint && clickedPoint.is_idpel_main) {
+                            this.relatedPhotos = this.markers
+                                .filter(m => m.data.idpel === idpel && m.data.photo)
+                                .map(m => ({
+                                    photo: m.data.photo,
+                                    koordinat_x: m.data.koordinat_x,
+                                    koordinat_y: m.data.koordinat_y,
+                                    is_idpel_main: m.data.is_idpel_main
+                                }));
+                        } else {
+                            // For non-main markers, show only this point's photo
+                            if (clickedPoint && clickedPoint.photo) {
+                                this.relatedPhotos = [{
+                                    photo: clickedPoint.photo,
+                                    koordinat_x: clickedPoint.koordinat_x,
+                                    koordinat_y: clickedPoint.koordinat_y,
+                                    is_idpel_main: clickedPoint.is_idpel_main
+                                }];
+                            } else {
+                                this.relatedPhotos = [];
+                            }
+                        }
+                        this.currentPhotoIndex = 0;
+                    },
 
-                                    // Count IDPEL occurrences for Jumlah Lampu
-                                    this.idpelCounts = {};
+                    nextPhoto() {
+                        if (this.relatedPhotos.length > 0) {
+                            this.currentPhotoIndex = (this.currentPhotoIndex + 1) % this.relatedPhotos.length;
+                        }
+                    },
+
+                    prevPhoto() {
+                        if (this.relatedPhotos.length > 0) {
+                            this.currentPhotoIndex = (this.currentPhotoIndex - 1 + this.relatedPhotos.length) % this.relatedPhotos.length;
+                        }
+                    },
+
+                    closeDetail() {
+                        this.selectedPoint = null;
+                        this.hoveredPoint = null;
+                        this.isFocused = false;
+                        this.hoveredLatLng = null;
+                    },
+
+                    async searchIdpel() {
+                        if (!this.searchQuery) return;
+
+                        // First try to find in already loaded markers
+                        let found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
+                            this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
+
+                        // If not found locally, search from server
+                        if (!found) {
+                            try {
+                                const response = await fetch(`/api/pju-markers/search?q=${encodeURIComponent(this.searchQuery)}`);
+                                const data = await response.json();
+
+                                if (data.length > 0) {
+                                    // Add searched markers to map
                                     data.forEach(p => {
-                                        if (p.idpel) {
-                                            this.idpelCounts[p.idpel] = (this.idpelCounts[p.idpel] || 0) + 1;
-                                        }
-                                    });
-
-                                    // Group markers by IDPEL for connecting lines
-                                    const idpelGroups = {};
-                                    console.log('Loaded markers:', data.length);
-                                    data.forEach(p => {
-                                        // Parse coordinates as floats (they come as strings from DB)
                                         const lat = parseFloat(p.koordinat_x);
                                         const lng = parseFloat(p.koordinat_y);
-
-                                        if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                                        if (!isNaN(lat) && !isNaN(lng)) {
                                             p.koordinat_x = lat;
                                             p.koordinat_y = lng;
-                                            this.addMarker(p);
-                                            // Group by IDPEL for connecting lines (store coords, is_idpel_main, and kdam)
-                                            if (p.idpel) {
-                                                if (!idpelGroups[p.idpel]) idpelGroups[p.idpel] = [];
-                                                idpelGroups[p.idpel].push({
-                                                    coords: [lat, lng],
-                                                    is_idpel_main: p.is_idpel_main,
-                                                    kdam: p.kdam
-                                                });
+                                            // Check if marker already exists
+                                            const exists = this.markers.find(m =>
+                                                m.data.idpel === p.idpel &&
+                                                m.data.koordinat_x === lat &&
+                                                m.data.koordinat_y === lng
+                                            );
+                                            if (!exists) {
+                                                this.addMarker(p);
+                                                // Update IDPEL counts
+                                                this.idpelCounts[p.idpel] = (this.idpelCounts[p.idpel] || 0) + 1;
                                             }
                                         }
                                     });
-
-                                    // Draw connecting lines for same IDPEL (multiple lamps)
-                                    this.drawConnectingLines(idpelGroups);
-                                } catch (e) {
-                                    console.error('Error loading markers:', e);
+                                    // Now find the marker
+                                    found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
+                                        this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
                                 }
-                            },
-
-                            async reloadViewportMarkers() {
-                                // Clear existing markers and lines
-                                this.markerLayer.clearLayers();
-                                if (this.lineLayer) {
-                                    this.lineLayer.clearLayers();
-                                }
-                                // Keep cached data for search and don't clear allMarkers
-                                // Reload markers for current viewport
-                                await this.loadMarkers();
-                            },
-
-                            drawConnectingLines(idpelGroups) {
-                                Object.entries(idpelGroups).forEach(([idpel, points]) => {
-                                    if (points.length > 1) {
-                                        // Find IDPEL Main point (center hub)
-                                        const mainPoint = points.find(p => p.is_idpel_main);
-                                        const branchPoints = points.filter(p => !p.is_idpel_main);
-
-                                        // Get line color from status (kdam) - use first point's status
-                                        const kdam = points[0]?.kdam || 'M';
-                                        const lineColor = kdam === 'M' ? '#17C353' : kdam === 'A' ? '#FBED21' : '#EB2027';
-
-                                        if (mainPoint && branchPoints.length > 0) {
-                                            // Star pattern: Connect IDPEL Main to each branch
-                                            branchPoints.forEach(branch => {
-                                                L.polyline([mainPoint.coords, branch.coords], {
-                                                    color: lineColor,
-                                                    weight: 2,
-                                                    opacity: 0.8
-                                                }).addTo(this.markerLayer);
-                                            });
-                                        } else {
-                                            // Fallback: Connect all points in chain
-                                            const coords = points.map(p => p.coords);
-                                            L.polyline(coords, {
-                                                color: lineColor,
-                                                weight: 2,
-                                                opacity: 0.8
-                                            }).addTo(this.markerLayer);
-                                        }
-                                    }
-                                });
-                            },
-
-                            loadSampleMarkers() {
-                                // Sample data - will be replaced by real database data
-                            },
-
-                            addMarker(point) {
-                                const color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
-                                let html;
-
-                                // IDPEL Main (with gardu) - circle outline
-                                if (point.is_idpel_main) {
-                                    html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};"></div>`;
-                                }
-                                // Unclear status - star shape
-                                else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
-                                    html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
-                                }
-                                // Abonemen - triangle
-                                else if (point.kdam === 'A') {
-                                    html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
-                                }
-                                // Meterisasi - filled circle
-                                else {
-                                    html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
-                                }
-                                const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
-                                const marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
-
-                                marker.on('click', (e) => {
-                                    this.selectedPoint = point;
-                                    this.hoveredPoint = point;
-                                    this.hoveredLatLng = L.latLng(point.koordinat_x, point.koordinat_y);
-                                    this.isFocused = true;
-                                    // Position popup near center of map container, not following mouse
-                                    const mapContainer = document.getElementById('main-map');
-                                    const rect = mapContainer.getBoundingClientRect();
-                                    this.popupX = Math.min(Math.max(e.containerPoint.x + 20, 20), rect.width - 320);
-                                    this.popupY = Math.min(Math.max(e.containerPoint.y - 100, 20), rect.height - 350);
-                                    this.loadRelatedPhotos(point.idpel);
-                                    // Don't panTo - let user see marker without jumping
-                                });
-
-                                // Popup only appears on click, not hover
-
-                                this.markers.push({ marker, data: point });
-                            },
-
-                            loadRelatedPhotos(idpel) {
-                                const clickedPoint = this.hoveredPoint;
-
-                                // If clicked point is IDPEL Main, show carousel with all photos from same IDPEL
-                                if (clickedPoint && clickedPoint.is_idpel_main) {
-                                    this.relatedPhotos = this.markers
-                                        .filter(m => m.data.idpel === idpel && m.data.photo)
-                                        .map(m => ({
-                                            photo: m.data.photo,
-                                            koordinat_x: m.data.koordinat_x,
-                                            koordinat_y: m.data.koordinat_y,
-                                            is_idpel_main: m.data.is_idpel_main
-                                        }));
-                                } else {
-                                    // For non-main markers, show only this point's photo
-                                    if (clickedPoint && clickedPoint.photo) {
-                                        this.relatedPhotos = [{
-                                            photo: clickedPoint.photo,
-                                            koordinat_x: clickedPoint.koordinat_x,
-                                            koordinat_y: clickedPoint.koordinat_y,
-                                            is_idpel_main: clickedPoint.is_idpel_main
-                                        }];
-                                    } else {
-                                        this.relatedPhotos = [];
-                                    }
-                                }
-                                this.currentPhotoIndex = 0;
-                            },
-
-                            nextPhoto() {
-                                if (this.relatedPhotos.length > 0) {
-                                    this.currentPhotoIndex = (this.currentPhotoIndex + 1) % this.relatedPhotos.length;
-                                }
-                            },
-
-                            prevPhoto() {
-                                if (this.relatedPhotos.length > 0) {
-                                    this.currentPhotoIndex = (this.currentPhotoIndex - 1 + this.relatedPhotos.length) % this.relatedPhotos.length;
-                                }
-                            },
-
-                            closeDetail() {
-                                this.selectedPoint = null;
-                                this.hoveredPoint = null;
-                                this.isFocused = false;
-                                this.hoveredLatLng = null;
-                            },
-
-                            async searchIdpel() {
-                                if (!this.searchQuery) return;
-
-                                // First try to find in already loaded markers
-                                let found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
-                                    this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
-
-                                // If not found locally, search from server
-                                if (!found) {
-                                    try {
-                                        const response = await fetch(`/api/pju-markers/search?q=${encodeURIComponent(this.searchQuery)}`);
-                                        const data = await response.json();
-
-                                        if (data.length > 0) {
-                                            // Add searched markers to map
-                                            data.forEach(p => {
-                                                const lat = parseFloat(p.koordinat_x);
-                                                const lng = parseFloat(p.koordinat_y);
-                                                if (!isNaN(lat) && !isNaN(lng)) {
-                                                    p.koordinat_x = lat;
-                                                    p.koordinat_y = lng;
-                                                    // Check if marker already exists
-                                                    const exists = this.markers.find(m =>
-                                                        m.data.idpel === p.idpel &&
-                                                        m.data.koordinat_x === lat &&
-                                                        m.data.koordinat_y === lng
-                                                    );
-                                                    if (!exists) {
-                                                        this.addMarker(p);
-                                                        // Update IDPEL counts
-                                                        this.idpelCounts[p.idpel] = (this.idpelCounts[p.idpel] || 0) + 1;
-                                                    }
-                                                }
-                                            });
-                                            // Now find the marker
-                                            found = this.markers.find(m => m.data.idpel === this.searchQuery) ||
-                                                this.markers.find(m => m.data.idpel?.includes(this.searchQuery));
-                                        }
-                                    } catch (e) {
-                                        console.error('Search error:', e);
-                                    }
-                                }
-
-                                if (found) {
-                                    this.selectedPoint = found.data;
-                                    this.hoveredPoint = found.data;
-                                    this.hoveredLatLng = L.latLng(found.data.koordinat_x, found.data.koordinat_y);
-                                    this.isFocused = true;
-                                    // Center popup on screen
-                                    const mapContainer = document.getElementById('main-map');
-                                    const rect = mapContainer.getBoundingClientRect();
-                                    this.popupX = rect.width / 2 - 130;
-                                    this.popupY = 100;
-                                    this.loadRelatedPhotos(found.data.idpel);
-                                    this.map.setView([found.data.koordinat_x, found.data.koordinat_y], 16);
-                                } else {
-                                    alert('IDPEL tidak ditemukan: ' + this.searchQuery);
-                                }
-                            },
-
-                            filterByRegion(regionName) {
-                                this.selectedRegion = regionName ? this.regions.find(r => r.name === regionName)?.label : null;
-                                this.applyFilters();
-                            },
-
-                            filterByStatus(status) {
-                                if (status === null) {
-                                    this.selectedStatus = null;
-                                } else if (status === 'M') {
-                                    this.selectedStatus = 'Meterisasi';
-                                } else if (status === 'A') {
-                                    this.selectedStatus = 'Abonemen';
-                                } else {
-                                    this.selectedStatus = 'Unclear';
-                                }
-                                this.applyFilters();
-                            },
-
-                            applyFilters() {
-                                this.markers.forEach(({ marker, data }) => {
-                                    let showMarker = true;
-
-                                    // Filter by region
-                                    if (this.selectedRegion) {
-                                        const regionMatch = this.regions.find(r => r.label === this.selectedRegion);
-                                        if (regionMatch && data.nama_kabupaten !== regionMatch.name) {
-                                            showMarker = false;
-                                        }
-                                    }
-
-                                    // Filter by status
-                                    if (this.selectedStatus) {
-                                        const statusMap = { 'Meterisasi': 'M', 'Abonemen': 'A', 'Unclear': null };
-                                        const expectedKdam = statusMap[this.selectedStatus];
-                                        if (this.selectedStatus === 'Unclear') {
-                                            if (data.kdam === 'M' || data.kdam === 'A') showMarker = false;
-                                        } else if (data.kdam !== expectedKdam) {
-                                            showMarker = false;
-                                        }
-                                    }
-
-                                    if (showMarker) {
-                                        marker.addTo(this.markerLayer);
-                                    } else {
-                                        this.markerLayer.removeLayer(marker);
-                                    }
-                                });
+                            } catch (e) {
+                                console.error('Search error:', e);
                             }
-                        };
-                    }
-                </script>
-                <style>
-                    .custom-marker {
-                        background: transparent !important;
-                        border: none !important;
-                    }
+                        }
 
-                    /* Fix map drag issue */
-                    #main-map {
-                        z-index: 1;
-                    }
+                        if (found) {
+                            this.selectedPoint = found.data;
+                            this.hoveredPoint = found.data;
+                            this.hoveredLatLng = L.latLng(found.data.koordinat_x, found.data.koordinat_y);
+                            this.isFocused = true;
+                            // Center popup on screen
+                            const mapContainer = document.getElementById('main-map');
+                            const rect = mapContainer.getBoundingClientRect();
+                            this.popupX = rect.width / 2 - 130;
+                            this.popupY = 100;
+                            this.loadRelatedPhotos(found.data.idpel);
+                            this.map.setView([found.data.koordinat_x, found.data.koordinat_y], 16);
+                        } else {
+                            alert('IDPEL tidak ditemukan: ' + this.searchQuery);
+                        }
+                    },
 
-                    .leaflet-container {
-                        z-index: 1 !important;
-                    }
+                    filterByRegion(regionName) {
+                        this.selectedRegion = regionName ? this.regions.find(r => r.name === regionName)?.label : null;
+                        this.applyFilters();
+                    },
 
-                    .marker-cluster {
-                        background-clip: padding-box;
-                    }
+                    filterByStatus(status) {
+                        if (status === null) {
+                            this.selectedStatus = null;
+                        } else if (status === 'M') {
+                            this.selectedStatus = 'Meterisasi';
+                        } else if (status === 'A') {
+                            this.selectedStatus = 'Abonemen';
+                        } else {
+                            this.selectedStatus = 'Unclear';
+                        }
+                        this.applyFilters();
+                    },
 
-                    .marker-cluster div {
-                        background-color: rgba(41, 170, 225, 0.6);
-                    }
+                    applyFilters() {
+                        this.markers.forEach(({ marker, data }) => {
+                            let showMarker = true;
 
-                    .marker-cluster span {
-                        color: #fff;
-                        font-weight: bold;
+                            // Filter by region
+                            if (this.selectedRegion) {
+                                const regionMatch = this.regions.find(r => r.label === this.selectedRegion);
+                                if (regionMatch && data.nama_kabupaten !== regionMatch.name) {
+                                    showMarker = false;
+                                }
+                            }
+
+                            // Filter by status
+                            if (this.selectedStatus) {
+                                const statusMap = { 'Meterisasi': 'M', 'Abonemen': 'A', 'Unclear': null };
+                                const expectedKdam = statusMap[this.selectedStatus];
+                                if (this.selectedStatus === 'Unclear') {
+                                    if (data.kdam === 'M' || data.kdam === 'A') showMarker = false;
+                                } else if (data.kdam !== expectedKdam) {
+                                    showMarker = false;
+                                }
+                            }
+
+                            if (showMarker) {
+                                marker.addTo(this.markerLayer);
+                            } else {
+                                this.markerLayer.removeLayer(marker);
+                            }
+                        });
                     }
-                </style>
+                };
+            }
+        </script>
+        <style>
+            .custom-marker {
+                background: transparent !important;
+                border: none !important;
+            }
+
+            /* Fix map drag issue */
+            #main-map {
+                z-index: 1;
+            }
+
+            .leaflet-container {
+                z-index: 1 !important;
+            }
+
+            .marker-cluster {
+                background-clip: padding-box;
+            }
+
+            .marker-cluster div {
+                background-color: rgba(41, 170, 225, 0.6);
+            }
+
+            .marker-cluster span {
+                color: #fff;
+                font-weight: bold;
+            }
+        </style>
     @endpush
 @endsection
