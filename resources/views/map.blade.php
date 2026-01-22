@@ -442,7 +442,12 @@
                         }
 
                         this.map = L.map('main-map', { zoomControl: true }).setView([-6.7320, 108.5523], 11);
-                        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: ' OpenStreetMap' }).addTo(this.map);
+                        // Use CartoDB tiles (more reliable alternative to OpenStreetMap)
+                        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { 
+                            attribution: '&copy; <a href="https://carto.com/">CARTO</a>',
+                            subdomains: 'abcd',
+                            maxZoom: 19
+                        }).addTo(this.map);
 
                         // Use regular FeatureGroup instead of MarkerCluster for accurate positioning
                         // Markers will stay at exact coordinates without shifting
