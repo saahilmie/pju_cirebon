@@ -470,16 +470,16 @@
                             console.log('Regions loaded:', regions.length, 'regions');
 
                             regions.forEach(region => {
-                                if (region.points.length < 3) return; // Need at least 3 points for polygon
+                                if (region.points.length < 1) return; // Need at least 1 point
 
-                                // Calculate convex hull for polygon
-                                const hull = this.convexHull(region.points);
-                                console.log('Region:', region.name, '- Points:', region.points.length, '- Hull:', hull.length);
-                                if (hull.length < 3) return;
+                                // Create bounding box polygon from all points
+                                const polygon = this.getBoundingPolygon(region.points);
+                                console.log('Region:', region.name, '- Points:', region.points.length, '- Polygon:', polygon.length);
+                                if (polygon.length < 4) return;
 
                                 const color = regionColors[region.name] || '#888888';
 
-                                L.polygon(hull, {
+                                L.polygon(polygon, {
                                     color: color,
                                     weight: 2,
                                     fillColor: color,
@@ -493,52 +493,36 @@
                         }
                     },
 
-                    // Convex Hull algorithm (Graham Scan) for dynamic polygon generation
-                    convexHull(inputPoints) {
-                        try {
-                            if (inputPoints.length < 3) return inputPoints;
+                    // Create polygon from bounding box of all points
+                    getBoundingPolygon(points) {
+                        if (points.length < 1) return [];
 
-                            // Clone array to avoid mutating original
-                            const points = inputPoints.map(p => [...p]);
+                        // Find min/max coordinates
+                        let minLat = points[0][0], maxLat = points[0][0];
+                        let minLng = points[0][1], maxLng = points[0][1];
 
-                            // Find the bottom-most point (or left most point in case of tie)
-                            let start = 0;
-                            for (let i = 1; i < points.length; i++) {
-                                if (points[i][0] < points[start][0] ||
-                                    (points[i][0] === points[start][0] && points[i][1] < points[start][1])) {
-                                    start = i;
-                                }
-                            }
-                            [points[0], points[start]] = [points[start], points[0]];
-                            const pivot = points[0];
+                        points.forEach(p => {
+                            minLat = Math.min(minLat, p[0]);
+                            maxLat = Math.max(maxLat, p[0]);
+                            minLng = Math.min(minLng, p[1]);
+                            maxLng = Math.max(maxLng, p[1]);
+                        });
 
-                            // Sort points by polar angle with respect to pivot
-                            points.sort((a, b) => {
-                                if (a === pivot) return -1;
-                                if (b === pivot) return 1;
-                                const angle1 = Math.atan2(a[0] - pivot[0], a[1] - pivot[1]);
-                                const angle2 = Math.atan2(b[0] - pivot[0], b[1] - pivot[1]);
-                                return angle1 - angle2;
-                            });
+                        // Add small padding (about 500m) for better visualization
+                        const padding = 0.005;
+                        minLat -= padding;
+                        maxLat += padding;
+                        minLng -= padding;
+                        maxLng += padding;
 
-                            // Build hull
-                            const hull = [points[0], points[1]];
-                            for (let i = 2; i < points.length; i++) {
-                                while (hull.length > 1 && this.cross(hull[hull.length - 2], hull[hull.length - 1], points[i]) <= 0) {
-                                    hull.pop();
-                                }
-                                hull.push(points[i]);
-                            }
-                            return hull;
-                        } catch (e) {
-                            console.error('Convex hull error:', e);
-                            return [];
-                        }
-                    },
-
-                    // Cross product for convex hull calculation
-                    cross(o, a, b) {
-                        return (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+                        // Return rectangle polygon
+                        return [
+                            [minLat, minLng],
+                            [minLat, maxLng],
+                            [maxLat, maxLng],
+                            [maxLat, minLng],
+                            [minLat, minLng] // Close the polygon
+                        ];
                     },
 
                     async loadMarkers() {
