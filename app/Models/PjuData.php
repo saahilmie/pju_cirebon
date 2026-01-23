@@ -19,6 +19,8 @@ class PjuData extends Model
         'rw',
         'tarif',
         'daya',
+        'jumlah_lampu',
+        'jumlah_lampu_source',
         'jenislayanan',
         'nomor_meter_kwh',
         'nomor_gardu',
@@ -40,8 +42,32 @@ class PjuData extends Model
         'koordinat_x' => 'decimal:14',
         'koordinat_y' => 'decimal:14',
         'daya' => 'integer',
+        'jumlah_lampu' => 'integer',
         'is_idpel_main' => 'boolean',
     ];
+
+    // Auto-calculate jumlah_lampu from daya on create/update
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Only auto-calculate if jumlah_lampu is not manually set
+            if ($model->daya && ($model->jumlah_lampu_source !== 'manual' || !$model->jumlah_lampu)) {
+                // Formula: daya / 125 (average 125W per lamp)
+                $model->jumlah_lampu = max(1, round($model->daya / 125));
+                $model->jumlah_lampu_source = 'estimated';
+            }
+        });
+    }
+
+    // Get estimated lamp count from daya
+    public function getEstimatedLampCountAttribute(): int
+    {
+        if (!$this->daya)
+            return 0;
+        return max(1, round($this->daya / 125));
+    }
 
     // Get status meter label
     public function getStatusMeterAttribute(): string

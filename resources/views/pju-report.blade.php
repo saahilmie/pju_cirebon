@@ -525,9 +525,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                        form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                        hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                    ]">
+                                                            form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                            hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                        ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -744,7 +744,17 @@
                             </div>
                             <div>
                                 <span class="text-xs font-medium text-gray-500 uppercase">DAYA</span>
-                                <p class="text-gray-800" x-text="viewingItem?.daya || '-'"></p>
+                                <p class="text-gray-800" x-text="viewingItem?.daya ? viewingItem.daya + ' VA' : '-'"></p>
+                            </div>
+                            <div>
+                                <span class="text-xs font-medium text-gray-500 uppercase">JUMLAH LAMPU</span>
+                                <p class="text-gray-800">
+                                    <span class="font-bold text-lg" x-text="viewingItem?.jumlah_lampu || '-'"></span>
+                                    <span x-show="viewingItem?.jumlah_lampu_source === 'estimated'"
+                                        class="ml-1 px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full text-[10px]">Estimasi</span>
+                                    <span x-show="viewingItem?.jumlah_lampu_source === 'manual'"
+                                        class="ml-1 px-2 py-0.5 bg-green-100 text-green-700 rounded-full text-[10px]">Manual</span>
+                                </p>
                             </div>
                             <div>
                                 <span class="text-xs font-medium text-gray-500 uppercase">JENISLAYANAN</span>
