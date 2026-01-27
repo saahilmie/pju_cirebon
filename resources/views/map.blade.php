@@ -77,12 +77,12 @@
                 <!-- Photo Filter Toggle -->
                 <button @click="togglePhotoFilter()"
                     class="bg-white rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors"
-                    :class="showOnlyWithPhoto ? 'text-[#29AAE1] ring-2 ring-[#29AAE1]' : 'text-gray-700'">
+                    :class="showOnlyWithPhoto ? 'text-[#29AAE1] ring-2 ring-[#29AAE1]' : 'text-green-600 ring-2 ring-green-500'">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span x-text="showOnlyWithPhoto ? 'With Photo' : 'Show All'"></span>
+                    <span x-text="showOnlyWithPhoto ? '📷 With Photo' : '📍 All Data'"></span>
                 </button>
             </div>
 
@@ -701,28 +701,44 @@
                     addMarker(point) {
                         const color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
                         let marker;
-                        let html;
 
-                        // Use same shapes for all modes - divIcon with lightweight SVG
-                        // IDPEL Main (with gardu) - double circle outline
-                        if (point.is_idpel_main) {
-                            html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};box-shadow:0 0 0 2px white, 0 0 0 4px ${color};"></div>`;
+                        // Use lightweight CircleMarker for "All Data" mode (faster rendering for 10k+ markers)
+                        if (!this.showOnlyWithPhoto) {
+                            // Canvas-based circle marker - super fast
+                            const radius = point.is_idpel_main ? 8 : 5;
+                            const fillOpacity = point.is_idpel_main ? 0.2 : 0.8;
+                            const weight = point.is_idpel_main ? 3 : 2;
+                            
+                            marker = L.circleMarker([point.koordinat_x, point.koordinat_y], {
+                                radius: radius,
+                                color: color,
+                                weight: weight,
+                                fillColor: color,
+                                fillOpacity: fillOpacity
+                            }).addTo(this.markerLayer);
+                        } else {
+                            // Full divIcon with custom shapes for "With Photo" mode
+                            let html;
+
+                            // IDPEL Main (with gardu) - double circle outline
+                            if (point.is_idpel_main) {
+                                html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};box-shadow:0 0 0 2px white, 0 0 0 4px ${color};"></div>`;
+                            }
+                            // Unclear status - star shape
+                            else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
+                                html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
+                            }
+                            // Abonemen - triangle
+                            else if (point.kdam === 'A') {
+                                html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
+                            }
+                            // Meterisasi - filled circle
+                            else {
+                                html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
+                            }
+                            const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
+                            marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
                         }
-                        // Unclear status - star shape
-                        else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
-                            html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
-                        }
-                        // Abonemen - triangle
-                        else if (point.kdam === 'A') {
-                            html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
-                        }
-                        // Meterisasi - filled circle
-                        else {
-                            html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
-                        }
-                        
-                        const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
-                        marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
 
                         marker.on('click', (e) => {
                             this.selectedPoint = point;
