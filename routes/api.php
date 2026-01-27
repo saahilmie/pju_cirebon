@@ -13,10 +13,17 @@ Route::get('/pju-markers', function (Request $request) {
     $minLng = $request->get('minLng');
     $maxLng = $request->get('maxLng');
 
+    // Photo filter - default to only with photos for performance
+    $withPhoto = $request->get('withPhoto', '1');
+
     $query = PjuData::whereNotNull('koordinat_x')
-        ->whereNotNull('koordinat_y')
-        ->whereNotNull('photo') // Only load markers with photos
-        ->where('photo', '!=', '');
+        ->whereNotNull('koordinat_y');
+
+    // Only filter by photo if withPhoto=1
+    if ($withPhoto === '1') {
+        $query->whereNotNull('photo')
+            ->where('photo', '!=', '');
+    }
 
     // Filter by viewport if bounds are provided
     if ($minLat && $maxLat && $minLng && $maxLng) {

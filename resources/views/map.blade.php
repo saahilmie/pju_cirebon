@@ -73,6 +73,17 @@
                         </button>
                     </div>
                 </div>
+
+                <!-- Photo Filter Toggle -->
+                <button @click="togglePhotoFilter()"
+                    class="bg-white rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors"
+                    :class="showOnlyWithPhoto ? 'text-[#29AAE1] ring-2 ring-[#29AAE1]' : 'text-gray-700'">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span x-text="showOnlyWithPhoto ? 'With Photo' : 'Show All'"></span>
+                </button>
             </div>
 
             <!-- Main Map -->
@@ -188,7 +199,8 @@
                 </div>
 
                 <!-- No Photo Placeholder -->
-                <div x-show="relatedPhotos.length === 0" class="w-full h-28 bg-gray-100 flex flex-col items-center justify-center gap-1">
+                <div x-show="relatedPhotos.length === 0"
+                    class="w-full h-28 bg-gray-100 flex flex-col items-center justify-center gap-1">
                     <svg class="w-8 h-8 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -384,6 +396,7 @@
                     searchQuery: '',
                     selectedRegion: null,
                     selectedStatus: null,
+                    showOnlyWithPhoto: true,
                     allMarkersData: [],
                     regions: [
                         { name: 'KAB. CIREBON', label: 'Kab. Cirebon', color: '#B51CEC' },
@@ -579,7 +592,8 @@
                                 minLat: bounds.getSouth(),
                                 maxLat: bounds.getNorth(),
                                 minLng: bounds.getWest(),
-                                maxLng: bounds.getEast()
+                                maxLng: bounds.getEast(),
+                                withPhoto: this.showOnlyWithPhoto ? '1' : '0'
                             });
 
                             const response = await fetch(`/api/pju-markers?${params.toString()}`);
@@ -633,6 +647,11 @@
                         // Keep cached data for search and don't clear allMarkers
                         // Reload markers for current viewport
                         await this.loadMarkers();
+                    },
+
+                    async togglePhotoFilter() {
+                        this.showOnlyWithPhoto = !this.showOnlyWithPhoto;
+                        await this.reloadViewportMarkers();
                     },
 
                     drawConnectingLines(idpelGroups) {
