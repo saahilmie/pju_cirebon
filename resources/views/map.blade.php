@@ -597,7 +597,10 @@
                                 maxLat: bounds.getNorth(),
                                 minLng: bounds.getWest(),
                                 maxLng: bounds.getEast(),
-                                withPhoto: this.showOnlyWithPhoto ? '1' : '0'
+                                withPhoto: this.showOnlyWithPhoto ? '1' : '0',
+                                region: this.selectedRegion || '',
+                                status: this.selectedStatus || '',
+                                search: this.searchQuery || ''
                             });
 
                             const response = await fetch(`/api/pju-markers?${params.toString()}`);
@@ -698,55 +701,71 @@
                     addMarker(point) {
                         const color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
                         let marker;
+                        let html;
 
-                        // Use lightweight CircleMarker for "Show All" mode (faster rendering)
-                        if (!this.showOnlyWithPhoto) {
-                            // Canvas-based circle marker - super fast for 10k+ points
-                            const radius = point.is_idpel_main ? 8 : 5;
-                            const fillOpacity = point.is_idpel_main ? 0 : 0.8;
-                            const weight = point.is_idpel_main ? 3 : 2;
-
-                            marker = L.circleMarker([point.koordinat_x, point.koordinat_y], {
-                                radius: radius,
-                                color: color,
-                                weight: weight,
-                                fillColor: color,
-                                fillOpacity: fillOpacity
-                            }).addTo(this.markerLayer);
-                        } else {
-                            // Full divIcon with custom shapes for "With Photo" mode
-                            let html;
-
-                            // IDPEL Main (with gardu) - circle outline
-                            if (point.is_idpel_main) {
-                                html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};"></div>`;
-                            }
-                            // Unclear status - star shape
-                            else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
-                                html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
-                            }
-                            // Abonemen - triangle
-                            else if (point.kdam === 'A') {
-                                html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
-                            }
-                            // Meterisasi - filled circle
-                            else {
-                                html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
-                            }
-                            const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
-                            marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
+                        // Use same shapes for all modes - divIcon with lightweight SVG
+                        // IDPEL Main (with gardu) - double circle outline
+                        if (point.is_idpel_main) {
+                            html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};box-shadow:0 0 0 2px white, 0 0 0 4px ${color};"></div>`;
                         }
+                        // Unclear status - star shape
+                        else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
+                            html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
+                        }
+                        // Abonemen - triangle
+                        else if (point.kdam === 'A') {
+                            html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
+                        }
+                        // Meterisasi - filled circle
+                        else {
+                            html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
+                        }
+                        
+                        const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
+                        marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
 
                         marker.on('click', (e) => {
                             this.selectedPoint = point;
                             this.hoveredPoint = point;
                             this.hoveredLatLng = L.latLng(point.koordinat_x, point.koordinat_y);
                             this.isFocused = true;
-                            // Position popup near center of map container, not following mouse
+                            
+                            // Smart popup positioning - auto adjust to avoid overflow
                             const mapContainer = document.getElementById('main-map');
                             const rect = mapContainer.getBoundingClientRect();
-                            this.popupX = Math.min(Math.max(e.containerPoint.x + 20, 20), rect.width - 320);
-                            this.popupY = Math.min(Math.max(e.containerPoint.y - 100, 20), rect.height - 350);
+                            const popupWidth = 300;
+                            const popupHeight = 280;
+                            const padding = 20;
+                            
+                            let popupX = e.containerPoint.x;
+                            let popupY = e.containerPoint.y;
+                            
+                            // Calculate available space on each side
+                            const spaceRight = rect.width - e.containerPoint.x;
+                            const spaceLeft = e.containerPoint.x;
+                            const spaceBottom = rect.height - e.containerPoint.y;
+                            const spaceTop = e.containerPoint.y;
+                            
+                            // Position horizontally - prefer right side, but flip to left if not enough space
+                            if (spaceRight >= popupWidth + padding) {
+                                popupX = e.containerPoint.x + padding;
+                            } else if (spaceLeft >= popupWidth + padding) {
+                                popupX = e.containerPoint.x - popupWidth - padding;
+                            } else {
+                                // Center it if neither side has enough space
+                                popupX = Math.max(padding, (rect.width - popupWidth) / 2);
+                            }
+                            
+                            // Position vertically - try to center on marker, but adjust if needed
+                            popupY = e.containerPoint.y - popupHeight / 2;
+                            if (popupY < padding) {
+                                popupY = padding;
+                            } else if (popupY + popupHeight > rect.height - padding) {
+                                popupY = rect.height - popupHeight - padding;
+                            }
+                            
+                            this.popupX = popupX;
+                            this.popupY = popupY;
                             this.loadRelatedPhotos(point.idpel);
                             // Don't panTo - let user see marker without jumping
                         });

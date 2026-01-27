@@ -16,6 +16,11 @@ Route::get('/pju-markers', function (Request $request) {
     // Photo filter - default to only with photos for performance
     $withPhoto = $request->get('withPhoto', '1');
 
+    // Additional filters
+    $region = $request->get('region');
+    $status = $request->get('status');
+    $search = $request->get('search');
+
     $query = PjuData::whereNotNull('koordinat_x')
         ->whereNotNull('koordinat_y');
 
@@ -23,6 +28,29 @@ Route::get('/pju-markers', function (Request $request) {
     if ($withPhoto === '1') {
         $query->whereNotNull('photo')
             ->where('photo', '!=', '');
+    }
+
+    // Filter by region (nama_kabupaten)
+    if ($region && $region !== 'null') {
+        $query->where('nama_kabupaten', $region);
+    }
+
+    // Filter by status (kdam)
+    if ($status && $status !== 'null') {
+        if ($status === 'unclear') {
+            $query->where(function ($q) {
+                $q->whereNull('kdam')
+                    ->orWhere('kdam', '')
+                    ->orWhereNotIn('kdam', ['M', 'A']);
+            });
+        } else {
+            $query->where('kdam', $status);
+        }
+    }
+
+    // Filter by IDPEL search
+    if ($search && $search !== '') {
+        $query->where('idpel', 'LIKE', "%{$search}%");
     }
 
     // Filter by viewport if bounds are provided
