@@ -64,6 +64,133 @@ class PjuReportController extends Controller
         return response()->json(['data' => $data, 'search' => $search, 'total' => $data->count()]);
     }
 
+    /**
+     * Export ALL PJU data to Excel (no limit)
+     */
+    public function exportExcel(Request $request)
+    {
+        // Get ALL data without limit
+        $query = PjuData::select([
+            'idpel',
+            'nama',
+            'namapnj',
+            'rt',
+            'rw',
+            'tarif',
+            'daya',
+            'jenislayanan',
+            'nomor_meter_kwh',
+            'nomor_gardu',
+            'nomor_jurusan_tiang',
+            'nama_gardu',
+            'nomor_meter_prepaid',
+            'koordinat_x',
+            'koordinat_y',
+            'kdam',
+            'nama_kabupaten',
+            'nama_kecamatan',
+            'nama_kelurahan',
+            'photo',
+            'is_idpel_main',
+        ]);
+
+        // Apply filters if provided
+        $region = $request->get('region');
+        $status = $request->get('status');
+        $search = $request->get('search');
+
+        if ($region) {
+            $query->where('nama_kabupaten', $region);
+        }
+        if ($status) {
+            if ($status === 'unclear') {
+                $query->where(function ($q) {
+                    $q->whereNull('kdam')
+                        ->orWhere('kdam', '')
+                        ->orWhereNotIn('kdam', ['M', 'A']);
+                });
+            } else {
+                $query->where('kdam', $status);
+            }
+        }
+        if ($search) {
+            $query->where('idpel', 'LIKE', "%{$search}%");
+        }
+
+        $data = $query->get();
+
+        // Create CSV response (more efficient for large data)
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="pju_data_export_' . date('Y-m-d_His') . '.csv"',
+        ];
+
+        $columns = [
+            'IDPEL',
+            'Nama',
+            'Alamat',
+            'RT',
+            'RW',
+            'Tarif',
+            'Daya',
+            'Jenis Layanan',
+            'No Meter KWH',
+            'No Gardu',
+            'No Tiang',
+            'Nama Gardu',
+            'No Meter Prepaid',
+            'Latitude',
+            'Longitude',
+            'Status (KDAM)',
+            'Wilayah Dishub',
+            'Kecamatan',
+            'Kelurahan',
+            'Photo',
+            'Is Main IDPEL'
+        ];
+
+        $callback = function () use ($data, $columns) {
+            $file = fopen('php://output', 'w');
+
+            // Add BOM for Excel to recognize UTF-8
+            fprintf($file, chr(0xEF) . chr(0xBB) . chr(0xBF));
+
+            // Header row
+            fputcsv($file, $columns);
+
+            // Data rows
+            foreach ($data as $row) {
+                fputcsv($file, [
+                    $row->idpel,
+                    $row->nama,
+                    $row->namapnj,
+                    $row->rt,
+                    $row->rw,
+                    $row->tarif,
+                    $row->daya,
+                    $row->jenislayanan ?: ($row->nomor_meter_prepaid ? 'PRABAYAR' : 'PASKABAYAR'),
+                    $row->nomor_meter_kwh,
+                    $row->nomor_gardu,
+                    $row->nomor_jurusan_tiang,
+                    $row->nama_gardu,
+                    $row->nomor_meter_prepaid,
+                    $row->koordinat_x,
+                    $row->koordinat_y,
+                    $row->kdam,
+                    $row->nama_kabupaten,
+                    $row->nama_kecamatan,
+                    $row->nama_kelurahan,
+                    $row->photo ? 'Yes' : 'No',
+                    $row->is_idpel_main ? 'Yes' : 'No',
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
     public function store(Request $request)
     {
         $request->validate([

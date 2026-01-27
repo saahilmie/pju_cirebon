@@ -32,6 +32,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/pju-report/{id}/photo', [PjuReportController::class, 'updatePhoto']);
     Route::delete('/api/pju-report/{id}', [PjuReportController::class, 'destroy']);
     Route::post('/api/pju-report/import', [PjuReportController::class, 'importCsv']);
+    Route::get('/api/pju-report/export', [PjuReportController::class, 'exportExcel']);
 
     // Analytics
     Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics');
