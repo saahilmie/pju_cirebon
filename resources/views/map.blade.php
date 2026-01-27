@@ -466,7 +466,11 @@
                             return;
                         }
 
-                        this.map = L.map('main-map', { zoomControl: true }).setView([-6.7320, 108.5523], 11);
+                        // Use Canvas renderer for much better performance with many markers
+                        this.map = L.map('main-map', {
+                            zoomControl: true,
+                            preferCanvas: true  // Use Canvas instead of SVG for better performance
+                        }).setView([-6.7320, 108.5523], 11);
                         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                             attribution: '&copy; OpenStreetMap contributors'
                         }).addTo(this.map);
@@ -693,26 +697,45 @@
 
                     addMarker(point) {
                         const color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
-                        let html;
+                        let marker;
 
-                        // IDPEL Main (with gardu) - circle outline
-                        if (point.is_idpel_main) {
-                            html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};"></div>`;
+                        // Use lightweight CircleMarker for "Show All" mode (faster rendering)
+                        if (!this.showOnlyWithPhoto) {
+                            // Canvas-based circle marker - super fast for 10k+ points
+                            const radius = point.is_idpel_main ? 8 : 5;
+                            const fillOpacity = point.is_idpel_main ? 0 : 0.8;
+                            const weight = point.is_idpel_main ? 3 : 2;
+
+                            marker = L.circleMarker([point.koordinat_x, point.koordinat_y], {
+                                radius: radius,
+                                color: color,
+                                weight: weight,
+                                fillColor: color,
+                                fillOpacity: fillOpacity
+                            }).addTo(this.markerLayer);
+                        } else {
+                            // Full divIcon with custom shapes for "With Photo" mode
+                            let html;
+
+                            // IDPEL Main (with gardu) - circle outline
+                            if (point.is_idpel_main) {
+                                html = `<div style="width:16px;height:16px;background:transparent;border-radius:50%;border:3px solid ${color};"></div>`;
+                            }
+                            // Unclear status - star shape
+                            else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
+                                html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
+                            }
+                            // Abonemen - triangle
+                            else if (point.kdam === 'A') {
+                                html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
+                            }
+                            // Meterisasi - filled circle
+                            else {
+                                html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
+                            }
+                            const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
+                            marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
                         }
-                        // Unclear status - star shape
-                        else if (!point.kdam || (point.kdam !== 'M' && point.kdam !== 'A')) {
-                            html = `<svg width="16" height="16" viewBox="0 0 24 24" fill="${color}"><path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/></svg>`;
-                        }
-                        // Abonemen - triangle
-                        else if (point.kdam === 'A') {
-                            html = `<div style="width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:14px solid ${color};"></div>`;
-                        }
-                        // Meterisasi - filled circle
-                        else {
-                            html = `<div style="width:14px;height:14px;background:${color};border-radius:50%;border:2px solid white;"></div>`;
-                        }
-                        const icon = L.divIcon({ html, className: 'custom-marker', iconSize: [16, 16], iconAnchor: [8, 8] });
-                        const marker = L.marker([point.koordinat_x, point.koordinat_y], { icon }).addTo(this.markerLayer);
 
                         marker.on('click', (e) => {
                             this.selectedPoint = point;
