@@ -396,6 +396,8 @@
                     searchQuery: '',
                     selectedRegion: null,
                     selectedStatus: null,
+                    filterRegionAPI: null,  // API value for region filter
+                    filterStatusAPI: null,  // API value for status filter ('M', 'A', 'unclear')
                     showOnlyWithPhoto: true,
                     allMarkersData: [],
                     regions: [
@@ -598,8 +600,8 @@
                                 minLng: bounds.getWest(),
                                 maxLng: bounds.getEast(),
                                 withPhoto: this.showOnlyWithPhoto ? '1' : '0',
-                                region: this.selectedRegion || '',
-                                status: this.selectedStatus || '',
+                                region: this.filterRegionAPI || '',
+                                status: this.filterStatusAPI || '',
                                 search: this.searchQuery || ''
                             });
 
@@ -708,7 +710,7 @@
                             const radius = point.is_idpel_main ? 8 : 5;
                             const fillOpacity = point.is_idpel_main ? 0.2 : 0.8;
                             const weight = point.is_idpel_main ? 3 : 2;
-                            
+
                             marker = L.circleMarker([point.koordinat_x, point.koordinat_y], {
                                 radius: radius,
                                 color: color,
@@ -745,23 +747,23 @@
                             this.hoveredPoint = point;
                             this.hoveredLatLng = L.latLng(point.koordinat_x, point.koordinat_y);
                             this.isFocused = true;
-                            
+
                             // Smart popup positioning - auto adjust to avoid overflow
                             const mapContainer = document.getElementById('main-map');
                             const rect = mapContainer.getBoundingClientRect();
                             const popupWidth = 300;
                             const popupHeight = 280;
                             const padding = 20;
-                            
+
                             let popupX = e.containerPoint.x;
                             let popupY = e.containerPoint.y;
-                            
+
                             // Calculate available space on each side
                             const spaceRight = rect.width - e.containerPoint.x;
                             const spaceLeft = e.containerPoint.x;
                             const spaceBottom = rect.height - e.containerPoint.y;
                             const spaceTop = e.containerPoint.y;
-                            
+
                             // Position horizontally - prefer right side, but flip to left if not enough space
                             if (spaceRight >= popupWidth + padding) {
                                 popupX = e.containerPoint.x + padding;
@@ -771,7 +773,7 @@
                                 // Center it if neither side has enough space
                                 popupX = Math.max(padding, (rect.width - popupWidth) / 2);
                             }
-                            
+
                             // Position vertically - try to center on marker, but adjust if needed
                             popupY = e.containerPoint.y - popupHeight / 2;
                             if (popupY < padding) {
@@ -779,7 +781,7 @@
                             } else if (popupY + popupHeight > rect.height - padding) {
                                 popupY = rect.height - popupHeight - padding;
                             }
-                            
+
                             this.popupX = popupX;
                             this.popupY = popupY;
                             this.loadRelatedPhotos(point.idpel);
@@ -900,11 +902,13 @@
                     },
 
                     filterByRegion(regionName) {
+                        this.filterRegionAPI = regionName || null;  // Store API value
                         this.selectedRegion = regionName ? this.regions.find(r => r.name === regionName)?.label : null;
-                        this.applyFilters();
+                        this.reloadViewportMarkers();  // Reload from server with filter
                     },
 
                     filterByStatus(status) {
+                        this.filterStatusAPI = status || null;  // Store API value ('M', 'A', 'unclear', null)
                         if (status === null) {
                             this.selectedStatus = null;
                         } else if (status === 'M') {
@@ -914,7 +918,7 @@
                         } else {
                             this.selectedStatus = 'Unclear';
                         }
-                        this.applyFilters();
+                        this.reloadViewportMarkers();  // Reload from server with filter
                     },
 
                     applyFilters() {
