@@ -144,11 +144,22 @@ Route::get('/pju-data', function (Request $request) {
 
 // Get region boundaries based on marker coordinates for dynamic polygons
 Route::get('/region-bounds', function () {
+    // Define valid coordinate bounds for Cirebon area
+    // Latitude: -8 to -6 (Jawa Barat region)
+    // Longitude: 106 to 110 (area sekitar Cirebon-Indramayu-Kuningan)
+    $minLat = -8.5;
+    $maxLat = -5.5;
+    $minLng = 106;
+    $maxLng = 110;
+
     $regions = PjuData::whereNotNull('nama_kabupaten')
         ->whereNotNull('koordinat_x')
         ->whereNotNull('koordinat_y')
         ->where('koordinat_x', '!=', 0)
         ->where('koordinat_y', '!=', 0)
+        // Filter valid coordinates within Cirebon area bounds
+        ->whereBetween('koordinat_x', [$minLat, $maxLat])
+        ->whereBetween('koordinat_y', [$minLng, $maxLng])
         ->select('nama_kabupaten', 'koordinat_x', 'koordinat_y')
         ->get()
         ->groupBy('nama_kabupaten')

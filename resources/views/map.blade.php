@@ -82,7 +82,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                             d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
-                    <span x-text="showOnlyWithPhoto ? '📷 With Photo' : '📍 All Data'"></span>
+                    <span x-text="showOnlyWithPhoto ? 'With Photo' : 'All Data'"></span>
                 </button>
             </div>
 
@@ -751,36 +751,38 @@
                             // Smart popup positioning - auto adjust to avoid overflow
                             const mapContainer = document.getElementById('main-map');
                             const rect = mapContainer.getBoundingClientRect();
-                            const popupWidth = 300;
-                            const popupHeight = 280;
-                            const padding = 20;
+                            const popupWidth = 280;
+                            const popupHeight = 260;
+                            const padding = 15;
+                            
+                            // Account for detail panel on right (about 380px wide when visible)
+                            const detailPanelWidth = this.selectedPoint ? 0 : 0; // Detail panel is separate, not overlapping map
+                            const availableWidth = rect.width - detailPanelWidth;
 
                             let popupX = e.containerPoint.x;
                             let popupY = e.containerPoint.y;
 
                             // Calculate available space on each side
-                            const spaceRight = rect.width - e.containerPoint.x;
+                            const spaceRight = availableWidth - e.containerPoint.x;
                             const spaceLeft = e.containerPoint.x;
-                            const spaceBottom = rect.height - e.containerPoint.y;
-                            const spaceTop = e.containerPoint.y;
 
                             // Position horizontally - prefer right side, but flip to left if not enough space
-                            if (spaceRight >= popupWidth + padding) {
+                            if (spaceRight >= popupWidth + padding * 2) {
                                 popupX = e.containerPoint.x + padding;
-                            } else if (spaceLeft >= popupWidth + padding) {
+                            } else if (spaceLeft >= popupWidth + padding * 2) {
                                 popupX = e.containerPoint.x - popupWidth - padding;
                             } else {
-                                // Center it if neither side has enough space
-                                popupX = Math.max(padding, (rect.width - popupWidth) / 2);
+                                // Center it horizontally if neither side has enough space
+                                popupX = Math.max(padding, Math.min(e.containerPoint.x - popupWidth / 2, availableWidth - popupWidth - padding));
                             }
+                            
+                            // Clamp X to never go outside visible area
+                            popupX = Math.max(padding, Math.min(popupX, availableWidth - popupWidth - padding));
 
                             // Position vertically - try to center on marker, but adjust if needed
                             popupY = e.containerPoint.y - popupHeight / 2;
-                            if (popupY < padding) {
-                                popupY = padding;
-                            } else if (popupY + popupHeight > rect.height - padding) {
-                                popupY = rect.height - popupHeight - padding;
-                            }
+                            // Clamp Y to never go outside visible area
+                            popupY = Math.max(padding, Math.min(popupY, rect.height - popupHeight - padding));
 
                             this.popupX = popupX;
                             this.popupY = popupY;
