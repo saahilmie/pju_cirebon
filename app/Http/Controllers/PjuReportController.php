@@ -44,11 +44,20 @@ class PjuReportController extends Controller
             'is_idpel_main',
         ]);
 
-        // If search parameter is provided, search across entire database
+        // If search parameter is provided, search across ALL important fields
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
                 $q->where('idpel', 'ILIKE', "%{$search}%")
-                    ->orWhere('nama', 'ILIKE', "%{$search}%");
+                    ->orWhere('nama', 'ILIKE', "%{$search}%")
+                    ->orWhere('namapnj', 'ILIKE', "%{$search}%")
+                    ->orWhere('nama_gardu', 'ILIKE', "%{$search}%")
+                    ->orWhere('nomor_gardu', 'ILIKE', "%{$search}%")
+                    ->orWhere('nomor_jurusan_tiang', 'ILIKE', "%{$search}%")
+                    ->orWhere('nama_kabupaten', 'ILIKE', "%{$search}%")
+                    ->orWhere('nama_kecamatan', 'ILIKE', "%{$search}%")
+                    ->orWhere('nama_kelurahan', 'ILIKE', "%{$search}%")
+                    ->orWhere('nomor_meter_kwh', 'ILIKE', "%{$search}%")
+                    ->orWhere('nomor_meter_prepaid', 'ILIKE', "%{$search}%");
             });
             // When searching, don't apply limit or apply higher limit
             $limit = min($request->get('limit', 1000), 5000);
