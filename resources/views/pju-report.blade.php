@@ -423,19 +423,26 @@
             </div>
 
             <!-- Pagination -->
-            <div class="p-4 flex items-center justify-end gap-2" style="border-top: 1px solid #C8BFBF;">
-                <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
-                    class="px-3 py-1 rounded text-sm disabled:opacity-50" style="border: 1px solid #C8BFBF;">&lt;</button>
-                <template x-for="page in visiblePages" :key="page">
-                    <button @click="currentPage = page" class="px-3 py-1 rounded text-sm"
-                        :class="currentPage === page ? 'bg-[#29AAE1] text-white' : ''"
-                        :style="currentPage !== page && 'border: 1px solid #C8BFBF'" x-text="page"></button>
-                </template>
-                <span x-show="totalPages > 5" class="text-gray-400">...</span>
-                <button x-show="totalPages > 5" @click="currentPage = totalPages" class="px-3 py-1 rounded text-sm"
-                    :class="currentPage === totalPages && 'bg-[#29AAE1] text-white'" x-text="totalPages"></button>
-                <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
-                    class="px-3 py-1 rounded text-sm disabled:opacity-50" style="border: 1px solid #C8BFBF;">&gt;</button>
+            <div class="p-4 flex items-center justify-between" style="border-top: 1px solid #C8BFBF;">
+                <span class="text-sm text-gray-500">
+                    Showing <span x-text="Math.min((currentPage - 1) * perPage + 1, totalFilteredCount)"></span>-<span x-text="Math.min(currentPage * perPage, totalFilteredCount)"></span> of <span x-text="totalFilteredCount"></span> items
+                </span>
+                <div class="flex items-center gap-1">
+                    <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
+                        class="px-3 py-1 rounded text-sm disabled:opacity-50" style="border: 1px solid #C8BFBF;">&lt;</button>
+                    <template x-for="page in visiblePages" :key="page">
+                        <template x-if="page === '...'">
+                            <span class="px-2 py-1 text-gray-400">...</span>
+                        </template>
+                        <template x-if="page !== '...'">
+                            <button @click="currentPage = page" class="px-3 py-1 rounded text-sm"
+                                :class="currentPage === page ? 'bg-[#29AAE1] text-white' : ''"
+                                :style="currentPage !== page && 'border: 1px solid #C8BFBF'" x-text="page"></button>
+                        </template>
+                    </template>
+                    <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
+                        class="px-3 py-1 rounded text-sm disabled:opacity-50" style="border: 1px solid #C8BFBF;">&gt;</button>
+                </div>
             </div>
         </div>
 
@@ -536,9 +543,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                                        form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                                        hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                                    ]">
+                                                                            form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                                            hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                                        ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -953,8 +960,56 @@
                         if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
                         return data.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
                     },
-                    get totalPages() { return Math.ceil(this.pjuData.length / this.perPage) || 1; },
-                    get visiblePages() { const p = []; for (let i = 1; i <= Math.min(3, this.totalPages); i++) p.push(i); return p; },
+                    // Total filtered count (before pagination) for accurate total pages
+                    get totalFilteredCount() {
+                        let data = this.pjuData;
+                        if (this.searchTable) data = data.filter(item => item.idpel?.includes(this.searchTable) || item.nama?.toLowerCase().includes(this.searchTable.toLowerCase()));
+                        if (this.selectedRegionals.length) data = data.filter(item => this.selectedRegionals.some(r => item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''))));
+                        if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
+                        if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
+                        return data.length;
+                    },
+                    get totalPages() { return Math.ceil(this.totalFilteredCount / this.perPage) || 1; },
+                    // Sliding window pagination: shows 5 pages around current page
+                    get visiblePages() {
+                        const total = this.totalPages;
+                        const current = this.currentPage;
+                        const pages = [];
+
+                        if (total <= 7) {
+                            // If 7 or fewer pages, show all
+                            for (let i = 1; i <= total; i++) pages.push(i);
+                        } else {
+                            // Always show first page
+                            pages.push(1);
+
+                            // Calculate window around current page
+                            let start = Math.max(2, current - 2);
+                            let end = Math.min(total - 1, current + 2);
+
+                            // Adjust window if near edges
+                            if (current <= 4) {
+                                start = 2;
+                                end = 5;
+                            } else if (current >= total - 3) {
+                                start = total - 4;
+                                end = total - 1;
+                            }
+
+                            // Add ellipsis before window if needed
+                            if (start > 2) pages.push('...');
+
+                            // Add window pages
+                            for (let i = start; i <= end; i++) pages.push(i);
+
+                            // Add ellipsis after window if needed
+                            if (end < total - 1) pages.push('...');
+
+                            // Always show last page
+                            pages.push(total);
+                        }
+                        return pages;
+                    },
                     init() { this.loadData(); },
                     async loadData(search = '') {
                         try {
