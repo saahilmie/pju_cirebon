@@ -12,13 +12,16 @@ class IdentifyBadCoordinates extends Command
     protected $description = 'Identify PJU data with bad coordinates and try to infer wilayah from alamat';
 
     // Mapping alamat keywords to nama_kabupaten
+    // NOTE: CILIMUS bisa KAB. KUNINGAN atau KAB. CIREBON - hanya infer jika ada "KUNINGAN" juga
     private $alamatToWilayah = [
-        // Kuningan areas
-        'CILIMUS' => 'KAB. KUNINGAN',
+        // Kuningan areas (pasti Kuningan)
+        'KUNINGAN-CILIMUS' => 'KAB. KUNINGAN',
+        'CILIMUS KUNINGAN' => 'KAB. KUNINGAN',
+        'KUNINGAN CILIMUS' => 'KAB. KUNINGAN',
         'GARAWANGI' => 'KAB. KUNINGAN',
         'CIWARU' => 'KAB. KUNINGAN',
         'CIGUGUR' => 'KAB. KUNINGAN',
-        'KUNINGAN' => 'KAB. KUNINGAN',
+        'KUNINGAN' => 'KAB. KUNINGAN',  // Generic kuningan last (setelah combo patterns)
         'KADUGEDE' => 'KAB. KUNINGAN',
         'LURAGUNG' => 'KAB. KUNINGAN',
         'LEBAKWANGI' => 'KAB. KUNINGAN',
@@ -27,6 +30,7 @@ class IdentifyBadCoordinates extends Command
         'GARAJATI' => 'KAB. KUNINGAN',
         'MEKARMULYA' => 'KAB. KUNINGAN',
         'PAJAMBON' => 'KAB. KUNINGAN',
+        // Cilimus TANPA Kuningan -> tidak di-infer otomatis (perlu review manual)
 
         // Cirebon Kabupaten areas
         'PAMULIHAN' => 'KAB. CIREBON',
