@@ -209,6 +209,66 @@ def extract_coords_from_watermark(image_path):
         return None
 
 
+def extract_coords_from_filename(filename):
+    """
+    Extract coordinates from filename.
+    
+    Handles formats like:
+    - -6.7392, 108.5525.jpg
+    - -6.7601, 108.483.jpg
+    - -6.7660097211111 108.550643411111.png
+    - koordinat_-6.7392_108.5525.jpg
+    """
+    try:
+        # Remove extension
+        name = Path(filename).stem
+        
+        # Pattern 1: Standard format -lat, lon or -lat lon
+        pattern1 = r'(-\d+\.?\d*)[,\s_]+(\d+\.?\d*)'
+        matches = re.findall(pattern1, name)
+        
+        if matches:
+            lat, lon = float(matches[0][0]), float(matches[0][1])
+            
+            # Validate for Cirebon/West Java area
+            if -8.5 <= lat <= -5.5 and 106 <= lon <= 110:
+                return {
+                    'latitude': lat,
+                    'longitude': lon,
+                    'source': 'FILENAME'
+                }
+        
+        # Pattern 2: Any two decimal numbers that look like coordinates
+        pattern2 = r'(\d+\.\d+)'
+        numbers = re.findall(pattern2, name)
+        
+        if len(numbers) >= 2:
+            # Try to identify lat and lon
+            for i, num1 in enumerate(numbers):
+                for num2 in numbers[i+1:]:
+                    n1, n2 = float(num1), float(num2)
+                    
+                    # Check if one is latitude (small) and one is longitude (large ~108)
+                    if 5 <= n1 <= 8 and 106 <= n2 <= 110:
+                        # n1 is likely latitude (without minus sign in filename)
+                        return {
+                            'latitude': -n1,  # Indonesia is south
+                            'longitude': n2,
+                            'source': 'FILENAME'
+                        }
+                    elif 106 <= n1 <= 110 and 5 <= n2 <= 8:
+                        return {
+                            'latitude': -n2,
+                            'longitude': n1,
+                            'source': 'FILENAME'
+                        }
+        
+        return None
+    
+    except Exception:
+        return None
+
+
 def haversine_distance(lat1, lon1, lat2, lon2):
     """Calculate the great circle distance between two points in meters"""
     R = 6371000  # Earth's radius in meters
@@ -358,14 +418,18 @@ def process_images(folder_path, database, max_distance=100):
             exif = get_exif_data(str(img_path))
             coords = get_gps_from_exif(exif)
             
-            # Method 2: Try OCR on watermark
+            # Method 2: Try extracting from filename
+            if not coords:
+                coords = extract_coords_from_filename(img_path.name)
+            
+            # Method 3: Try OCR on watermark (slower)
             if not coords:
                 coords = extract_coords_from_watermark(str(img_path))
             
             if not coords:
                 results['no_coords'].append({
                     'image': img_path.name,
-                    'reason': 'No coordinates found in EXIF or watermark'
+                    'reason': 'No coordinates found in EXIF, filename, or watermark'
                 })
                 continue
             
