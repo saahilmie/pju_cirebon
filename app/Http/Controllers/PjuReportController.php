@@ -323,7 +323,10 @@ class PjuReportController extends Controller
     }
 
     /**
-     * Import CSV with duplicate detection and auto-delimiter detection
+     * Smart Import CSV with flexible column mapping and update-empty-fields mode
+     * - Auto-detects column names from various formats
+     * - Updates only empty fields for existing IDPEL records
+     * - Reports which columns were recognized vs ignored
      */
     public function importCsv(Request $request)
     {
@@ -349,130 +352,136 @@ class PjuReportController extends Controller
             return response()->json(['success' => false, 'error' => 'Could not read CSV headers']);
         }
 
+        $originalHeaders = $headers; // Keep original for reporting
         $headers = array_map(function ($h) {
             return strtolower(trim(str_replace(['"', ' '], ['', '_'], $h)));
         }, $headers);
 
-        // Get all existing IDPELs for duplicate checking
-        $existingIdpels = PjuData::pluck('idpel')->toArray();
-        $existingIdpelsFlipped = array_flip($existingIdpels);
+        // Define column mappings (flexible names -> database field)
+        $columnMappings = [
+            'idpel' => ['idpel', 'id_pel', 'idpelanggan', 'id_pelanggan', 'no_idpel'],
+            'nama' => ['nama', 'name', 'nama_pelanggan'],
+            'namapnj' => ['namapnj', 'nama_pnj', 'alamat', 'address'],
+            'rt' => ['rt'],
+            'rw' => ['rw'],
+            'tarif' => ['tarif', 'tariff'],
+            'daya' => ['daya', 'power', 'watt'],
+            'jenislayanan' => ['jenislayanan', 'jenis_layanan', 'layanan', 'service'],
+            'nomor_meter_kwh' => ['nomor_meter_kwh', 'no_meter_kwh', 'meter_kwh', 'kwh'],
+            'nomor_gardu' => ['nomor_gardu', 'no_gardu', 'gardu'],
+            'nomor_jurusan_tiang' => ['nomor_jurusan_tiang', 'no_jurusan', 'jurusan_tiang', 'tiang'],
+            'nama_gardu' => ['nama_gardu'],
+            'nomor_meter_prepaid' => ['nomor_meter_prepaid', 'no_meter_prepaid', 'prepaid'],
+            'koordinat_x' => ['koordinat_x', 'x', 'longitude', 'lon', 'lng', 'long'],
+            'koordinat_y' => ['koordinat_y', 'y', 'latitude', 'lat'],
+            'kdam' => ['kdam', 'status_meter', 'status', 'meterisasi'],
+            'nama_kabupaten' => ['nama_kabupaten', 'kabupaten', 'kab', 'nama_kab', 'wilayah', 'region'],
+            'nama_kecamatan' => ['nama_kecamatan', 'kecamatan', 'kec', 'nama_kec'],
+            'nama_kelurahan' => ['nama_kelurahan', 'kelurahan', 'kel', 'nama_kel', 'desa'],
+        ];
+
+        // Track which columns are recognized
+        $recognizedColumns = [];
+        $unrecognizedColumns = [];
+
+        foreach ($headers as $i => $header) {
+            $found = false;
+            foreach ($columnMappings as $dbField => $aliases) {
+                if (in_array($header, $aliases)) {
+                    $recognizedColumns[$header] = $dbField;
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found && !empty($header)) {
+                $unrecognizedColumns[] = $originalHeaders[$i] ?? $header;
+            }
+        }
+
+        // Get all existing data for update mode
+        $existingData = PjuData::whereNotNull('idpel')->get()->keyBy('idpel');
 
         $imported = 0;
+        $updated = 0;
         $duplicates = 0;
         $errors = 0;
         $processed = 0;
         $batchData = [];
-        $batchSize = 500; // Insert in batches
+        $batchSize = 500;
 
         while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
             $processed++;
 
-            // Handle column count mismatch gracefully
+            // Handle column count mismatch
             $headerCount = count($headers);
             $rowCount = count($row);
 
             if ($rowCount < $headerCount) {
-                // Pad row with empty values if it has fewer columns
                 $row = array_pad($row, $headerCount, '');
             } elseif ($rowCount > $headerCount) {
-                // Trim extra columns if row has more
                 $row = array_slice($row, 0, $headerCount);
             }
 
             $data = array_combine($headers, $row);
 
-            // Get IDPEL - try common column names (can be empty for unregistered lamps)
-            $idpel = $data['idpel'] ?? $data['id_pel'] ?? $data['idpelanggan'] ?? null;
-            $idpel = $idpel ?: null; // Convert empty string to null
-
-            // Check for duplicate only if IDPEL exists
-            if ($idpel && isset($existingIdpelsFlipped[$idpel])) {
-                $duplicates++;
-                continue;
+            // Get IDPEL
+            $idpel = null;
+            foreach ($columnMappings['idpel'] as $alias) {
+                if (isset($data[$alias]) && !empty(trim($data[$alias]))) {
+                    $idpel = trim($data[$alias]);
+                    break;
+                }
             }
 
-            // Parse coordinates - handle various formats
-            $koordinatX = $this->parseCoordinate($data['koordinat_x'] ?? $data['x'] ?? $data['longitude'] ?? $data['lon'] ?? null);
-            $koordinatY = $this->parseCoordinate($data['koordinat_y'] ?? $data['y'] ?? $data['latitude'] ?? $data['lat'] ?? null);
+            // Prepare new data from CSV
+            $newData = $this->extractDataFromRow($data, $columnMappings);
 
-            // Parse daya safely - handle overflow
-            $daya = $data['daya'] ?? $data['power'] ?? null;
-            if ($daya !== null && $daya !== '') {
-                $daya = (int) preg_replace('/[^\d]/', '', $daya);
-                if ($daya > 2147483647)
-                    $daya = null; // Max integer
-            } else {
-                $daya = null;
-            }
+            // Check if IDPEL exists - UPDATE EMPTY FIELDS instead of skipping
+            if ($idpel && isset($existingData[$idpel])) {
+                $existing = $existingData[$idpel];
+                $fieldsToUpdate = [];
 
-            // Prepare data for insert
-            $batchData[] = [
-                'idpel' => $idpel,
-                'nama' => $data['nama'] ?? $data['name'] ?? null,
-                'namapnj' => $data['namapnj'] ?? $data['nama_pnj'] ?? null,
-                'rt' => $data['rt'] ?? null,
-                'rw' => $data['rw'] ?? null,
-                'tarif' => $data['tarif'] ?? null,
-                'daya' => $daya,
-                'jenislayanan' => $data['jenislayanan'] ?? $data['jenis_layanan'] ?? null,
-                'nomor_meter_kwh' => $data['nomor_meter_kwh'] ?? $data['no_meter_kwh'] ?? null,
-                'nomor_gardu' => $data['nomor_gardu'] ?? $data['no_gardu'] ?? null,
-                'nomor_jurusan_tiang' => $data['nomor_jurusan_tiang'] ?? $data['no_jurusan'] ?? null,
-                'nama_gardu' => $data['nama_gardu'] ?? null,
-                'nomor_meter_prepaid' => $data['nomor_meter_prepaid'] ?? $data['no_meter_prepaid'] ?? null,
-                'koordinat_x' => $koordinatX,
-                'koordinat_y' => $koordinatY,
-                'kdam' => $data['kdam'] ?? $data['status_meter'] ?? null,
-                'nama_kabupaten' => $data['nama_kabupaten'] ?? $data['kabupaten'] ?? null,
-                'nama_kecamatan' => $data['nama_kecamatan'] ?? $data['kecamatan'] ?? null,
-                'nama_kelurahan' => $data['nama_kelurahan'] ?? $data['kelurahan'] ?? null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
-
-            // Add to existing list to catch duplicates within same file
-            $existingIdpelsFlipped[$idpel] = true;
-
-            // Batch insert
-            if (count($batchData) >= $batchSize) {
-                try {
-                    PjuData::insert($batchData);
-                    $imported += count($batchData);
-                } catch (\Exception $e) {
-                    // Fallback: insert one by one when batch fails
-                    \Log::warning('Batch insert failed, falling back to single inserts');
-                    foreach ($batchData as $row) {
-                        try {
-                            PjuData::insert([$row]);
-                            $imported++;
-                        } catch (\Exception $e2) {
-                            \Log::error('Single insert error: ' . $e2->getMessage());
-                            $errors++;
+                // Only update fields that are currently empty/null in database
+                foreach ($newData as $field => $value) {
+                    if ($value !== null && $value !== '') {
+                        $existingValue = $existing->$field;
+                        if ($existingValue === null || $existingValue === '') {
+                            $fieldsToUpdate[$field] = $value;
                         }
                     }
                 }
+
+                // Update if there are empty fields to fill
+                if (!empty($fieldsToUpdate)) {
+                    try {
+                        PjuData::where('idpel', $idpel)->update($fieldsToUpdate);
+                        $updated++;
+                    } catch (\Exception $e) {
+                        \Log::error('Update error: ' . $e->getMessage());
+                        $errors++;
+                    }
+                } else {
+                    $duplicates++; // No changes needed
+                }
+                continue;
+            }
+
+            // New record - prepare for batch insert
+            $newData['idpel'] = $idpel;
+            $newData['created_at'] = now();
+            $newData['updated_at'] = now();
+            $batchData[] = $newData;
+
+            // Batch insert
+            if (count($batchData) >= $batchSize) {
+                $imported += $this->batchInsertWithFallback($batchData);
                 $batchData = [];
             }
         }
 
         // Insert remaining data
         if (count($batchData) > 0) {
-            try {
-                PjuData::insert($batchData);
-                $imported += count($batchData);
-            } catch (\Exception $e) {
-                // Fallback: insert one by one when batch fails
-                \Log::warning('Final batch insert failed, falling back to single inserts');
-                foreach ($batchData as $row) {
-                    try {
-                        PjuData::insert([$row]);
-                        $imported++;
-                    } catch (\Exception $e2) {
-                        \Log::error('Single insert error: ' . $e2->getMessage());
-                        $errors++;
-                    }
-                }
-            }
+            $imported += $this->batchInsertWithFallback($batchData);
         }
 
         fclose($handle);
@@ -480,11 +489,74 @@ class PjuReportController extends Controller
         return response()->json([
             'success' => true,
             'imported' => $imported,
+            'updated' => $updated,
             'duplicates' => $duplicates,
             'errors' => $errors,
             'processed' => $processed,
-            'message' => "Successfully imported {$imported} records."
+            'recognized_columns' => array_values(array_unique($recognizedColumns)),
+            'unrecognized_columns' => $unrecognizedColumns,
+            'message' => "Imported {$imported} new, updated {$updated} existing records."
         ]);
+    }
+
+    /**
+     * Extract data from row based on column mappings
+     */
+    private function extractDataFromRow($data, $columnMappings)
+    {
+        $result = [];
+
+        foreach ($columnMappings as $dbField => $aliases) {
+            if ($dbField === 'idpel')
+                continue; // Handle separately
+
+            $value = null;
+            foreach ($aliases as $alias) {
+                if (isset($data[$alias]) && !empty(trim($data[$alias]))) {
+                    $value = trim($data[$alias]);
+                    break;
+                }
+            }
+
+            // Special handling for coordinates
+            if (in_array($dbField, ['koordinat_x', 'koordinat_y'])) {
+                $value = $this->parseCoordinate($value);
+            }
+
+            // Special handling for daya (power)
+            if ($dbField === 'daya' && $value !== null) {
+                $value = (int) preg_replace('/[^\d]/', '', $value);
+                if ($value > 2147483647)
+                    $value = null;
+            }
+
+            $result[$dbField] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Batch insert with fallback to single inserts
+     */
+    private function batchInsertWithFallback($batchData)
+    {
+        $imported = 0;
+        try {
+            PjuData::insert($batchData);
+            $imported = count($batchData);
+        } catch (\Exception $e) {
+            \Log::warning('Batch insert failed, falling back to single inserts');
+            foreach ($batchData as $row) {
+                try {
+                    PjuData::insert([$row]);
+                    $imported++;
+                } catch (\Exception $e2) {
+                    \Log::error('Single insert error: ' . $e2->getMessage());
+                }
+            }
+        }
+        return $imported;
     }
 
     /**

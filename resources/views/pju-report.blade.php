@@ -547,9 +547,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                                            ]">
+                                                                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                                                            ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -927,7 +927,7 @@
                 return {
                     activeDropdown: null, searchRegional: '', searchStatus: '', searchIdpel: '', searchTable: '',
                     selectedRegionals: [], selectedStatuses: [], selectedIdpels: [],
-                    regionals: ['Kab. Cirebon', 'Kota Cirebon', 'Kab. Kuningan', 'Majalengka', 'Indramayu'],
+                    regionals: ['Kab. Cirebon', 'Kota Cirebon', 'Kab. Kuningan', 'Majalengka', 'Indramayu', 'Belum Ada Wilayah'],
                     statuses: ['M', 'A', 'Unclear'], idpels: [], pjuData: [],
                     currentPage: 1, perPage: 10,
                     showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
@@ -959,7 +959,19 @@
                     get filteredData() {
                         let data = this.pjuData;
                         // Note: searchTable filter is handled server-side (loadData), not here
-                        if (this.selectedRegionals.length) data = data.filter(item => this.selectedRegionals.some(r => item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''))));
+                        if (this.selectedRegionals.length) {
+                            data = data.filter(item => {
+                                // Handle 'Belum Ada Wilayah' filter
+                                if (this.selectedRegionals.includes('Belum Ada Wilayah')) {
+                                    if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
+                                }
+                                // Handle normal regional filters
+                                return this.selectedRegionals.some(r => {
+                                    if (r === 'Belum Ada Wilayah') return false;
+                                    return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
+                                });
+                            });
+                        }
                         if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
                         if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
                         return data.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
@@ -968,7 +980,17 @@
                     get totalFilteredCount() {
                         let data = this.pjuData;
                         // Note: searchTable filter is handled server-side (loadData), not here
-                        if (this.selectedRegionals.length) data = data.filter(item => this.selectedRegionals.some(r => item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''))));
+                        if (this.selectedRegionals.length) {
+                            data = data.filter(item => {
+                                if (this.selectedRegionals.includes('Belum Ada Wilayah')) {
+                                    if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
+                                }
+                                return this.selectedRegionals.some(r => {
+                                    if (r === 'Belum Ada Wilayah') return false;
+                                    return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
+                                });
+                            });
+                        }
                         if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
                         if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
                         return data.length;
@@ -1034,9 +1056,11 @@
                     },
                     searchServer() {
                         if (this.searchTable.length >= 3) {
+                            this.currentPage = 1; // Reset to first                                        page on new search
                             this.currentSearch = this.searchTable;
                             this.loadData(this.searchTable);
                         } else if (this.searchTable.length === 0) {
+                            this.currentPage = 1; // Reset to first page
                             this.currentSearch = '';
                             this.loadData();
                         }
@@ -1208,19 +1232,22 @@
 
                             this.importResult = {
                                 imported: result.imported || 0,
+                                updated: result.updated || 0,
                                 duplicates: result.duplicates || 0,
                                 errors: result.errors || 0,
-                                processed: result.processed || 0
+                                processed: result.processed || 0,
+                                recognized_columns: result.recognized_columns || [],
+                                unrecognized_columns: result.unrecognized_columns || []
                             };
 
-                            // Show result modal if there are duplicates or the import succeeded
-                            if (result.duplicates > 0 || result.imported > 0) {
+                            // Show result modal if there's any result
+                            if (result.imported > 0 || result.updated > 0 || result.duplicates > 0) {
                                 this.showImportResultModal = true;
                             }
 
-                            // Reload data after import
-                            if (result.imported > 0) {
-                                await this.loadData();
+                            // Reload data after import or update
+                            if (result.imported > 0 || result.updated > 0) {
+                                await this.loadData(this.currentSearch);
                             }
 
                         } catch (e) {
