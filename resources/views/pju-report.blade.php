@@ -425,11 +425,14 @@
             <!-- Pagination -->
             <div class="p-4 flex items-center justify-between" style="border-top: 1px solid #C8BFBF;">
                 <span class="text-sm text-gray-500">
-                    Showing <span x-text="Math.min((currentPage - 1) * perPage + 1, totalFilteredCount)"></span>-<span x-text="Math.min(currentPage * perPage, totalFilteredCount)"></span> of <span x-text="totalFilteredCount"></span> items
+                    Showing <span x-text="Math.min((currentPage - 1) * perPage + 1, totalFilteredCount)"></span>-<span
+                        x-text="Math.min(currentPage * perPage, totalFilteredCount)"></span> of <span
+                        x-text="totalFilteredCount"></span> items
                 </span>
                 <div class="flex items-center gap-1">
                     <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
-                        class="px-3 py-1 rounded text-sm disabled:opacity-50" style="border: 1px solid #C8BFBF;">&lt;</button>
+                        class="px-3 py-1 rounded text-sm disabled:opacity-50"
+                        style="border: 1px solid #C8BFBF;">&lt;</button>
                     <template x-for="page in visiblePages" :key="page">
                         <template x-if="page === '...'">
                             <span class="px-2 py-1 text-gray-400">...</span>
@@ -440,8 +443,9 @@
                                 :style="currentPage !== page && 'border: 1px solid #C8BFBF'" x-text="page"></button>
                         </template>
                     </template>
-                    <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
-                        class="px-3 py-1 rounded text-sm disabled:opacity-50" style="border: 1px solid #C8BFBF;">&gt;</button>
+                    <button @click="currentPage = Math.min(totalPages, currentPage + 1)"
+                        :disabled="currentPage === totalPages" class="px-3 py-1 rounded text-sm disabled:opacity-50"
+                        style="border: 1px solid #C8BFBF;">&gt;</button>
                 </div>
             </div>
         </div>
@@ -543,9 +547,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                                            form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                                            hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                                        ]">
+                                                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                                            ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -954,7 +958,7 @@
                     get filteredIdpels() { return this.searchIdpel ? this.idpels.filter(i => i.includes(this.searchIdpel)) : this.idpels; },
                     get filteredData() {
                         let data = this.pjuData;
-                        if (this.searchTable) data = data.filter(item => item.idpel?.includes(this.searchTable) || item.nama?.toLowerCase().includes(this.searchTable.toLowerCase()));
+                        // Note: searchTable filter is handled server-side (loadData), not here
                         if (this.selectedRegionals.length) data = data.filter(item => this.selectedRegionals.some(r => item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''))));
                         if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
                         if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
@@ -963,7 +967,7 @@
                     // Total filtered count (before pagination) for accurate total pages
                     get totalFilteredCount() {
                         let data = this.pjuData;
-                        if (this.searchTable) data = data.filter(item => item.idpel?.includes(this.searchTable) || item.nama?.toLowerCase().includes(this.searchTable.toLowerCase()));
+                        // Note: searchTable filter is handled server-side (loadData), not here
                         if (this.selectedRegionals.length) data = data.filter(item => this.selectedRegionals.some(r => item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''))));
                         if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
                         if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
