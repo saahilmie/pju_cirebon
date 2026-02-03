@@ -40,7 +40,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-[10px] text-gray-500 uppercase">Meterisasi</p>
+                    <p class="text-[10px] text-gray-500 uppercase">Metered</p>
                     <p class="text-lg font-bold text-gray-800">{{ number_format($stats['total_meterisasi']) }}</p>
                 </div>
             </div>
@@ -51,7 +51,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-[10px] text-gray-500 uppercase">Abonemen</p>
+                    <p class="text-[10px] text-gray-500 uppercase">Flat Rate</p>
                     <p class="text-lg font-bold text-gray-800">{{ number_format($stats['total_abonemen']) }}</p>
                 </div>
             </div>
@@ -99,7 +99,7 @@
                 <!-- Photo Progress -->
                 <div class="bg-gray-50 rounded-lg p-3">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-600">📸 Photo</span>
+                        <span class="text-xs font-medium text-gray-600">Photo</span>
                         <span class="text-xs font-bold text-[#17C353]">{{ $dataCompletion['photo']['percent'] }}%</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
@@ -112,7 +112,7 @@
                 <!-- Coordinates Progress -->
                 <div class="bg-gray-50 rounded-lg p-3">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-600">📍 Coordinates</span>
+                        <span class="text-xs font-medium text-gray-600">Coordinates</span>
                         <span
                             class="text-xs font-bold text-[#29AAE1]">{{ $dataCompletion['coordinates']['percent'] }}%</span>
                     </div>
@@ -126,7 +126,7 @@
                 <!-- IDPEL Progress -->
                 <div class="bg-gray-50 rounded-lg p-3">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-600">🔢 IDPEL</span>
+                        <span class="text-xs font-medium text-gray-600">IDPEL</span>
                         <span class="text-xs font-bold text-[#B51CEC]">{{ $dataCompletion['idpel']['percent'] }}%</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
@@ -139,7 +139,7 @@
                 <!-- Kabupaten Progress -->
                 <div class="bg-gray-50 rounded-lg p-3">
                     <div class="flex items-center justify-between mb-2">
-                        <span class="text-xs font-medium text-gray-600">🏛️ Kabupaten</span>
+                        <span class="text-xs font-medium text-gray-600">District</span>
                         <span class="text-xs font-bold text-[#FBED21]">{{ $dataCompletion['kabupaten']['percent'] }}%</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
@@ -369,7 +369,7 @@
                             }, 100);
                         @endif
 
-                                    if (document.getElementById('mini-map')) {
+                                            if (document.getElementById('mini-map')) {
                             const miniMap = L.map('mini-map', {
                                 zoomControl: true, dragging: true, scrollWheelZoom: true
                             }).setView([-6.7066, 108.5570], 9);

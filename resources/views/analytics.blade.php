@@ -16,7 +16,7 @@
                     <select x-model="filters.wilayah" @change="loadAllCharts()"
                         class="px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-[#29AAE1] focus:border-[#29AAE1]"
                         style="border-color: #C8BFBF;">
-                        <option value="">Semua Wilayah</option>
+                        <option value="">All Regions</option>
                         <template x-for="w in filterOptions.wilayah" :key="w">
                             <option :value="w" x-text="w"></option>
                         </template>
@@ -26,9 +26,9 @@
                     <select x-model="filters.status" @change="loadAllCharts()"
                         class="px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-[#29AAE1] focus:border-[#29AAE1]"
                         style="border-color: #C8BFBF;">
-                        <option value="">Semua Status</option>
-                        <option value="M">Meterisasi</option>
-                        <option value="A">Abonemen</option>
+                        <option value="">All Status</option>
+                        <option value="M">Metered</option>
+                        <option value="A">Flat Rate</option>
                         <option value="unclear">Unclear</option>
                     </select>
 
@@ -36,7 +36,7 @@
                     <select x-model="filters.daya" @change="loadAllCharts()"
                         class="px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-[#29AAE1] focus:border-[#29AAE1]"
                         style="border-color: #C8BFBF;">
-                        <option value="">Semua Daya</option>
+                        <option value="">All Power</option>
                         <template x-for="d in filterOptions.daya" :key="d">
                             <option :value="d" x-text="d + ' VA'"></option>
                         </template>
@@ -73,7 +73,7 @@
         <div id="charts-container" class="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <!-- Status Meter Chart -->
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Distribusi Status Meter</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Meter Status Distribution</h3>
                 <div class="relative h-72">
                     <canvas id="statusChart"></canvas>
                     <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -87,11 +87,11 @@
                 <div class="flex justify-center gap-6 mt-4">
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-[#17C353]"></div>
-                        <span class="text-sm text-gray-600">Meterisasi</span>
+                        <span class="text-sm text-gray-600">Metered</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-[#FBED21]"></div>
-                        <span class="text-sm text-gray-600">Abonemen</span>
+                        <span class="text-sm text-gray-600">Flat Rate</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-[#EB2027]"></div>
@@ -102,7 +102,7 @@
 
             <!-- Wilayah Chart -->
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">PJU per Wilayah</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-4">PJU by Region</h3>
                 <div class="h-72">
                     <canvas id="wilayahChart"></canvas>
                 </div>
@@ -110,7 +110,7 @@
 
             <!-- Daya Chart -->
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <h3 class="text-lg font-bold text-gray-800 mb-4">Distribusi Daya</h3>
+                <h3 class="text-lg font-bold text-gray-800 mb-4">Power Distribution</h3>
                 <div class="h-72">
                     <canvas id="dayaChart"></canvas>
                 </div>
@@ -119,20 +119,20 @@
             <!-- IDPEL Analysis -->
             <div class="bg-white rounded-xl shadow-lg p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <h3 class="text-lg font-bold text-gray-800">Analisis IDPEL (Potensi Anomali)</h3>
+                    <h3 class="text-lg font-bold text-gray-800">IDPEL Analysis (Potential Anomalies)</h3>
                     <span x-show="idpelData.total_anomalies > 0"
                         class="px-3 py-1 text-sm font-medium text-white bg-[#EB2027] rounded-full"
-                        x-text="idpelData.total_anomalies + ' Anomali'"></span>
+                        x-text="idpelData.total_anomalies + ' Anomalies'"></span>
                 </div>
-                <p class="text-sm text-gray-500 mb-3">IDPEL dengan &gt;3 PJU. <span class="text-[#EB2027]">Merah</span> =
-                    Daya ≤900VA (potensi illegal)</p>
+                <p class="text-sm text-gray-500 mb-3">IDPEL with &gt;3 PJU. <span class="text-[#EB2027]">Red</span> =
+                    Power ≤900VA (potential illegal)</p>
                 <div class="overflow-y-auto max-h-56">
                     <table class="w-full text-sm">
                         <thead class="bg-gray-50 sticky top-0">
                             <tr>
                                 <th class="px-3 py-2 text-left text-gray-600">IDPEL</th>
-                                <th class="px-3 py-2 text-left text-gray-600">Daya</th>
-                                <th class="px-3 py-2 text-left text-gray-600">Jumlah</th>
+                                <th class="px-3 py-2 text-left text-gray-600">Power</th>
+                                <th class="px-3 py-2 text-left text-gray-600">Count</th>
                                 <th class="px-3 py-2 text-left text-gray-600">Status</th>
                             </tr>
                         </thead>
@@ -154,7 +154,7 @@
                                 </tr>
                             </template>
                             <tr x-show="!idpelData.data || idpelData.data.length === 0">
-                                <td colspan="4" class="px-3 py-8 text-center text-gray-400">Tidak ada data anomali</td>
+                                <td colspan="4" class="px-3 py-8 text-center text-gray-400">No anomaly data</td>
                             </tr>
                         </tbody>
                     </table>

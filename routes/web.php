@@ -49,4 +49,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile');
     Route::put('/profile', [App\Http\Controllers\ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/avatar', [App\Http\Controllers\ProfileController::class, 'deleteAvatar'])->name('profile.avatar.delete');
+
+    // Photo Upload (Bulk)
+    Route::get('/photo-upload', [App\Http\Controllers\PhotoUploadController::class, 'index'])->name('photo-upload');
+    Route::post('/api/photo-upload/analyze', [App\Http\Controllers\PhotoUploadController::class, 'analyze']);
+    Route::post('/api/photo-upload/process', [App\Http\Controllers\PhotoUploadController::class, 'process']);
 });
