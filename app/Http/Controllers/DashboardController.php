@@ -14,8 +14,11 @@ class DashboardController extends Controller
         $totalPoints = PjuData::count();
         $totalMeterisasi = PjuData::where('kdam', 'M')->count();
         $totalAbonemen = PjuData::where('kdam', 'A')->count();
+        // Unclear = no KDAM or has generated IDPEL (pattern: "code - area / region")
         $totalUnclear = PjuData::where(function ($q) {
-            $q->whereNull('kdam')->orWhereNotIn('kdam', ['M', 'A']);
+            $q->whereNull('kdam')
+                ->orWhereNotIn('kdam', ['M', 'A'])
+                ->orWhere('idpel', 'LIKE', '% - %'); // Generated IDPEL pattern
         })->count();
         $totalUsers = User::count();
 
@@ -57,7 +60,9 @@ class DashboardController extends Controller
             $aCount = PjuData::where('nama_kabupaten', $dbName)->where('kdam', 'A')->count();
             $unclearCount = PjuData::where('nama_kabupaten', $dbName)
                 ->where(function ($q) {
-                    $q->whereNull('kdam')->orWhereNotIn('kdam', ['M', 'A']);
+                    $q->whereNull('kdam')
+                        ->orWhereNotIn('kdam', ['M', 'A'])
+                        ->orWhere('idpel', 'LIKE', '% - %'); // Generated IDPEL
                 })->count();
 
             $regionalStats[$info['name']] = [

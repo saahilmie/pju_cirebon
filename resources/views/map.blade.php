@@ -131,7 +131,7 @@
                     </div>
                 </div>
                 <div class="border-t mt-4 pt-3 space-y-2.5 text-sm">
-                    <p class="text-gray-500 font-semibold">Wilayah</p>
+                    <p class="text-gray-500 font-semibold">Regional</p>
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-sm bg-[#B51CEC] opacity-60"></div>
                         <span class="text-gray-600">KAB. CIREBON</span>
@@ -312,7 +312,7 @@
                             x-text="(selectedPoint?.tarif || '-') + ' / ' + (selectedPoint?.daya || '-') + ' VA'"></td>
                     </tr>
                     <tr class="h-8">
-                        <td class="text-gray-600">Wilayah Dishub</td>
+                        <td class="text-gray-600">Dishub Regional</td>
                         <td>:</td>
                         <td class="text-[#29AAE1]" x-text="getWilayahDishub(selectedPoint)"></td>
                     </tr>

@@ -113,10 +113,12 @@ class PjuReportController extends Controller
         }
         if ($status) {
             if ($status === 'unclear') {
+                // Unclear = no KDAM or has generated IDPEL (pattern: "code - area / region")
                 $query->where(function ($q) {
                     $q->whereNull('kdam')
                         ->orWhere('kdam', '')
-                        ->orWhereNotIn('kdam', ['M', 'A']);
+                        ->orWhereNotIn('kdam', ['M', 'A'])
+                        ->orWhere('idpel', 'LIKE', '% - %'); // Generated IDPEL pattern
                 });
             } else {
                 $query->where('kdam', $status);
