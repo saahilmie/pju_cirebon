@@ -198,8 +198,9 @@ foreach ($csvFiles as $csvFile) {
             'jumlah_lampu_source' => 'manual',
             'daya' => $daya ?: null,
             'is_idpel_main' => $hasRealIdpel, // Only real IDPELs can be main
-            'koordinat_x' => is_numeric($xCoord) ? (float) $xCoord : null,
-            'koordinat_y' => is_numeric($yCoord) ? (float) $yCoord : null,
+            // Note: Coordinates in CSV are in UTM format (X/Y), not lat/lng - skip them
+            'koordinat_x' => null,
+            'koordinat_y' => null,
             'created_at' => now(),
             'updated_at' => now(),
         ];
