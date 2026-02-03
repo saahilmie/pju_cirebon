@@ -27,8 +27,8 @@
                         class="px-3 py-2 text-sm border rounded-lg focus:ring-2 focus:ring-[#29AAE1] focus:border-[#29AAE1]"
                         style="border-color: #C8BFBF;">
                         <option value="">All Status</option>
-                        <option value="M">Metered</option>
-                        <option value="A">Flat Rate</option>
+                        <option value="M">Meterisasi</option>
+                        <option value="A">Abonemen</option>
                         <option value="unclear">Unclear</option>
                     </select>
 
@@ -87,11 +87,11 @@
                 <div class="flex justify-center gap-6 mt-4">
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-[#17C353]"></div>
-                        <span class="text-sm text-gray-600">Metered</span>
+                        <span class="text-sm text-gray-600">Meterisasi</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-[#FBED21]"></div>
-                        <span class="text-sm text-gray-600">Flat Rate</span>
+                        <span class="text-sm text-gray-600">Abonemen</span>
                     </div>
                     <div class="flex items-center gap-2">
                         <div class="w-3 h-3 rounded-full bg-[#EB2027]"></div>

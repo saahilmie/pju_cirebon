@@ -40,7 +40,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-[10px] text-gray-500 uppercase">Metered</p>
+                    <p class="text-[10px] text-gray-500 uppercase">Meterisasi</p>
                     <p class="text-lg font-bold text-gray-800">{{ number_format($stats['total_meterisasi']) }}</p>
                 </div>
             </div>
@@ -51,7 +51,7 @@
                     </svg>
                 </div>
                 <div>
-                    <p class="text-[10px] text-gray-500 uppercase">Flat Rate</p>
+                    <p class="text-[10px] text-gray-500 uppercase">Abonemen</p>
                     <p class="text-lg font-bold text-gray-800">{{ number_format($stats['total_abonemen']) }}</p>
                 </div>
             </div>
@@ -369,7 +369,7 @@
                             }, 100);
                         @endif
 
-                                            if (document.getElementById('mini-map')) {
+                                                    if (document.getElementById('mini-map')) {
                             const miniMap = L.map('mini-map', {
                                 zoomControl: true, dragging: true, scrollWheelZoom: true
                             }).setView([-6.7066, 108.5570], 9);

@@ -33,7 +33,7 @@
                         class="absolute top-full mt-2 bg-white rounded-lg shadow-xl py-2 w-52 z-50">
                         <button @click="filterByRegion(null); open = false"
                             class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left text-sm">
-                            Semua Regional
+                            All Regional
                         </button>
                         <template x-for="region in regions" :key="region.name">
                             <button @click="filterByRegion(region.name); open = false"
@@ -57,7 +57,7 @@
                         class="absolute top-full mt-2 bg-white rounded-lg shadow-xl py-2 w-44 z-50">
                         <button @click="filterByStatus(null); open = false"
                             class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left text-sm">
-                            Semua Status
+                            All Status
                         </button>
                         <button @click="filterByStatus('M'); open = false"
                             class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left">
@@ -754,7 +754,7 @@
                             const popupWidth = 280;
                             const popupHeight = 260;
                             const padding = 15;
-                            
+
                             // Account for detail panel on right (about 380px wide when visible)
                             const detailPanelWidth = this.selectedPoint ? 0 : 0; // Detail panel is separate, not overlapping map
                             const availableWidth = rect.width - detailPanelWidth;
@@ -775,7 +775,7 @@
                                 // Center it horizontally if neither side has enough space
                                 popupX = Math.max(padding, Math.min(e.containerPoint.x - popupWidth / 2, availableWidth - popupWidth - padding));
                             }
-                            
+
                             // Clamp X to never go outside visible area
                             popupX = Math.max(padding, Math.min(popupX, availableWidth - popupWidth - padding));
 

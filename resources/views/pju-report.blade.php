@@ -162,6 +162,12 @@
                                     <span class="text-gray-400 text-sm ml-auto">(<span
                                             x-text="idpels.length"></span>)</span>
                                 </label>
+                                <label
+                                    class="flex items-center gap-3 p-2 hover:bg-red-50 rounded-lg cursor-pointer pl-6 border-b border-gray-200">
+                                    <input type="checkbox" value="NO_IDPEL" x-model="selectedIdpels"
+                                        class="w-4 h-4 rounded text-[#EB2027]" style="border-color: #C8BFBF;">
+                                    <span class="text-sm text-red-600 font-medium">No IDPEL</span>
+                                </label>
                                 <template x-for="i in filteredIdpels.slice(0, 50)" :key="i">
                                     <label
                                         class="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg cursor-pointer pl-6">
@@ -547,9 +553,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                                                            ]">
+                                                                                                    form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                                                                    hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                                                                ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
