@@ -13,7 +13,7 @@
 <body class="min-h-screen bg-gradient-to-br from-[#E8F4FC] to-[#D1E9F6] flex items-center justify-center p-4"
     x-data="loginPage()">
     <!-- Toast Notification -->
-    <div x-show="showToast" x-transition:enter="transition ease-out duration-300"
+    <div x-show="showToast" x-cloak x-transition:enter="transition ease-out duration-300"
         x-transition:enter-start="opacity-0 transform -translate-y-4"
         x-transition:enter-end="opacity-100 transform translate-y-0"
         x-transition:leave="transition ease-in duration-200" class="fixed top-4 right-4 z-50">
@@ -72,7 +72,7 @@
                             required>
                         <button type="button" @click="showPassword = !showPassword"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-[#29AAE1]">
-                            <svg x-show="!showPassword" x-cloak class="w-5 h-5" fill="none" stroke="currentColor"
+                            <svg x-show="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor"
                                 viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
