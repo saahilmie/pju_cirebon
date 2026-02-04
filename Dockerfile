@@ -48,16 +48,13 @@ RUN npm install && npm run build
 RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache \
     && chmod -R 777 storage bootstrap/cache
 
-# DO NOT cache config at build time - env vars are set at runtime!
-# Config will be fresh on each request
-
-# Create start script
+# Create start script - use server.php router for static files
 RUN echo '#!/bin/bash\n\
     php artisan config:clear\n\
     php artisan cache:clear\n\
     php artisan view:clear\n\
     php artisan migrate --force\n\
-    php -S 0.0.0.0:${PORT:-8080} -t public' > /app/start.sh \
+    php -S 0.0.0.0:${PORT:-8080} server.php' > /app/start.sh \
     && chmod +x /app/start.sh
 
 # Start command
