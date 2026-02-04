@@ -55,6 +55,7 @@ RUN echo '#!/bin/bash\n\
     php artisan cache:clear\n\
     php artisan view:clear\n\
     php artisan migrate --force\n\
+    php artisan db:seed --force 2>/dev/null || true\n\
     php -S 0.0.0.0:${PORT:-8080} server.php' > /app/start.sh \
     && chmod +x /app/start.sh
 
