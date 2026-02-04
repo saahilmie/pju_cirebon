@@ -398,7 +398,7 @@
                     selectedStatus: null,
                     filterRegionAPI: null,  // API value for region filter
                     filterStatusAPI: null,  // API value for status filter ('M', 'A', 'unclear')
-                    showOnlyWithPhoto: true,
+                    showOnlyWithPhoto: false, // Default: show ALL data, not just with photo
                     allMarkersData: [],
                     regions: [
                         { name: 'KAB. CIREBON', label: 'Kab. Cirebon', color: '#B51CEC' },
