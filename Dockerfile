@@ -47,8 +47,12 @@ RUN npm install && npm run build
 # Cache Laravel config
 RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
 
-# Expose port
-EXPOSE $PORT
+# Create storage directories
+RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+    && chmod -R 775 storage bootstrap/cache
 
-# Start command
-CMD php artisan migrate --force && php artisan serve --host=0.0.0.0 --port=$PORT
+# Default port
+ENV PORT=8080
+
+# Start command - use shell to properly handle PORT variable
+CMD php artisan migrate --force && php -S 0.0.0.0:${PORT} -t public
