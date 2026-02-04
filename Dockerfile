@@ -1,5 +1,6 @@
 FROM php:8.3-cli
 
+# Force rebuild: 2026-02-04T11:30
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
