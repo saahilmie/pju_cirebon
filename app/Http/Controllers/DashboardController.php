@@ -34,7 +34,11 @@ class DashboardController extends Controller
         $withPhoto = PjuData::whereNotNull('photo')->where('photo', '!=', '')->count();
         $withCoordinates = PjuData::whereNotNull('koordinat_x')->whereNotNull('koordinat_y')
             ->where('koordinat_x', '!=', 0)->where('koordinat_y', '!=', 0)->count();
-        $withIdpel = PjuData::whereNotNull('idpel')->where('idpel', '!=', '')->count();
+        // Only count real IDPELs, not generated ones (generated pattern: "533313 - SUMBER / KAB.CIREBON")
+        $withIdpel = PjuData::whereNotNull('idpel')
+            ->where('idpel', '!=', '')
+            ->where('idpel', 'NOT LIKE', '% - %')
+            ->count();
         $withKabupaten = PjuData::whereNotNull('nama_kabupaten')->where('nama_kabupaten', '!=', '')->count();
 
         $dataCompletion = [

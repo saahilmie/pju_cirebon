@@ -553,9 +553,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                                                                        form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                                                                        hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                                                                    ]">
+                                                                                                            form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                                                                            hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                                                                        ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -934,422 +934,436 @@
                     activeDropdown: null, searchRegional: '', searchStatus: '', searchIdpel: '', searchTable: '',
                     selectedRegionals: [], selectedStatuses: [], selectedIdpels: [],
                     regionals: ['Kab. Cirebon', 'Kota Cirebon', 'Kab. Kuningan', 'Majalengka', 'Indramayu', 'No Regional'],
-                          statuses: ['M', 'A', 'Unclear'], idpels: [], pjuData: [],
-                            currentPage: 1, perPage: 10,
-                            showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
-                            showViewModal: false, viewingItem: null,
-                            showPhotoUploadModal: false, photoUploadItem: null,
-                            showImportResultModal: false, importResult: { imported: 0, duplicates: 0, errors: 0 },
-                            isImporting: false, importStatus: '',
-                            isDragging: false, photoPreview: null, photoName: '', photoFile: null,
-                            toast: { show: false, message: '', type: 'success' },
-                            currentSearch: '', // Persist search after edit
-                            form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '', is_idpel_main: false },
+                    statuses: ['M', 'A', 'Unclear'], idpels: [], pjuData: [],
+                    currentPage: 1, perPage: 10,
+                    showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
+                    showViewModal: false, viewingItem: null,
+                    showPhotoUploadModal: false, photoUploadItem: null,
+                    showImportResultModal: false, importResult: { imported: 0, duplicates: 0, errors: 0 },
+                    isImporting: false, importStatus: '',
+                    isDragging: false, photoPreview: null, photoName: '', photoFile: null,
+                    toast: { show: false, message: '', type: 'success' },
+                    currentSearch: '', // Persist search after edit
+                    form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '', is_idpel_main: false },
 
-                            // Check if another entry with same IDPEL already has is_idpel_main=true
-                            hasExistingIdpelMain() {
-                                if (!this.form.idpel) return false;
-                                const currentId = this.isEditing ? this.editingId : null;
-                                return this.pjuData.some(item =>
-                                    item.idpel === this.form.idpel &&
-                                    item.is_idpel_main &&
-                                    item.id !== currentId
-                                );
-                            },
+                    // Check if another entry with same IDPEL already has is_idpel_main=true
+                    hasExistingIdpelMain() {
+                        if (!this.form.idpel) return false;
+                        const currentId = this.isEditing ? this.editingId : null;
+                        return this.pjuData.some(item =>
+                            item.idpel === this.form.idpel &&
+                            item.is_idpel_main &&
+                            item.id !== currentId
+                        );
+                    },
 
-                            get isAllSelected() { return !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length; },
-                            get hasActiveFilters() { return this.selectedRegionals.length || this.selectedStatuses.length || this.selectedIdpels.length; },
-                            get filteredRegionals() { return this.searchRegional ? this.regionals.filter(r => r.toLowerCase().includes(this.searchRegional.toLowerCase())) : this.regionals; },
-                            get filteredStatuses() { return this.searchStatus ? this.statuses.filter(s => s.toLowerCase().includes(this.searchStatus.toLowerCase())) : this.statuses; },
-                            get filteredIdpels() { return this.searchIdpel ? this.idpels.filter(i => i.includes(this.searchIdpel)) : this.idpels; },
-                            get filteredData() {
-                                let data = this.pjuData;
-                                // Note: searchTable filter is handled server-side (loadData), not here
-                                if (this.selectedRegionals.length) {
-                                    data = data.filter(item => {
-                                        // Handle 'No Regional' filter
-                                        if (this.selectedRegionals.includes('No Regional')) {
-                                            if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
-                                        }
-                                        // Handle normal regional filters
-                                        return this.selectedRegionals.some(r => {
-                                            if (r === 'No Regional') return false;
-                                            return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
-                                        });
-                                    });
+                    get isAllSelected() { return !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length; },
+                    get hasActiveFilters() { return this.selectedRegionals.length || this.selectedStatuses.length || this.selectedIdpels.length; },
+                    get filteredRegionals() { return this.searchRegional ? this.regionals.filter(r => r.toLowerCase().includes(this.searchRegional.toLowerCase())) : this.regionals; },
+                    get filteredStatuses() { return this.searchStatus ? this.statuses.filter(s => s.toLowerCase().includes(this.searchStatus.toLowerCase())) : this.statuses; },
+                    get filteredIdpels() { return this.searchIdpel ? this.idpels.filter(i => i.includes(this.searchIdpel)) : this.idpels; },
+                    get filteredData() {
+                        let data = this.pjuData;
+                        // Note: searchTable filter is handled server-side (loadData), not here
+                        if (this.selectedRegionals.length) {
+                            data = data.filter(item => {
+                                // Handle 'No Regional' filter
+                                if (this.selectedRegionals.includes('No Regional')) {
+                                    if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
                                 }
-                                if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
-                                if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
-                                return data.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
-                            },
-                            // Total filtered count (before pagination) for accurate total pages
-                            get totalFilteredCount() {
-                                let data = this.pjuData;
-                                // Note: searchTable filter is handled server-side (loadData), not here
-                                if (this.selectedRegionals.length) {
-                                    data = data.filter(item => {
-                                        if (this.selectedRegionals.includes('No Regional')) {
-                                            if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
-                                        }
-                                        return this.selectedRegionals.some(r => {
-                                            if (r === 'No Regional') return false;
-                                            return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
-                                        });
-                                    });
-                                }
-                                if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
-                                if (this.selectedIdpels.length) data = data.filter(item => this.selectedIdpels.includes(item.idpel));
-                                return data.length;
-                            },
-                            get totalPages() { return Math.ceil(this.totalFilteredCount / this.perPage) || 1; },
-                            // Sliding window pagination: shows 5 pages around current page
-                            get visiblePages() {
-                                const total = this.totalPages;
-                                const current = this.currentPage;
-                                const pages = [];
-
-                                if (total <= 7) {
-                                    // If 7 or fewer pages, show all
-                                    for (let i = 1; i <= total; i++) pages.push(i);
-                                } else {
-                                    // Always show first page
-                                    pages.push(1);
-
-                                    // Calculate window around current page
-                                    let start = Math.max(2, current - 2);
-                                    let end = Math.min(total - 1, current + 2);
-
-                                    // Adjust window if near edges
-                                    if (current <= 4) {
-                                        start = 2;
-                                        end = 5;
-                                    } else if (current >= total - 3) {
-                                        start = total - 4;
-                                        end = total - 1;
-                                    }
-
-                                    // Add ellipsis before window if needed
-                                    if (start > 2) pages.push('...');
-
-                                    // Add window pages
-                                    for (let i = start; i <= end; i++) pages.push(i);
-
-                                    // Add ellipsis after window if needed
-                                    if (end < total - 1) pages.push('...');
-
-                                    // Always show last page
-                                    pages.push(total);
-                                }
-                                return pages;
-                            },
-                            init() { this.loadData(); },
-                            async loadData(search = '') {
-                                try {
-                                    let url = '/api/pju-report/data?limit=5000';
-                                    if (search) {
-                                        url = `/api/pju-report/data?limit=5000&search=${encodeURIComponent(search)}`;
-                                    }
-                                    const res = await fetch(url);
-                                    const json = await res.json();
-                                    this.pjuData = json.data || [];
-                                    this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
-                                    if (search && this.pjuData.length > 0) {
-                                        this.showToast(`Found ${this.pjuData.length} results for "${search}"`, 'success');
-                                    } else if (search && this.pjuData.length === 0) {
-                                        this.showToast(`No results found for "${search}"`, 'error');
-                                    }
-                                } catch (e) { console.error(e); }
-                            },
-                            searchServer() {
-                                if (this.searchTable.length >= 3) {
-                                    this.currentPage = 1; // Reset to first                                        page on new search
-                                    this.currentSearch = this.searchTable;
-                                    this.loadData(this.searchTable);
-                                } else if (this.searchTable.length === 0) {
-                                    this.currentPage = 1; // Reset to first page
-                                    this.currentSearch = '';
-                                    this.loadData();
-                                }
-                            },
-                            toggleDropdown(name) { this.activeDropdown = this.activeDropdown === name ? null : name; },
-                            selectAll() { this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = []; },
-                            toggleAllRegionals() { this.selectedRegionals = this.selectedRegionals.length === this.regionals.length ? [] : [...this.regionals]; },
-                            toggleAllStatuses() { this.selectedStatuses = this.selectedStatuses.length === this.statuses.length ? [] : [...this.statuses]; },
-                            toggleAllIdpels() { this.selectedIdpels = this.selectedIdpels.length === this.idpels.length ? [] : [...this.idpels]; },
-                            clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; },
-                            clearAllFilters() { this.selectAll(); },
-                            applyFilter() { this.currentPage = 1; },
-                            copyAsNew(item) {
-                                // Copy all data except id, coordinates, and photo
-                                this.isEditing = false;
-                                this.form = { ...item };
-                                delete this.form.id;
-                                this.form.koordinat_x = '';  // Clear for new location
-                                this.form.koordinat_y = '';  // Clear for new location
-                                this.photoPreview = null;    // Clear photo
-                                this.photoFile = null;
-                                this.photoName = '';
-                                this.showModal = true;
-                                this.showToast('Data copied! Fill new coordinates and photo, then save.', 'success');
-                            },
-                            openAddModal() { this.isEditing = false; this.resetForm(); this.showModal = true; },
-                            openEditModal(item) { this.isEditing = true; this.form = { ...item }; this.editingId = item.id; if (item.photo) { this.photoPreview = '/storage/' + item.photo; } this.showModal = true; },
-                            openDeleteModal(item) { this.deleteItem = item; this.showDeleteModal = true; },
-                            viewItem(item) { this.viewingItem = item; this.showViewModal = true; },
-                            resetForm() { Object.keys(this.form).forEach(k => this.form[k] = ''); this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
-                            handleFileSelect(e) { const file = e.target.files[0]; if (file) this.processFile(file); },
-                            handleDrop(e) { this.isDragging = false; const file = e.dataTransfer.files[0]; if (file) this.processFile(file); },
-                            processFile(file) {
-                                if (!['image/jpeg', 'image/png'].includes(file.type)) { this.showToast('Only JPG and PNG files are allowed', 'error'); return; }
-                                if (file.size > 20 * 1024 * 1024) { this.showToast('File size must be less than 20MB', 'error'); return; }
-                                this.photoFile = file; this.photoName = file.name;
-                                const reader = new FileReader(); reader.onload = e => this.photoPreview = e.target.result; reader.readAsDataURL(file);
-
-                                // Extract GPS coordinates from EXIF data
-                                this.extractGPSFromPhoto(file);
-                            },
-
-                            // Extract GPS coordinates from photo EXIF data
-                            extractGPSFromPhoto(file) {
-                                const self = this;
-                                EXIF.getData(file, function () {
-                                    const lat = EXIF.getTag(this, 'GPSLatitude');
-                                    const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
-                                    const lng = EXIF.getTag(this, 'GPSLongitude');
-                                    const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
-
-                                    if (lat && lng) {
-                                        // Convert DMS (degrees, minutes, seconds) to decimal
-                                        let latitude = lat[0] + lat[1] / 60 + lat[2] / 3600;
-                                        let longitude = lng[0] + lng[1] / 60 + lng[2] / 3600;
-
-                                        // Apply reference (N/S for lat, E/W for lng)
-                                        if (latRef === 'S') latitude = -latitude;
-                                        if (lngRef === 'W') longitude = -longitude;
-
-                                        // Auto-fill coordinates (koordinat_x = latitude, koordinat_y = longitude)
-                                        self.form.koordinat_x = latitude.toFixed(8);
-                                        self.form.koordinat_y = longitude.toFixed(8);
-
-                                        self.showToast('📍 GPS coordinates extracted from photo!', 'success');
-                                    } else {
-                                        console.log('No GPS data found in photo');
-                                    }
+                                // Handle normal regional filters
+                                return this.selectedRegionals.some(r => {
+                                    if (r === 'No Regional') return false;
+                                    return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
                                 });
-                            },
-                            removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
-                            async saveData() {
-                                const formData = new FormData();
-                                Object.keys(this.form).forEach(k => {
-                                    // Skip is_idpel_main here, handle separately
-                                    if (k === 'is_idpel_main') return;
-                                    if (this.form[k]) formData.append(k, this.form[k]);
+                            });
+                        }
+                        if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
+                        if (this.selectedIdpels.length) {
+                            data = data.filter(item => {
+                                // NO_IDPEL = show records with generated IDPEL (contains ' - ')
+                                if (this.selectedIdpels.includes('NO_IDPEL') && item.idpel?.includes(' - ')) return true;
+                                // Otherwise match exact IDPEL
+                                return this.selectedIdpels.filter(i => i !== 'NO_IDPEL').includes(item.idpel);
+                            });
+                        }
+                        return data.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
+                    },
+                    // Total filtered count (before pagination) for accurate total pages
+                    get totalFilteredCount() {
+                        let data = this.pjuData;
+                        // Note: searchTable filter is handled server-side (loadData), not here
+                        if (this.selectedRegionals.length) {
+                            data = data.filter(item => {
+                                if (this.selectedRegionals.includes('No Regional')) {
+                                    if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
+                                }
+                                return this.selectedRegionals.some(r => {
+                                    if (r === 'No Regional') return false;
+                                    return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
                                 });
-                                // Handle is_idpel_main as 1/0 for Laravel
-                                formData.append('is_idpel_main', this.form.is_idpel_main ? '1' : '0');
-                                if (this.photoFile) formData.append('photo', this.photoFile);
-                                try {
-                                    const url = this.isEditing ? `/api/pju-report/${this.editingId}` : '/api/pju-report';
-                                    const method = this.isEditing ? 'PUT' : 'POST';
-                                    if (this.isEditing) formData.append('_method', 'PUT');
-                                    const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
-                                    const json = await res.json();
-                                    if (json.success) {
-                                        this.showToast(json.message, 'success');
-                                        this.showModal = false;
-                                        // Persist search after edit
-                                        this.loadData(this.currentSearch);
-                                    }
-                                    else { this.showToast(json.message || 'Error saving data', 'error'); }
-                                } catch (e) { console.error(e); this.showToast('Error saving data', 'error'); }
-                            },
-                            async deleteData() {
-                                try {
-                                    const res = await fetch(`/api/pju-report/${this.deleteItem.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
-                                    const json = await res.json();
-                                    if (json.success) { this.showToast('Data successfully deleted', 'success'); this.showDeleteModal = false; this.loadData(); }
-                                } catch (e) { this.showToast('Error deleting data', 'error'); }
-                            },
-                            showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); },
+                            });
+                        }
+                        if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
+                        if (this.selectedIdpels.length) {
+                            data = data.filter(item => {
+                                // NO_IDPEL = show records with generated IDPEL (contains ' - ')
+                                if (this.selectedIdpels.includes('NO_IDPEL') && item.idpel?.includes(' - ')) return true;
+                                // Otherwise match exact IDPEL
+                                return this.selectedIdpels.filter(i => i !== 'NO_IDPEL').includes(item.idpel);
+                            });
+                        }
+                        return data.length;
+                    },
+                    get totalPages() { return Math.ceil(this.totalFilteredCount / this.perPage) || 1; },
+                    // Sliding window pagination: shows 5 pages around current page
+                    get visiblePages() {
+                        const total = this.totalPages;
+                        const current = this.currentPage;
+                        const pages = [];
 
-                            // Photo Upload Modal for Employee
-                            openPhotoUploadModal(item) {
-                                this.photoUploadItem = item;
-                                this.photoPreview = item.photo ? '/storage/' + item.photo : null;
-                                this.photoFile = null;
-                                this.photoName = '';
-                                this.showPhotoUploadModal = true;
-                            },
-                            async savePhotoOnly() {
-                                if (!this.photoFile) {
-                                    this.showToast('Please select a photo to upload', 'error');
-                                    return;
-                                }
-                                const formData = new FormData();
-                                formData.append('photo', this.photoFile);
-                                formData.append('_method', 'PUT');
-                                try {
-                                    const res = await fetch(`/api/pju-report/${this.photoUploadItem.id}/photo`, {
-                                        method: 'POST',
-                                        body: formData,
-                                        headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
-                                    });
-                                    const json = await res.json();
-                                    if (json.success) {
-                                        this.showToast('Photo uploaded successfully', 'success');
-                                        this.showPhotoUploadModal = false;
-                                        this.loadData();
-                                    } else {
-                                        this.showToast(json.message || 'Error uploading photo', 'error');
-                                    }
-                                } catch (e) { this.showToast('Error uploading photo', 'error'); }
-                            },
+                        if (total <= 7) {
+                            // If 7 or fewer pages, show all
+                            for (let i = 1; i <= total; i++) pages.push(i);
+                        } else {
+                            // Always show first page
+                            pages.push(1);
 
-                            // Import CSV/Excel
-                            async handleImport(event, format) {
-                                const file = event.target.files[0];
-                                if (!file) return;
+                            // Calculate window around current page
+                            let start = Math.max(2, current - 2);
+                            let end = Math.min(total - 1, current + 2);
 
-                                if (format !== 'csv') {
-                                    this.showToast('Please use CSV format for import.', 'error');
-                                    event.target.value = '';
-                                    return;
-                                }
-
-                                this.isImporting = true;
-                                this.importStatus = `Uploading ${file.name}...`;
-
-                                const formData = new FormData();
-                                formData.append('file', file);
-
-                                try {
-                                    this.importStatus = `Processing ${file.name}... This may take several minutes for large files.`;
-
-                                    const res = await fetch('/api/pju-report/import', {
-                                        method: 'POST',
-                                        body: formData,
-                                        headers: {
-                                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                            'Accept': 'application/json'
-                                        }
-                                    });
-
-                                    const result = await res.json();
-
-                                    this.importResult = {
-                                        imported: result.imported || 0,
-                                        updated: result.updated || 0,
-                                        duplicates: result.duplicates || 0,
-                                        errors: result.errors || 0,
-                                        processed: result.processed || 0,
-                                        recognized_columns: result.recognized_columns || [],
-                                        unrecognized_columns: result.unrecognized_columns || []
-                                    };
-
-                                    // Show result modal if there's any result
-                                    if (result.imported > 0 || result.updated > 0 || result.duplicates > 0) {
-                                        this.showImportResultModal = true;
-                                    }
-
-                                    // Reload data after import or update
-                                    if (result.imported > 0 || result.updated > 0) {
-                                        await this.loadData(this.currentSearch);
-                                    }
-
-                                } catch (e) {
-                                    console.error('Import error:', e);
-                                    this.showToast('Import failed. Please check your file format.', 'error');
-                                } finally {
-                                    this.isImporting = false;
-                                    event.target.value = '';
-                                }
-                            },
-
-                            // Export to Excel/CSV
-                            exportData(format = 'csv', mode = 'local') {
-                                // Mode 'all' = export ALL data from server (no limit)
-                                // Mode 'local' = export currently filtered data (max 5000)
-
-                                if (mode === 'all') {
-                                    // Build query params for server-side export with filters
-                                    const params = new URLSearchParams();
-                                    if (this.selectedRegionals.length === 1) {
-                                        params.set('region', this.selectedRegionals[0]);
-                                    }
-                                    if (this.selectedStatuses.length === 1) {
-                                        const statusMap = { 'METERISASI': 'M', 'ABONEMEN': 'A', 'UNCLEAR': 'unclear' };
-                                        params.set('status', statusMap[this.selectedStatuses[0]] || this.selectedStatuses[0]);
-                                    }
-                                    if (this.currentSearch) {
-                                        params.set('search', this.currentSearch);
-                                    }
-
-                                    // Redirect to server export endpoint (downloads CSV)
-                                    const url = '/api/pju-report/export' + (params.toString() ? '?' + params.toString() : '');
-                                    window.location.href = url;
-                                    this.showToast('Downloading ALL data...', 'success');
-                                    return;
-                                }
-
-                                // Local export (existing behavior)
-                                if (!this.filteredData.length) {
-                                    this.showToast('No data to export', 'error');
-                                    return;
-                                }
-
-                                const headers = ['IDPEL', 'NAMA', 'NAMAPNJ', 'RT', 'RW', 'TARIF', 'DAYA', 'JENISLAYANAN',
-                                    'NOMOR_METER_KWH', 'NOMOR_GARDU', 'NOMOR_JURUSAN_TIANG', 'NAMA_GARDU',
-                                    'NOMOR_METER_PREPAID', 'KOORDINAT_X', 'KOORDINAT_Y', 'KDAM',
-                                    'NAMA_KABUPATEN', 'NAMA_KECAMATAN', 'NAMA_KELURAHAN'];
-
-                                const rows = this.filteredData.map(item => [
-                                    item.idpel || '',
-                                    item.nama || '',
-                                    item.namapnj || '',
-                                    item.rt || '',
-                                    item.rw || '',
-                                    item.tarif || '',
-                                    item.daya || '',
-                                    item.jenislayanan || item.jenis_layanan || '',
-                                    item.nomor_meter_kwh || '',
-                                    item.nomor_gardu || '',
-                                    item.nomor_jurusan_tiang || '',
-                                    item.nama_gardu || '',
-                                    item.nomor_meter_prepaid || '',
-                                    item.koordinat_x || '',
-                                    item.koordinat_y || '',
-                                    item.kdam || '',
-                                    item.nama_kabupaten || '',
-                                    item.nama_kecamatan || '',
-                                    item.nama_kelurahan || ''
-                                ]);
-
-                                if (format === 'excel' && typeof XLSX !== 'undefined') {
-                                    // Export as Excel using SheetJS
-                                    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
-                                    const wb = XLSX.utils.book_new();
-                                    XLSX.utils.book_append_sheet(wb, ws, 'PJU Report');
-                                    XLSX.writeFile(wb, `pju-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
-                                } else {
-                                    // Export as CSV
-                                    let csv = headers.join(',') + '\n';
-                                    rows.forEach(row => {
-                                        csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
-                                    });
-
-                                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                                    const url = URL.createObjectURL(blob);
-                                    const link = document.createElement('a');
-                                    link.href = url;
-                                    link.download = `pju-report-${new Date().toISOString().slice(0, 10)}.csv`;
-                                    link.click();
-                                    URL.revokeObjectURL(url);
-                                }
-
-                                this.showToast(`Exported ${this.filteredData.length} records as ${format.toUpperCase()}`, 'success');
+                            // Adjust window if near edges
+                            if (current <= 4) {
+                                start = 2;
+                                end = 5;
+                            } else if (current >= total - 3) {
+                                start = total - 4;
+                                end = total - 1;
                             }
-                        };
+
+                            // Add ellipsis before window if needed
+                            if (start > 2) pages.push('...');
+
+                            // Add window pages
+                            for (let i = start; i <= end; i++) pages.push(i);
+
+                            // Add ellipsis after window if needed
+                            if (end < total - 1) pages.push('...');
+
+                            // Always show last page
+                            pages.push(total);
+                        }
+                        return pages;
+                    },
+                    init() { this.loadData(); },
+                    async loadData(search = '') {
+                        try {
+                            let url = '/api/pju-report/data?limit=5000';
+                            if (search) {
+                                url = `/api/pju-report/data?limit=5000&search=${encodeURIComponent(search)}`;
+                            }
+                            const res = await fetch(url);
+                            const json = await res.json();
+                            this.pjuData = json.data || [];
+                            this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
+                            if (search && this.pjuData.length > 0) {
+                                this.showToast(`Found ${this.pjuData.length} results for "${search}"`, 'success');
+                            } else if (search && this.pjuData.length === 0) {
+                                this.showToast(`No results found for "${search}"`, 'error');
+                            }
+                        } catch (e) { console.error(e); }
+                    },
+                    searchServer() {
+                        if (this.searchTable.length >= 3) {
+                            this.currentPage = 1; // Reset to first                                        page on new search
+                            this.currentSearch = this.searchTable;
+                            this.loadData(this.searchTable);
+                        } else if (this.searchTable.length === 0) {
+                            this.currentPage = 1; // Reset to first page
+                            this.currentSearch = '';
+                            this.loadData();
+                        }
+                    },
+                    toggleDropdown(name) { this.activeDropdown = this.activeDropdown === name ? null : name; },
+                    selectAll() { this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = []; },
+                    toggleAllRegionals() { this.selectedRegionals = this.selectedRegionals.length === this.regionals.length ? [] : [...this.regionals]; },
+                    toggleAllStatuses() { this.selectedStatuses = this.selectedStatuses.length === this.statuses.length ? [] : [...this.statuses]; },
+                    toggleAllIdpels() { this.selectedIdpels = this.selectedIdpels.length === this.idpels.length ? [] : [...this.idpels]; },
+                    clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; },
+                    clearAllFilters() { this.selectAll(); },
+                    applyFilter() { this.currentPage = 1; },
+                    copyAsNew(item) {
+                        // Copy all data except id, coordinates, and photo
+                        this.isEditing = false;
+                        this.form = { ...item };
+                        delete this.form.id;
+                        this.form.koordinat_x = '';  // Clear for new location
+                        this.form.koordinat_y = '';  // Clear for new location
+                        this.photoPreview = null;    // Clear photo
+                        this.photoFile = null;
+                        this.photoName = '';
+                        this.showModal = true;
+                        this.showToast('Data copied! Fill new coordinates and photo, then save.', 'success');
+                    },
+                    openAddModal() { this.isEditing = false; this.resetForm(); this.showModal = true; },
+                    openEditModal(item) { this.isEditing = true; this.form = { ...item }; this.editingId = item.id; if (item.photo) { this.photoPreview = '/storage/' + item.photo; } this.showModal = true; },
+                    openDeleteModal(item) { this.deleteItem = item; this.showDeleteModal = true; },
+                    viewItem(item) { this.viewingItem = item; this.showViewModal = true; },
+                    resetForm() { Object.keys(this.form).forEach(k => this.form[k] = ''); this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
+                    handleFileSelect(e) { const file = e.target.files[0]; if (file) this.processFile(file); },
+                    handleDrop(e) { this.isDragging = false; const file = e.dataTransfer.files[0]; if (file) this.processFile(file); },
+                    processFile(file) {
+                        if (!['image/jpeg', 'image/png'].includes(file.type)) { this.showToast('Only JPG and PNG files are allowed', 'error'); return; }
+                        if (file.size > 20 * 1024 * 1024) { this.showToast('File size must be less than 20MB', 'error'); return; }
+                        this.photoFile = file; this.photoName = file.name;
+                        const reader = new FileReader(); reader.onload = e => this.photoPreview = e.target.result; reader.readAsDataURL(file);
+
+                        // Extract GPS coordinates from EXIF data
+                        this.extractGPSFromPhoto(file);
+                    },
+
+                    // Extract GPS coordinates from photo EXIF data
+                    extractGPSFromPhoto(file) {
+                        const self = this;
+                        EXIF.getData(file, function () {
+                            const lat = EXIF.getTag(this, 'GPSLatitude');
+                            const latRef = EXIF.getTag(this, 'GPSLatitudeRef');
+                            const lng = EXIF.getTag(this, 'GPSLongitude');
+                            const lngRef = EXIF.getTag(this, 'GPSLongitudeRef');
+
+                            if (lat && lng) {
+                                // Convert DMS (degrees, minutes, seconds) to decimal
+                                let latitude = lat[0] + lat[1] / 60 + lat[2] / 3600;
+                                let longitude = lng[0] + lng[1] / 60 + lng[2] / 3600;
+
+                                // Apply reference (N/S for lat, E/W for lng)
+                                if (latRef === 'S') latitude = -latitude;
+                                if (lngRef === 'W') longitude = -longitude;
+
+                                // Auto-fill coordinates (koordinat_x = latitude, koordinat_y = longitude)
+                                self.form.koordinat_x = latitude.toFixed(8);
+                                self.form.koordinat_y = longitude.toFixed(8);
+
+                                self.showToast('📍 GPS coordinates extracted from photo!', 'success');
+                            } else {
+                                console.log('No GPS data found in photo');
+                            }
+                        });
+                    },
+                    removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
+                    async saveData() {
+                        const formData = new FormData();
+                        Object.keys(this.form).forEach(k => {
+                            // Skip is_idpel_main here, handle separately
+                            if (k === 'is_idpel_main') return;
+                            if (this.form[k]) formData.append(k, this.form[k]);
+                        });
+                        // Handle is_idpel_main as 1/0 for Laravel
+                        formData.append('is_idpel_main', this.form.is_idpel_main ? '1' : '0');
+                        if (this.photoFile) formData.append('photo', this.photoFile);
+                        try {
+                            const url = this.isEditing ? `/api/pju-report/${this.editingId}` : '/api/pju-report';
+                            const method = this.isEditing ? 'PUT' : 'POST';
+                            if (this.isEditing) formData.append('_method', 'PUT');
+                            const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                            const json = await res.json();
+                            if (json.success) {
+                                this.showToast(json.message, 'success');
+                                this.showModal = false;
+                                // Persist search after edit
+                                this.loadData(this.currentSearch);
+                            }
+                            else { this.showToast(json.message || 'Error saving data', 'error'); }
+                        } catch (e) { console.error(e); this.showToast('Error saving data', 'error'); }
+                    },
+                    async deleteData() {
+                        try {
+                            const res = await fetch(`/api/pju-report/${this.deleteItem.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                            const json = await res.json();
+                            if (json.success) { this.showToast('Data successfully deleted', 'success'); this.showDeleteModal = false; this.loadData(); }
+                        } catch (e) { this.showToast('Error deleting data', 'error'); }
+                    },
+                    showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); },
+
+                    // Photo Upload Modal for Employee
+                    openPhotoUploadModal(item) {
+                        this.photoUploadItem = item;
+                        this.photoPreview = item.photo ? '/storage/' + item.photo : null;
+                        this.photoFile = null;
+                        this.photoName = '';
+                        this.showPhotoUploadModal = true;
+                    },
+                    async savePhotoOnly() {
+                        if (!this.photoFile) {
+                            this.showToast('Please select a photo to upload', 'error');
+                            return;
+                        }
+                        const formData = new FormData();
+                        formData.append('photo', this.photoFile);
+                        formData.append('_method', 'PUT');
+                        try {
+                            const res = await fetch(`/api/pju-report/${this.photoUploadItem.id}/photo`, {
+                                method: 'POST',
+                                body: formData,
+                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                            });
+                            const json = await res.json();
+                            if (json.success) {
+                                this.showToast('Photo uploaded successfully', 'success');
+                                this.showPhotoUploadModal = false;
+                                this.loadData();
+                            } else {
+                                this.showToast(json.message || 'Error uploading photo', 'error');
+                            }
+                        } catch (e) { this.showToast('Error uploading photo', 'error'); }
+                    },
+
+                    // Import CSV/Excel
+                    async handleImport(event, format) {
+                        const file = event.target.files[0];
+                        if (!file) return;
+
+                        if (format !== 'csv') {
+                            this.showToast('Please use CSV format for import.', 'error');
+                            event.target.value = '';
+                            return;
+                        }
+
+                        this.isImporting = true;
+                        this.importStatus = `Uploading ${file.name}...`;
+
+                        const formData = new FormData();
+                        formData.append('file', file);
+
+                        try {
+                            this.importStatus = `Processing ${file.name}... This may take several minutes for large files.`;
+
+                            const res = await fetch('/api/pju-report/import', {
+                                method: 'POST',
+                                body: formData,
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                }
+                            });
+
+                            const result = await res.json();
+
+                            this.importResult = {
+                                imported: result.imported || 0,
+                                updated: result.updated || 0,
+                                duplicates: result.duplicates || 0,
+                                errors: result.errors || 0,
+                                processed: result.processed || 0,
+                                recognized_columns: result.recognized_columns || [],
+                                unrecognized_columns: result.unrecognized_columns || []
+                            };
+
+                            // Show result modal if there's any result
+                            if (result.imported > 0 || result.updated > 0 || result.duplicates > 0) {
+                                this.showImportResultModal = true;
+                            }
+
+                            // Reload data after import or update
+                            if (result.imported > 0 || result.updated > 0) {
+                                await this.loadData(this.currentSearch);
+                            }
+
+                        } catch (e) {
+                            console.error('Import error:', e);
+                            this.showToast('Import failed. Please check your file format.', 'error');
+                        } finally {
+                            this.isImporting = false;
+                            event.target.value = '';
+                        }
+                    },
+
+                    // Export to Excel/CSV
+                    exportData(format = 'csv', mode = 'local') {
+                        // Mode 'all' = export ALL data from server (no limit)
+                        // Mode 'local' = export currently filtered data (max 5000)
+
+                        if (mode === 'all') {
+                            // Build query params for server-side export with filters
+                            const params = new URLSearchParams();
+                            if (this.selectedRegionals.length === 1) {
+                                params.set('region', this.selectedRegionals[0]);
+                            }
+                            if (this.selectedStatuses.length === 1) {
+                                const statusMap = { 'METERISASI': 'M', 'ABONEMEN': 'A', 'UNCLEAR': 'unclear' };
+                                params.set('status', statusMap[this.selectedStatuses[0]] || this.selectedStatuses[0]);
+                            }
+                            if (this.currentSearch) {
+                                params.set('search', this.currentSearch);
+                            }
+
+                            // Redirect to server export endpoint (downloads CSV)
+                            const url = '/api/pju-report/export' + (params.toString() ? '?' + params.toString() : '');
+                            window.location.href = url;
+                            this.showToast('Downloading ALL data...', 'success');
+                            return;
+                        }
+
+                        // Local export (existing behavior)
+                        if (!this.filteredData.length) {
+                            this.showToast('No data to export', 'error');
+                            return;
+                        }
+
+                        const headers = ['IDPEL', 'NAMA', 'NAMAPNJ', 'RT', 'RW', 'TARIF', 'DAYA', 'JENISLAYANAN',
+                            'NOMOR_METER_KWH', 'NOMOR_GARDU', 'NOMOR_JURUSAN_TIANG', 'NAMA_GARDU',
+                            'NOMOR_METER_PREPAID', 'KOORDINAT_X', 'KOORDINAT_Y', 'KDAM',
+                            'NAMA_KABUPATEN', 'NAMA_KECAMATAN', 'NAMA_KELURAHAN'];
+
+                        const rows = this.filteredData.map(item => [
+                            item.idpel || '',
+                            item.nama || '',
+                            item.namapnj || '',
+                            item.rt || '',
+                            item.rw || '',
+                            item.tarif || '',
+                            item.daya || '',
+                            item.jenislayanan || item.jenis_layanan || '',
+                            item.nomor_meter_kwh || '',
+                            item.nomor_gardu || '',
+                            item.nomor_jurusan_tiang || '',
+                            item.nama_gardu || '',
+                            item.nomor_meter_prepaid || '',
+                            item.koordinat_x || '',
+                            item.koordinat_y || '',
+                            item.kdam || '',
+                            item.nama_kabupaten || '',
+                            item.nama_kecamatan || '',
+                            item.nama_kelurahan || ''
+                        ]);
+
+                        if (format === 'excel' && typeof XLSX !== 'undefined') {
+                            // Export as Excel using SheetJS
+                            const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+                            const wb = XLSX.utils.book_new();
+                            XLSX.utils.book_append_sheet(wb, ws, 'PJU Report');
+                            XLSX.writeFile(wb, `pju-report-${new Date().toISOString().slice(0, 10)}.xlsx`);
+                        } else {
+                            // Export as CSV
+                            let csv = headers.join(',') + '\n';
+                            rows.forEach(row => {
+                                csv += row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',') + '\n';
+                            });
+
+                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            const url = URL.createObjectURL(blob);
+                            const link = document.createElement('a');
+                            link.href = url;
+                            link.download = `pju-report-${new Date().toISOString().slice(0, 10)}.csv`;
+                            link.click();
+                            URL.revokeObjectURL(url);
+                        }
+
+                        this.showToast(`Exported ${this.filteredData.length} records as ${format.toUpperCase()}`, 'success');
                     }
-                </script>
+                };
+            }
+        </script>
     @endpush
 @endsection
