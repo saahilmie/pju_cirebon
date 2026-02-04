@@ -44,15 +44,21 @@ RUN composer install --no-dev --optimize-autoloader --no-interaction
 # Install Node dependencies and build assets
 RUN npm install && npm run build
 
-# Cache Laravel config
-RUN php artisan config:cache && php artisan route:cache && php artisan view:cache
+# Create storage directories with proper permissions
+RUN mkdir -p storage/logs storage/framework/cache/data storage/framework/sessions storage/framework/views bootstrap/cache \
+    && chmod -R 777 storage bootstrap/cache
 
-# Create storage directories
-RUN mkdir -p storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
-    && chmod -R 775 storage bootstrap/cache
+# DO NOT cache config at build time - env vars are set at runtime!
+# Config will be fresh on each request
 
-# Default port
-ENV PORT=8080
+# Create start script
+RUN echo '#!/bin/bash\n\
+    php artisan config:clear\n\
+    php artisan cache:clear\n\
+    php artisan view:clear\n\
+    php artisan migrate --force\n\
+    php -S 0.0.0.0:${PORT:-8080} -t public' > /app/start.sh \
+    && chmod +x /app/start.sh
 
-# Start command - use shell to properly handle PORT variable
-CMD php artisan migrate --force && php -S 0.0.0.0:${PORT} -t public
+# Start command
+CMD ["/app/start.sh"]
