@@ -649,6 +649,7 @@
 
                     async reloadViewportMarkers() {
                         // Clear existing markers and lines
+                        this.markers = []; // Clear local array to prevent accumulation
                         this.markerLayer.clearLayers();
                         if (this.lineLayer) {
                             this.lineLayer.clearLayers();
@@ -800,7 +801,8 @@
 
                         // If clicked point is IDPEL Main, show carousel with all photos from same IDPEL
                         if (clickedPoint && clickedPoint.is_idpel_main) {
-                            this.relatedPhotos = this.markers
+                            // Get all photos for this IDPEL and ensure unique photo paths
+                            const photos = this.markers
                                 .filter(m => m.data.idpel === idpel && m.data.photo)
                                 .map(m => ({
                                     photo: m.data.photo,
@@ -808,6 +810,9 @@
                                     koordinat_y: m.data.koordinat_y,
                                     is_idpel_main: m.data.is_idpel_main
                                 }));
+                            
+                            // Deduplicate by photo path
+                            this.relatedPhotos = Array.from(new Map(photos.map(item => [item.photo, item])).values());
                         } else {
                             // For non-main markers, show only this point's photo
                             if (clickedPoint && clickedPoint.photo) {

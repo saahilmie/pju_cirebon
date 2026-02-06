@@ -114,8 +114,8 @@ class PhotoUploadController extends Controller
                     // Use coordinates from parsed filename if available
                     $parsed = $item['parsed'];
                     if (!empty($parsed['lat']) && !empty($parsed['lng'])) {
-                        $newRecord->koordinat_x = $parsed['lng'];
-                        $newRecord->koordinat_y = $parsed['lat'];
+                        $newRecord->koordinat_x = $parsed['lat'];
+                        $newRecord->koordinat_y = $parsed['lng'];
                     } else {
                         // Generate nearby coordinates
                         $offset = (mt_rand(-100, 100) / 1000000);
