@@ -69,7 +69,7 @@
                     <div class="relative" x-data="{ showPassword: false }">
                         <input :type="showPassword ? 'text' : 'password'" name="password" placeholder="Password"
                             class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#29AAE1] text-sm pr-10"
-                            required>
+                            autocomplete="off" required>
                         <button type="button" @click="showPassword = !showPassword"
                             class="absolute right-3 top-1/2 -translate-y-1/2 text-[#29AAE1]">
                             <!-- Eye open icon (show when password is hidden) -->

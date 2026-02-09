@@ -6,7 +6,7 @@
 @section('content')
     <div x-data="dashboardPage()" x-init="init()" class="space-y-4">
         <!-- Toast Notification -->
-        <div x-show="showToast" x-transition class="fixed top-4 right-4 z-[60]">
+        <div x-show="showToast" x-cloak x-transition class="fixed top-4 right-4 z-[60]">
             <div class="bg-[#17C353] text-white px-5 py-3 rounded-lg shadow-lg flex items-center gap-3 min-w-[280px]">
                 <div class="w-7 h-7 bg-white rounded-full flex items-center justify-center flex-shrink-0">
                     <svg class="w-4 h-4 text-[#17C353]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -369,7 +369,7 @@
                             }, 100);
                         @endif
 
-                                                    if (document.getElementById('mini-map')) {
+                                                            if (document.getElementById('mini-map')) {
                             const miniMap = L.map('mini-map', {
                                 zoomControl: true, dragging: true, scrollWheelZoom: true
                             }).setView([-6.7066, 108.5570], 9);

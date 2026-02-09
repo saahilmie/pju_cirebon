@@ -1,6 +1,6 @@
 <!-- Main Layout - T-Shape: Navbar full width, Sidebar below navbar -->
 <!DOCTYPE html>
-<html lang="id" x-data="appState()" :class="{ 'dark': darkMode }">
+<html lang="id" x-data="appState()">
 
 <head>
     <meta charset="UTF-8">
@@ -30,7 +30,7 @@
     @stack('styles')
 </head>
 
-<body class="min-h-screen bg-gray-100 dark:bg-gray-900">
+<body class="min-h-screen bg-gray-100">
     <!-- T-Shape Layout: Navbar on top (full width), then Sidebar + Content below -->
 
     <!-- Navbar - Full Width at Top -->
@@ -115,20 +115,16 @@
         function appState() {
             return {
                 sidebarOpen: localStorage.getItem('sidebarOpen') !== 'false',
-                darkMode: localStorage.getItem('darkMode') === 'true',
                 showLogoutModal: false,
                 toggleSidebar() {
                     this.sidebarOpen = !this.sidebarOpen;
                     localStorage.setItem('sidebarOpen', this.sidebarOpen);
                 },
-                toggleDarkMode() {
-                    this.darkMode = !this.darkMode;
-                    localStorage.setItem('darkMode', this.darkMode);
-                },
+            },
                 openLogoutModal() {
-                    this.showLogoutModal = true;
-                }
-            };
+                this.showLogoutModal = true;
+            }
+        };
         }
 
         // Real-time updates handler
