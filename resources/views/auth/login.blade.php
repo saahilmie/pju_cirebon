@@ -95,7 +95,7 @@
                         <input type="checkbox" name="remember" class="w-4 h-4 rounded border-gray-300 text-[#29AAE1]">
                         <span class="text-gray-600">Remember me</span>
                     </label>
-                    <a href="#" class="text-[#29AAE1] hover:underline">Forgot Password?</a>
+                    <span class="text-gray-400 cursor-not-allowed" title="Feature coming soon">Forgot Password?</span>
                 </div>
 
                 <button type="submit"

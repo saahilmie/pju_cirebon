@@ -369,7 +369,9 @@
                             }, 100);
                         @endif
 
-                                                            if (document.getElementById('mini-map')) {
+                                // Only initialize mini-map if container exists and hasn't been initialized
+                                const mapContainer = document.getElementById('mini-map');
+                        if (mapContainer && !mapContainer._leaflet_id) {
                             const miniMap = L.map('mini-map', {
                                 zoomControl: true, dragging: true, scrollWheelZoom: true
                             }).setView([-6.7066, 108.5570], 9);

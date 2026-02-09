@@ -215,7 +215,9 @@
 
                             if (this.charts.status) this.charts.status.destroy();
 
-                            const ctx = document.getElementById('statusChart').getContext('2d');
+                            const canvas = document.getElementById('statusChart');
+                            if (!canvas) return;
+                            const ctx = canvas.getContext('2d');
                             this.charts.status = new Chart(ctx, {
                                 type: 'doughnut',
                                 data: {
@@ -253,7 +255,9 @@
 
                             if (this.charts.wilayah) this.charts.wilayah.destroy();
 
-                            const ctx = document.getElementById('wilayahChart').getContext('2d');
+                            const canvas = document.getElementById('wilayahChart');
+                            if (!canvas) return;
+                            const ctx = canvas.getContext('2d');
                             this.charts.wilayah = new Chart(ctx, {
                                 type: 'bar',
                                 data: {
@@ -294,7 +298,9 @@
 
                             if (this.charts.daya) this.charts.daya.destroy();
 
-                            const ctx = document.getElementById('dayaChart').getContext('2d');
+                            const canvas = document.getElementById('dayaChart');
+                            if (!canvas) return;
+                            const ctx = canvas.getContext('2d');
                             this.charts.daya = new Chart(ctx, {
                                 type: 'bar',
                                 data: {
