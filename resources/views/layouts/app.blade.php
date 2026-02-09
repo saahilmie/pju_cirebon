@@ -120,11 +120,10 @@
                     this.sidebarOpen = !this.sidebarOpen;
                     localStorage.setItem('sidebarOpen', this.sidebarOpen);
                 },
-            },
                 openLogoutModal() {
-                this.showLogoutModal = true;
-            }
-        };
+                    this.showLogoutModal = true;
+                }
+            };
         }
 
         // Real-time updates handler
