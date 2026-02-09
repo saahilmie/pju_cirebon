@@ -196,9 +196,9 @@
 
         <!-- Report Content -->
         <div class="bg-white rounded-xl shadow-sm" style="border: 1px solid #C8BFBF;">
-            <div class="p-4 flex items-center justify-between" style="border-bottom: 1px solid #C8BFBF;">
+            <div class="p-4 flex flex-wrap items-center justify-between gap-3" style="border-bottom: 1px solid #C8BFBF;">
                 <h3 class="text-lg font-bold text-gray-800">All Report</h3>
-                <div class="flex items-center gap-3">
+                <div class="flex flex-wrap items-center gap-3">
                     <div class="relative flex items-center gap-1">
                         <input type="text" placeholder="Search IDPEL, Gardu, Alamat..." x-model="searchTable"
                             @keyup.enter="searchServer()"
@@ -553,9 +553,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                                                                            form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                                                                            hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                                                                        ]">
+                                                                                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                                                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                                                                            ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">

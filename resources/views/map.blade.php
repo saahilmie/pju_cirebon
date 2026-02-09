@@ -522,6 +522,10 @@
                             // Fetch region bounds from API
                             console.log('Fetching region bounds...');
                             const response = await fetch('/api/region-bounds');
+                            if (!response.ok) {
+                                console.warn('Region bounds API returned:', response.status);
+                                return; // Skip region polygons if API fails
+                            }
                             const regions = await response.json();
                             console.log('Regions loaded:', regions.length, 'regions');
 
@@ -810,7 +814,7 @@
                                     koordinat_y: m.data.koordinat_y,
                                     is_idpel_main: m.data.is_idpel_main
                                 }));
-                            
+
                             // Deduplicate by photo path
                             this.relatedPhotos = Array.from(new Map(photos.map(item => [item.photo, item])).values());
                         } else {
