@@ -59,6 +59,19 @@ Route::get('/pju-markers', function (Request $request) {
             ->whereBetween('koordinat_y', [(float) $minLng, (float) $maxLng]);
     }
 
+    // --- PRIORITIZATION & LIMIT FIX ---
+    // Ensure Meterisasi (M) and Abonemen (A) are returned FIRST
+    $query->orderByRaw("CASE WHEN kdam IN ('M', 'A') THEN 1 ELSE 2 END");
+
+    // Secondary sort by ID desc
+    $query->orderBy('id', 'desc');
+
+    // Override limit if it's the default frontend request (5000)
+    // Increase to 25000 to show more data
+    if ($limit == 5000) {
+        $limit = 25000;
+    }
+
     $points = $query->select([
         'idpel',
         'nama',

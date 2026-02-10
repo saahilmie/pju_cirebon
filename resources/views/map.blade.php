@@ -598,7 +598,7 @@
                             // Get current viewport bounds for optimized loading
                             const bounds = this.map.getBounds();
                             const params = new URLSearchParams({
-                                limit: 5000,
+                                limit: 30000,
                                 minLat: bounds.getSouth(),
                                 maxLat: bounds.getNorth(),
                                 minLng: bounds.getWest(),
