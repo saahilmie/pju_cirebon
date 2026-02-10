@@ -75,20 +75,21 @@ Route::get('/pju-markers', function (Request $request) {
     $points = $query->select([
         'idpel',
         'nama',
-        // 'namapnj', // Removed to save bandwidth
-        // 'rt', 'rw', // Removed
+        'namapnj',
+        'rt',
+        'rw',
         'tarif',
         'daya',
         'kdam',
         'nama_kabupaten',
         'nama_kecamatan',
-        // 'nama_kelurahan', // Removed
-        // 'jenislayanan', // Removed
-        // 'nomor_meter_kwh', // Removed
-        // 'nomor_meter_prepaid', // Removed
-        // 'nomor_gardu', // Removed
-        // 'nama_gardu', // Removed
-        // 'nomor_jurusan_tiang', // Removed
+        'nama_kelurahan',
+        'jenislayanan',
+        'nomor_meter_kwh',
+        'nomor_meter_prepaid',
+        'nomor_gardu',
+        'nama_gardu',
+        'nomor_jurusan_tiang',
         'koordinat_x',
         'koordinat_y',
         'photo',
