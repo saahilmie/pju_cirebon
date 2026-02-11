@@ -55,3 +55,28 @@ Route::middleware('auth')->group(function () {
     Route::post('/api/photo-upload/analyze', [App\Http\Controllers\PhotoUploadController::class, 'analyze']);
     Route::post('/api/photo-upload/process', [App\Http\Controllers\PhotoUploadController::class, 'process']);
 });
+
+// EMERGENCY CLEANUP ROUTE (Secret URL)
+Route::get('/cleanup-duplicates-now-please', function () {
+    try {
+        // Increase memory limit for this heavy operation
+        ini_set('memory_limit', '512M');
+        set_time_limit(300);
+
+        $deleted = \Illuminate\Support\Facades\DB::delete("
+            DELETE FROM pju_data 
+            WHERE id IN (
+                SELECT id FROM (
+                    SELECT id,
+                    ROW_NUMBER() OVER (PARTITION BY idpel ORDER BY id DESC) as rn
+                    FROM pju_data
+                    WHERE (kdam IS NULL OR kdam = '' OR kdam NOT IN ('M', 'A'))
+                ) t
+                WHERE t.rn > 1
+            )
+        ");
+        return "<h1>CLEANUP SUCCESS ✅</h1><p>Deleted Records: <strong>$deleted</strong></p><p>Current Total Data: " . \App\Models\PjuData::count() . "</p><br><a href='/dashboard'>Back to Dashboard</a>";
+    } catch (\Exception $e) {
+        return "<h1>ERROR ❌</h1><p>" . $e->getMessage() . "</p>";
+    }
+});
