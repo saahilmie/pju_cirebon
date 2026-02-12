@@ -169,7 +169,7 @@
                 <!-- Image Carousel (like Google Maps) -->
                 <div class="relative" x-show="relatedPhotos.length > 0">
                     <div class="w-full h-40 bg-gray-100 overflow-hidden">
-                        <img :src="'/storage/' + relatedPhotos[currentPhotoIndex]?.photo" class="w-full h-full object-cover"
+                        <img :src="getPhotoUrl(relatedPhotos[currentPhotoIndex]?.photo)" class="w-full h-full object-cover"
                             x-show="relatedPhotos[currentPhotoIndex]?.photo">
                     </div>
                     <!-- Prev/Next Buttons -->
@@ -273,7 +273,7 @@
             <!-- Photo Section - Single photo per location -->
             <div class="relative h-44 bg-gray-100 flex items-center justify-center overflow-hidden">
                 <template x-if="selectedPoint?.photo">
-                    <img :src="'/storage/' + selectedPoint.photo" class="w-full h-full object-cover"
+                    <img :src="getPhotoUrl(selectedPoint.photo)" class="w-full h-full object-cover"
                         :alt="'Photo ' + selectedPoint.idpel">
                 </template>
                 <template x-if="!selectedPoint?.photo">
@@ -452,6 +452,15 @@
                     // Helper function: Get jumlah lampu (count of markers with same IDPEL)
                     getJumlahLampu(idpel) {
                         return this.idpelCounts[idpel] || 1;
+                    },
+
+                    // Helper function: Get correct photo URL
+                    // Photos starting with '/' are served directly from public/ (e.g. /dishub_photos/XYZ.jpg)
+                    // Others need the /storage/ prefix (e.g. pju-photos/abc.png)
+                    getPhotoUrl(photo) {
+                        if (!photo) return '';
+                        if (photo.startsWith('/') || photo.startsWith('http')) return photo;
+                        return '/storage/' + photo;
                     },
 
                     async init() {
