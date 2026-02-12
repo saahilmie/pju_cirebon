@@ -553,9 +553,9 @@
                         </div>
                         <div class="col-span-2">
                             <label class="flex items-center gap-3 p-3 rounded-lg border transition-colors" :class="[
-                                                                                                                form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
-                                                                                                                hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-                                                                                                            ]">
+                                                                                                                    form.is_idpel_main ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]',
+                                                                                                                    hasExistingIdpelMain() && !form.is_idpel_main ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
+                                                                                                                ]">
                                 <input type="checkbox" x-model="form.is_idpel_main"
                                     :disabled="hasExistingIdpelMain() && !form.is_idpel_main"
                                     class="w-5 h-5 text-[#29AAE1] rounded focus:ring-[#29AAE1]">
@@ -851,7 +851,7 @@
                     <!-- Photo Section -->
                     <div x-show="viewingItem?.photo" class="border-t pt-4">
                         <span class="text-xs font-medium text-gray-500 uppercase block mb-2">PJU DOCUMENTATION PHOTO</span>
-                        <img :src="viewingItem?.photo ? '/storage/' + viewingItem.photo : ''"
+                        <img :src="getPhotoUrl(viewingItem?.photo)"
                             class="max-w-full max-h-64 rounded-lg shadow-md object-contain">
                     </div>
                     <div x-show="!viewingItem?.photo" class="border-t pt-4">
@@ -1107,10 +1107,11 @@
                         this.showToast('Data copied! Fill new coordinates and photo, then save.', 'success');
                     },
                     openAddModal() { this.isEditing = false; this.resetForm(); this.showModal = true; },
-                    openEditModal(item) { this.isEditing = true; this.form = { ...item }; this.editingId = item.id; if (item.photo) { this.photoPreview = '/storage/' + item.photo; } this.showModal = true; },
+                    openEditModal(item) { this.isEditing = true; this.form = { ...item }; this.editingId = item.id; if (item.photo) { this.photoPreview = this.getPhotoUrl(item.photo); } this.showModal = true; },
                     openDeleteModal(item) { this.deleteItem = item; this.showDeleteModal = true; },
                     viewItem(item) { this.viewingItem = item; this.showViewModal = true; },
                     resetForm() { Object.keys(this.form).forEach(k => this.form[k] = ''); this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
+                    getPhotoUrl(photo) { if (!photo) return ''; if (photo.startsWith('/') || photo.startsWith('http')) return photo; return '/storage/' + photo; },
                     handleFileSelect(e) { const file = e.target.files[0]; if (file) this.processFile(file); },
                     handleDrop(e) { this.isDragging = false; const file = e.dataTransfer.files[0]; if (file) this.processFile(file); },
                     processFile(file) {
