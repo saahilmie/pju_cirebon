@@ -9,12 +9,12 @@
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-xl font-bold text-gray-900 dark:text-white">Bulk Photo Upload</h1>
-                <p class="text-gray-600 dark:text-gray-400 text-sm mt-1">Upload multiple PJU photos at once with
+                <h1 class="text-xl font-bold text-gray-900">Bulk Photo Upload</h1>
+                <p class="text-gray-600 text-sm mt-1">Upload multiple PJU photos at once with
                     auto-matching</p>
             </div>
             <a href="{{ route('pju-report') }}"
-                class="px-4 py-2 text-sm bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-slate-600 transition">
+                class="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300:bg-slate-600 transition">
                 Back to Report
             </a>
         </div>
@@ -32,30 +32,30 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                 </svg>
-                <p class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                <p class="text-lg font-semibold text-gray-700 mb-1">
                     Drag & Drop Photos Here
                 </p>
-                <p class="text-gray-500 dark:text-gray-400 text-sm">
+                <p class="text-gray-500 text-sm">
                     or click to browse - Supports JPG, PNG up to 20MB each
                 </p>
             </div>
         </div>
 
         <!-- Filename Format Guide -->
-        <div class="bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <h3 class="font-semibold text-blue-800 dark:text-blue-300 mb-2 text-sm">Supported Filename Formats:</h3>
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 class="font-semibold text-blue-800 mb-2 text-sm">Supported Filename Formats:</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
-                <div class="bg-white dark:bg-slate-800 p-2 rounded">
-                    <code class="text-blue-600 dark:text-blue-400">533113714188.jpg</code>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">IDPEL Main (attach)</p>
+                <div class="bg-white p-2 rounded">
+                    <code class="text-blue-600">533113714188.jpg</code>
+                    <p class="text-gray-600 mt-1">IDPEL Main (attach)</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-2 rounded">
-                    <code class="text-amber-600 dark:text-amber-400">533113714188(2).jpg</code>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">Branch #2 (auto-duplicate)</p>
+                <div class="bg-white p-2 rounded">
+                    <code class="text-amber-600">533113714188(2).jpg</code>
+                    <p class="text-gray-600 mt-1">Branch #2 (auto-duplicate)</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-2 rounded">
-                    <code class="text-green-600 dark:text-green-400">533113714188_-6.767,108.556.jpg</code>
-                    <p class="text-gray-600 dark:text-gray-400 mt-1">With coordinates</p>
+                <div class="bg-white p-2 rounded">
+                    <code class="text-green-600">533113714188_-6.767,108.556.jpg</code>
+                    <p class="text-gray-600 mt-1">With coordinates</p>
                 </div>
             </div>
         </div>
@@ -75,14 +75,14 @@
 
         <!-- Results Table -->
         <div x-show="results.length > 0 && !isAnalyzing"
-            class="bg-white dark:bg-slate-800 rounded-lg shadow overflow-hidden">
-            <div class="p-3 border-b border-gray-200 dark:border-slate-700 flex justify-between items-center">
-                <h3 class="text-sm font-semibold text-gray-800 dark:text-white">
+            class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-3 border-b border-gray-200 flex justify-between items-center">
+                <h3 class="text-sm font-semibold text-gray-800">
                     Preview Upload (<span x-text="results.length"></span> files)
                 </h3>
                 <div class="flex gap-2">
                     <button @click="clearAll()"
-                        class="px-3 py-1.5 text-xs bg-gray-200 dark:bg-slate-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-slate-600 transition">
+                        class="px-3 py-1.5 text-xs bg-gray-200 text-gray-700 rounded hover:bg-gray-300:bg-slate-600 transition">
                         Clear All
                     </button>
                     <button @click="processUploads()" :disabled="isProcessing"
@@ -95,36 +95,36 @@
 
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="bg-gray-50 dark:bg-slate-900">
+                    <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                 Preview</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                 Filename</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                 IDPEL</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                 Status</th>
-                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">
+                            <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">
                                 Action</th>
                             <th class="px-3 py-2"></th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-gray-200 dark:divide-slate-700">
+                    <tbody class="divide-y divide-gray-200">
                         <template x-for="(item, index) in results" :key="index">
-                            <tr class="hover:bg-gray-50 dark:hover:bg-slate-700/50">
+                            <tr class="hover:bg-gray-50:bg-slate-700/50">
                                 <td class="px-3 py-2">
                                     <img :src="'/storage/' + item.temp_path" class="w-10 h-10 object-cover rounded" alt="">
                                 </td>
                                 <td class="px-3 py-2">
-                                    <span class="text-xs text-gray-900 dark:text-white" x-text="item.original_name"></span>
+                                    <span class="text-xs text-gray-900" x-text="item.original_name"></span>
                                     <div x-show="item.parsed.sequence"
-                                        class="text-[10px] text-amber-600 dark:text-amber-400">
+                                        class="text-[10px] text-amber-600">
                                         Branch #<span x-text="item.parsed.sequence"></span>
                                     </div>
                                 </td>
                                 <td class="px-3 py-2">
-                                    <span class="font-mono text-xs text-gray-700 dark:text-gray-300"
+                                    <span class="font-mono text-xs text-gray-700"
                                         x-text="item.parsed.idpel || '-'"></span>
                                     <div x-show="item.parsed.lat" class="text-[10px] text-gray-500">
                                         <span x-text="item.parsed.lat?.toFixed(4)"></span>, <span
@@ -143,7 +143,7 @@
                                 </td>
                                 <td class="px-3 py-2">
                                     <select x-model="item.action"
-                                        class="text-xs border rounded px-2 py-1 bg-white dark:bg-slate-700 dark:border-slate-600">
+                                        class="text-xs border rounded px-2 py-1 bg-white">
                                         <option value="attach" x-show="item.match.status === 'match'">Attach to record
                                         </option>
                                         <option value="duplicate" x-show="item.match.status === 'duplicate'">
@@ -168,20 +168,20 @@
 
         <!-- Process Result -->
         <div x-show="processResult"
-            class="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
-            <h3 class="text-sm font-semibold text-green-800 dark:text-green-300 mb-3">Upload Complete!</h3>
+            class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-green-800 mb-3">Upload Complete!</h3>
             <div class="grid grid-cols-3 gap-3 text-center">
-                <div class="bg-white dark:bg-slate-800 p-3 rounded">
+                <div class="bg-white p-3 rounded">
                     <p class="text-2xl font-bold text-green-600" x-text="processResult?.processed || 0"></p>
-                    <p class="text-xs text-gray-600 dark:text-gray-400">Photos Attached</p>
+                    <p class="text-xs text-gray-600">Photos Attached</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-3 rounded">
+                <div class="bg-white p-3 rounded">
                     <p class="text-2xl font-bold text-amber-600" x-text="processResult?.duplicated || 0"></p>
-                    <p class="text-xs text-gray-600 dark:text-gray-400">Records Created</p>
+                    <p class="text-xs text-gray-600">Records Created</p>
                 </div>
-                <div class="bg-white dark:bg-slate-800 p-3 rounded">
+                <div class="bg-white p-3 rounded">
                     <p class="text-2xl font-bold text-gray-500" x-text="processResult?.skipped || 0"></p>
-                    <p class="text-xs text-gray-600 dark:text-gray-400">Skipped</p>
+                    <p class="text-xs text-gray-600">Skipped</p>
                 </div>
             </div>
         </div>
