@@ -963,57 +963,11 @@
                     get filteredStatuses() { return this.searchStatus ? this.statuses.filter(s => s.toLowerCase().includes(this.searchStatus.toLowerCase())) : this.statuses; },
                     get filteredIdpels() { return this.searchIdpel ? this.idpels.filter(i => i.includes(this.searchIdpel)) : this.idpels; },
                     get filteredData() {
-                        let data = this.pjuData;
-                        // Note: searchTable filter is handled server-side (loadData), not here
-                        if (this.selectedRegionals.length) {
-                            data = data.filter(item => {
-                                // Handle 'No Regional' filter
-                                if (this.selectedRegionals.includes('No Regional')) {
-                                    if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
-                                }
-                                // Handle normal regional filters
-                                return this.selectedRegionals.some(r => {
-                                    if (r === 'No Regional') return false;
-                                    return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
-                                });
-                            });
-                        }
-                        if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
-                        if (this.selectedIdpels.length) {
-                            data = data.filter(item => {
-                                // NO_IDPEL = show records with generated IDPEL (contains ' - ')
-                                if (this.selectedIdpels.includes('NO_IDPEL') && item.idpel?.includes(' - ')) return true;
-                                // Otherwise match exact IDPEL
-                                return this.selectedIdpels.filter(i => i !== 'NO_IDPEL').includes(item.idpel);
-                            });
-                        }
-                        return data.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
+                        // All filtering is now server-side, just paginate
+                        return this.pjuData.slice((this.currentPage - 1) * this.perPage, this.currentPage * this.perPage);
                     },
-                    // Total filtered count (before pagination) for accurate total pages
                     get totalFilteredCount() {
-                        let data = this.pjuData;
-                        // Note: searchTable filter is handled server-side (loadData), not here
-                        if (this.selectedRegionals.length) {
-                            data = data.filter(item => {
-                                if (this.selectedRegionals.includes('No Regional')) {
-                                    if (!item.nama_kabupaten || item.nama_kabupaten.trim() === '') return true;
-                                }
-                                return this.selectedRegionals.some(r => {
-                                    if (r === 'No Regional') return false;
-                                    return item.nama_kabupaten?.includes(r.toUpperCase().replace('KAB. ', '').replace('KOTA ', ''));
-                                });
-                            });
-                        }
-                        if (this.selectedStatuses.length) data = data.filter(item => this.selectedStatuses.includes(item.kdam || 'Unclear'));
-                        if (this.selectedIdpels.length) {
-                            data = data.filter(item => {
-                                // NO_IDPEL = show records with generated IDPEL (contains ' - ')
-                                if (this.selectedIdpels.includes('NO_IDPEL') && item.idpel?.includes(' - ')) return true;
-                                // Otherwise match exact IDPEL
-                                return this.selectedIdpels.filter(i => i !== 'NO_IDPEL').includes(item.idpel);
-                            });
-                        }
-                        return data.length;
+                        return this.pjuData.length;
                     },
                     get totalPages() { return Math.ceil(this.totalFilteredCount / this.perPage) || 1; },
                     // Sliding window pagination: shows 5 pages around current page
@@ -1059,11 +1013,22 @@
                     init() { this.loadData(); },
                     async loadData(search = '') {
                         try {
-                            let url = '/api/pju-report/data?limit=5000';
+                            let params = new URLSearchParams();
+                            params.set('limit', '5000');
                             if (search) {
-                                url = `/api/pju-report/data?limit=5000&search=${encodeURIComponent(search)}`;
+                                params.set('search', search);
                             }
-                            const res = await fetch(url);
+                            // Send filter parameters to server
+                            if (this.selectedRegionals.length) {
+                                params.set('regional', this.selectedRegionals.join(','));
+                            }
+                            if (this.selectedStatuses.length) {
+                                params.set('status', this.selectedStatuses.join(','));
+                            }
+                            if (this.selectedIdpels.length) {
+                                params.set('idpel', this.selectedIdpels.join(','));
+                            }
+                            const res = await fetch('/api/pju-report/data?' + params.toString());
                             const json = await res.json();
                             this.pjuData = json.data || [];
                             this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
@@ -1086,13 +1051,13 @@
                         }
                     },
                     toggleDropdown(name) { this.activeDropdown = this.activeDropdown === name ? null : name; },
-                    selectAll() { this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = []; },
+                    selectAll() { this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = []; this.currentPage = 1; this.loadData(this.currentSearch); },
                     toggleAllRegionals() { this.selectedRegionals = this.selectedRegionals.length === this.regionals.length ? [] : [...this.regionals]; },
                     toggleAllStatuses() { this.selectedStatuses = this.selectedStatuses.length === this.statuses.length ? [] : [...this.statuses]; },
                     toggleAllIdpels() { this.selectedIdpels = this.selectedIdpels.length === this.idpels.length ? [] : [...this.idpels]; },
-                    clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; },
+                    clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; this.currentPage = 1; this.loadData(this.currentSearch); },
                     clearAllFilters() { this.selectAll(); },
-                    applyFilter() { this.currentPage = 1; },
+                    applyFilter() { this.currentPage = 1; this.loadData(this.currentSearch); },
                     copyAsNew(item) {
                         // Copy all data except id, coordinates, and photo
                         this.isEditing = false;

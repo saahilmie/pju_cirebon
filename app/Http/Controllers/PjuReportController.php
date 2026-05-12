@@ -18,6 +18,9 @@ class PjuReportController extends Controller
     {
         $limit = $request->get('limit', 100);
         $search = $request->get('search', '');
+        $regionals = $request->get('regional') ? explode(',', $request->get('regional')) : [];
+        $statuses = $request->get('status') ? explode(',', $request->get('status')) : [];
+        $idpels = $request->get('idpel') ? explode(',', $request->get('idpel')) : [];
 
         $query = PjuData::select([
             'id',
@@ -43,6 +46,49 @@ class PjuReportController extends Controller
             'photo',
             'is_idpel_main',
         ]);
+
+        // Server-side Regional filter
+        if (!empty($regionals)) {
+            $query->where(function ($q) use ($regionals) {
+                foreach ($regionals as $regional) {
+                    if ($regional === 'No Regional') {
+                        $q->orWhereNull('nama_kabupaten')
+                          ->orWhere('nama_kabupaten', '');
+                    } else {
+                        $coreName = strtoupper($regional);
+                        $coreName = str_replace(['KAB. ', 'KOTA '], '', $coreName);
+                        $q->orWhere('nama_kabupaten', 'ILIKE', '%' . $coreName . '%');
+                    }
+                }
+            });
+        }
+
+        // Server-side Status filter
+        if (!empty($statuses)) {
+            $query->where(function ($q) use ($statuses) {
+                $directStatuses = array_filter($statuses, fn($s) => $s !== 'Unclear');
+                if (!empty($directStatuses)) {
+                    $q->orWhereIn('kdam', $directStatuses);
+                }
+                if (in_array('Unclear', $statuses)) {
+                    $q->orWhereNull('kdam')
+                      ->orWhere('kdam', '');
+                }
+            });
+        }
+
+        // Server-side IDPEL filter
+        if (!empty($idpels)) {
+            $query->where(function ($q) use ($idpels) {
+                foreach ($idpels as $idpel) {
+                    if ($idpel === 'NO_IDPEL') {
+                        $q->orWhere('idpel', 'LIKE', '% - %');
+                    } else {
+                        $q->orWhere('idpel', $idpel);
+                    }
+                }
+            });
+        }
 
         // If search parameter is provided, search across ALL important fields
         if (!empty($search)) {
