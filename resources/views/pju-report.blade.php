@@ -1161,10 +1161,13 @@
                     removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
                     async saveData() {
                         const formData = new FormData();
+                        const skipFields = ['is_idpel_main', 'jenis_layanan', 'id', 'created_at', 'updated_at'];
                         Object.keys(this.form).forEach(k => {
-                            // Skip is_idpel_main here, handle separately
-                            if (k === 'is_idpel_main') return;
-                            if (this.form[k]) formData.append(k, this.form[k]);
+                            if (skipFields.includes(k)) return;
+                            // Include 0 values (e.g., RT=0, RW=0) but skip null/undefined/empty
+                            if (this.form[k] !== null && this.form[k] !== undefined && this.form[k] !== '') {
+                                formData.append(k, this.form[k]);
+                            }
                         });
                         // Handle is_idpel_main as 1/0 for Laravel
                         formData.append('is_idpel_main', this.form.is_idpel_main ? '1' : '0');

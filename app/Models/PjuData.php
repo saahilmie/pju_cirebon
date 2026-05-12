@@ -52,6 +52,13 @@ class PjuData extends Model
         parent::boot();
 
         static::saving(function ($model) {
+            // Auto-set jenislayanan based on KDAM status
+            if ($model->kdam === 'A') {
+                $model->jenislayanan = 'ABODEMEN';
+            } elseif ($model->kdam === 'M') {
+                $model->jenislayanan = 'METER';
+            }
+
             // Only auto-calculate if jumlah_lampu is not manually set
             if ($model->daya && ($model->jumlah_lampu_source !== 'manual' || !$model->jumlah_lampu)) {
                 // Formula: daya / 125 (average 125W per lamp)

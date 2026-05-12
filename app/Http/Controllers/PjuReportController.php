@@ -278,8 +278,12 @@ class PjuReportController extends Controller
 
         $pju = PjuData::create($data);
 
-        // Broadcast event for real-time updates
-        event(new PjuDataUpdated('created', $pju->idpel, auth()->user()->name, $pju->id));
+        // Broadcast event for real-time updates (don't let broadcast failures break the save)
+        try {
+            event(new PjuDataUpdated('created', $pju->idpel, auth()->user()->name, $pju->id));
+        } catch (\Exception $e) {
+            \Log::warning('Broadcast failed for PJU create: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Data successfully added', 'data' => $pju]);
     }
@@ -319,8 +323,12 @@ class PjuReportController extends Controller
 
         $pju->update($data);
 
-        // Broadcast event for real-time updates
-        event(new PjuDataUpdated('updated', $pju->idpel, auth()->user()->name, $pju->id));
+        // Broadcast event for real-time updates (don't let broadcast failures break the save)
+        try {
+            event(new PjuDataUpdated('updated', $pju->idpel, auth()->user()->name, $pju->id));
+        } catch (\Exception $e) {
+            \Log::warning('Broadcast failed for PJU update: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Data successfully updated', 'data' => $pju]);
     }
@@ -336,8 +344,12 @@ class PjuReportController extends Controller
 
         $pju->delete();
 
-        // Broadcast event for real-time updates
-        event(new PjuDataUpdated('deleted', $idpel, auth()->user()->name, $id));
+        // Broadcast event for real-time updates (don't let broadcast failures break the delete)
+        try {
+            event(new PjuDataUpdated('deleted', $idpel, auth()->user()->name, $id));
+        } catch (\Exception $e) {
+            \Log::warning('Broadcast failed for PJU delete: ' . $e->getMessage());
+        }
 
         return response()->json(['success' => true, 'message' => 'Data successfully deleted']);
     }
