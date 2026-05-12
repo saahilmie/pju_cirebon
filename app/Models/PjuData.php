@@ -57,6 +57,8 @@ class PjuData extends Model
                 $model->jenislayanan = 'ABODEMEN';
             } elseif ($model->kdam === 'M') {
                 $model->jenislayanan = 'METER';
+            } elseif (empty($model->kdam)) {
+                $model->jenislayanan = 'UNCLEAR';
             }
 
             // Only auto-calculate if jumlah_lampu is not manually set
