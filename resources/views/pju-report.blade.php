@@ -944,6 +944,8 @@
                     isDragging: false, photoPreview: null, photoName: '', photoFile: null,
                     toast: { show: false, message: '', type: 'success' },
                     currentSearch: '', // Persist search after edit
+                    isLoading: false, // Loading state for data fetch
+                    _initialData: [], // Cache of initial unfiltered data
                     form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '', is_idpel_main: false },
 
                     // Check if another entry with same IDPEL already has is_idpel_main=true
@@ -1012,6 +1014,7 @@
                     },
                     init() { this.loadData(); },
                     async loadData(search = '') {
+                        this.isLoading = true;
                         try {
                             let params = new URLSearchParams();
                             params.set('limit', '5000');
@@ -1032,12 +1035,24 @@
                             const json = await res.json();
                             this.pjuData = json.data || [];
                             this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
+                            // Cache initial unfiltered data for instant "All" button
+                            if (!search && !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length) {
+                                this._initialData = [...this.pjuData];
+                            }
                             if (search && this.pjuData.length > 0) {
                                 this.showToast(`Found ${this.pjuData.length} results for "${search}"`, 'success');
                             } else if (search && this.pjuData.length === 0) {
                                 this.showToast(`No results found for "${search}"`, 'error');
                             }
-                        } catch (e) { console.error(e); }
+                        } catch (e) {
+                            console.error(e);
+                            // If fetch fails and we have cached data, restore it
+                            if (this._initialData.length > 0 && !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length) {
+                                this.pjuData = [...this._initialData];
+                            }
+                        } finally {
+                            this.isLoading = false;
+                        }
                     },
                     searchServer() {
                         if (this.searchTable.length >= 3) {
@@ -1051,11 +1066,37 @@
                         }
                     },
                     toggleDropdown(name) { this.activeDropdown = this.activeDropdown === name ? null : name; },
-                    selectAll() { this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = []; this.currentPage = 1; this.loadData(this.currentSearch); },
+                    selectAll() {
+                        this.selectedRegionals = []; this.selectedStatuses = []; this.selectedIdpels = [];
+                        this.currentPage = 1; this.currentSearch = ''; this.searchTable = '';
+                        // Use cached data for instant restore instead of new server request
+                        if (this._initialData.length > 0) {
+                            this.pjuData = [...this._initialData];
+                            this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
+                        } else {
+                            this.loadData();
+                        }
+                    },
                     toggleAllRegionals() { this.selectedRegionals = this.selectedRegionals.length === this.regionals.length ? [] : [...this.regionals]; },
                     toggleAllStatuses() { this.selectedStatuses = this.selectedStatuses.length === this.statuses.length ? [] : [...this.statuses]; },
                     toggleAllIdpels() { this.selectedIdpels = this.selectedIdpels.length === this.idpels.length ? [] : [...this.idpels]; },
-                    clearFilter(type) { if (type === 'regional') this.selectedRegionals = []; if (type === 'status') this.selectedStatuses = []; if (type === 'idpel') this.selectedIdpels = []; this.currentPage = 1; this.loadData(this.currentSearch); },
+                    clearFilter(type) {
+                        if (type === 'regional') this.selectedRegionals = [];
+                        if (type === 'status') this.selectedStatuses = [];
+                        if (type === 'idpel') this.selectedIdpels = [];
+                        this.currentPage = 1;
+                        // If no filters remain, restore cached data; otherwise reload from server
+                        if (!this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length) {
+                            if (this._initialData.length > 0 && !this.currentSearch) {
+                                this.pjuData = [...this._initialData];
+                                this.idpels = [...new Set(this.pjuData.map(d => d.idpel).filter(Boolean))];
+                            } else {
+                                this.loadData(this.currentSearch);
+                            }
+                        } else {
+                            this.loadData(this.currentSearch);
+                        }
+                    },
                     clearAllFilters() { this.selectAll(); },
                     applyFilter() { this.currentPage = 1; this.loadData(this.currentSearch); },
                     copyAsNew(item) {
