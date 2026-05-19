@@ -468,9 +468,9 @@
                 </div>
                 <form @submit.prevent="saveData()" class="p-6">
                     <div class="grid grid-cols-2 gap-4">
-                        <div><label class="block text-xs font-medium text-gray-600 mb-1">IDPEL</label><input type="text"
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">IDPEL <span class="text-red-500">*</span></label><input type="text"
                                 x-model="form.idpel" class="w-full px-3 py-2 rounded-lg text-sm"
-                                style="border: 1px solid #C8BFBF;" required></div>
+                                style="border: 1px solid #C8BFBF;"></div>
                         <div><label class="block text-xs font-medium text-gray-600 mb-1">NOMOR_JURUSAN_TIANG</label><input
                                 type="text" x-model="form.nomor_jurusan_tiang" class="w-full px-3 py-2 rounded-lg text-sm"
                                 style="border: 1px solid #C8BFBF;"></div>
@@ -1160,6 +1160,11 @@
                     },
                     removePhoto() { this.photoPreview = null; this.photoFile = null; this.photoName = ''; },
                     async saveData() {
+                        if (!this.form.idpel || this.form.idpel.trim() === '') {
+                            this.showToast('IDPEL is required and cannot be empty.', 'error');
+                            return;
+                        }
+                        
                         const formData = new FormData();
                         const skipFields = ['is_idpel_main', 'jenis_layanan', 'id', 'created_at', 'updated_at'];
                         Object.keys(this.form).forEach(k => {
