@@ -130,7 +130,7 @@
                             <td class="px-4 py-3 text-sm text-gray-700">{{ ucfirst(str_replace('_', ' ', $user->role)) }}</td>
                             <td class="px-4 py-3">
                                 <div class="flex items-center gap-2">
-                                    <button class="p-1 text-gray-500 hover:text-[#29AAE1]" title="View">
+                                    <button @click="openViewModal({{ json_encode($user) }})" class="p-1 text-gray-500 hover:text-[#29AAE1]" title="View">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                                 d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -306,6 +306,49 @@
             </div>
         </div>
 
+        <!-- View User Modal -->
+        <div x-show="showViewModal" x-cloak x-transition.opacity
+            class="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4" @click.self="showViewModal = false">
+            <div x-show="showViewModal" x-transition class="bg-white rounded-lg shadow-xl w-full max-w-md">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-800">User Details</h3>
+                    <button @click="showViewModal = false" class="text-gray-400 hover:text-gray-600">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="p-4 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Full Name</label>
+                        <p class="mt-1 text-gray-900 font-medium" x-text="viewingUser?.name"></p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-500">Email Address</label>
+                        <p class="mt-1 text-gray-900" x-text="viewingUser?.email"></p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Role</label>
+                            <p class="mt-1 text-gray-900 capitalize" x-text="viewingUser?.role?.replace('_', ' ')"></p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-500">Status</label>
+                            <div class="mt-1">
+                                <span class="px-3 py-1 rounded-full text-xs font-medium"
+                                    :class="viewingUser?.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'"
+                                    x-text="viewingUser?.status?.charAt(0).toUpperCase() + viewingUser?.status?.slice(1)">
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="p-4 border-t bg-gray-50 flex justify-end rounded-b-lg">
+                    <button @click="showViewModal = false" class="px-6 py-2 bg-[#29AAE1] text-white rounded-lg hover:bg-[#1E8CC0]">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Logout Confirmation Modal -->
         <div x-show="showLogoutModal" x-cloak x-transition.opacity
             class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
@@ -338,6 +381,7 @@
             function userManagement() {
                 return {
                     showModal: false,
+                    showViewModal: false,
                     showDeleteModal: false,
                     showLogoutModal: false,
                     showPasswordField: false,
@@ -353,6 +397,7 @@
                     statusFilter: '{{ request('status', 'all') }}',
                     roleFilter: '{{ request('role', 'all') }}',
 
+                    viewingUser: null,
                     editingUser: null,
                     deleteUserId: null,
                     deleteUserName: '',
@@ -383,6 +428,11 @@
                         this.formData = { name: '', email: '', password: '', role: '', status: 'active' };
                         this.showPasswordField = false;
                         this.showModal = true;
+                    },
+
+                    openViewModal(user) {
+                        this.viewingUser = user;
+                        this.showViewModal = true;
                     },
 
                     openEditModal(user) {
