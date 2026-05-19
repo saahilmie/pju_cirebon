@@ -1170,7 +1170,7 @@
                         
                         this.isSaving = true;
                         const formData = new FormData();
-                        const skipFields = ['is_idpel_main', 'jenis_layanan', 'id', 'created_at', 'updated_at'];
+                        const skipFields = ['is_idpel_main', 'jenis_layanan', 'id', 'created_at', 'updated_at', 'photo'];
                         Object.keys(this.form).forEach(k => {
                             if (skipFields.includes(k)) return;
                             // Include 0 values (e.g., RT=0, RW=0) but skip null/undefined/empty
