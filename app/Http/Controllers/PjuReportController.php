@@ -376,7 +376,11 @@ class PjuReportController extends Controller
             $pju->save();
 
             // Broadcast event for real-time updates
-            event(new PjuDataUpdated('photo_uploaded', $pju->idpel, auth()->user()->name, $pju->id));
+            try {
+                event(new PjuDataUpdated('photo_uploaded', $pju->idpel, auth()->user()->name, $pju->id));
+            } catch (\Exception $e) {
+                \Log::warning('Broadcast failed for PJU photo update: ' . $e->getMessage());
+            }
         }
 
         return response()->json(['success' => true, 'message' => 'Photo uploaded successfully', 'data' => $pju]);
