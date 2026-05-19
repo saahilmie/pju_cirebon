@@ -16,9 +16,17 @@ import Pusher from 'pusher-js';
 
 window.Pusher = Pusher;
 
-window.Echo = new Echo({
-    broadcaster: 'pusher',
-    key: import.meta.env.VITE_PUSHER_APP_KEY,
-    cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER,
-    forceTLS: true
-});
+try {
+    if (import.meta.env.VITE_PUSHER_APP_KEY) {
+        window.Echo = new Echo({
+            broadcaster: 'pusher',
+            key: import.meta.env.VITE_PUSHER_APP_KEY,
+            cluster: import.meta.env.VITE_PUSHER_APP_CLUSTER || 'ap1',
+            forceTLS: true
+        });
+    } else {
+        console.warn("VITE_PUSHER_APP_KEY is missing. Real-time updates disabled.");
+    }
+} catch (e) {
+    console.error("Failed to initialize Pusher/Echo", e);
+}
