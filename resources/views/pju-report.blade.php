@@ -1185,7 +1185,14 @@
                             const url = this.isEditing ? `/api/pju-report/${this.editingId}` : '/api/pju-report';
                             const method = this.isEditing ? 'PUT' : 'POST';
                             if (this.isEditing) formData.append('_method', 'PUT');
-                            const res = await fetch(url, { method: 'POST', body: formData, headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                            const res = await fetch(url, { 
+                                method: 'POST', 
+                                body: formData, 
+                                headers: { 
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                } 
+                            });
                             const json = await res.json();
                             if (json.success) {
                                 this.showToast(json.message, 'success');
@@ -1203,7 +1210,13 @@
                     },
                     async deleteData() {
                         try {
-                            const res = await fetch(`/api/pju-report/${this.deleteItem.id}`, { method: 'DELETE', headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content } });
+                            const res = await fetch(`/api/pju-report/${this.deleteItem.id}`, {
+                                method: 'DELETE',
+                                headers: {
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                }
+                            });
                             const json = await res.json();
                             if (json.success) { this.showToast('Data successfully deleted', 'success'); this.showDeleteModal = false; this.loadData(); }
                         } catch (e) { this.showToast('Error deleting data', 'error'); }
@@ -1230,7 +1243,10 @@
                             const res = await fetch(`/api/pju-report/${this.photoUploadItem.id}/photo`, {
                                 method: 'POST',
                                 body: formData,
-                                headers: { 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content }
+                                headers: { 
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                    'Accept': 'application/json'
+                                }
                             });
                             const json = await res.json();
                             if (json.success) {

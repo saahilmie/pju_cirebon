@@ -251,7 +251,7 @@ class PjuReportController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'idpel' => 'required|string|max:20',
+            'idpel' => 'required|string|max:255',
             'nama' => 'nullable|string|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png|max:20480',
             'is_idpel_main' => 'nullable|boolean',
@@ -293,7 +293,7 @@ class PjuReportController extends Controller
         $pju = PjuData::findOrFail($id);
 
         $request->validate([
-            'idpel' => 'required|string|max:20',
+            'idpel' => 'required|string|max:255',
             'photo' => 'nullable|image|mimes:jpeg,png|max:20480',
             'is_idpel_main' => 'nullable|boolean',
         ]);
