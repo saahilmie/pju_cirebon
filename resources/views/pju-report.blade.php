@@ -611,8 +611,10 @@
                     <div class="flex justify-end gap-3 mt-6 pt-4" style="border-top: 1px solid #C8BFBF;">
                         <button type="button" @click="showModal = false" class="px-6 py-2 rounded-lg"
                             style="border: 1px solid #C8BFBF;">Cancel</button>
-                        <button type="submit" class="px-6 py-2 bg-[#29AAE1] text-white rounded-lg"
-                            x-text="isEditing ? 'Edit' : 'Add'"></button>
+                        <button type="submit" class="px-6 py-2 bg-[#29AAE1] text-white rounded-lg transition-colors"
+                            :disabled="isSaving"
+                            :class="isSaving ? 'opacity-70 cursor-not-allowed' : 'hover:bg-[#1E8CC0]'"
+                            x-text="isSaving ? 'Saving...' : (isEditing ? 'Edit' : 'Add')"></button>
                     </div>
                 </form>
             </div>
@@ -943,6 +945,7 @@
                     isImporting: false, importStatus: '',
                     isDragging: false, photoPreview: null, photoName: '', photoFile: null,
                     toast: { show: false, message: '', type: 'success' },
+                    isSaving: false,
                     currentSearch: '', // Persist search after edit
                     isLoading: false, // Loading state for data fetch
                     _initialData: [], // Cache of initial unfiltered data
@@ -1165,6 +1168,7 @@
                             return;
                         }
                         
+                        this.isSaving = true;
                         const formData = new FormData();
                         const skipFields = ['is_idpel_main', 'jenis_layanan', 'id', 'created_at', 'updated_at'];
                         Object.keys(this.form).forEach(k => {
@@ -1190,7 +1194,12 @@
                                 this.loadData(this.currentSearch);
                             }
                             else { this.showToast(json.message || 'Error saving data', 'error'); }
-                        } catch (e) { console.error(e); this.showToast('Error saving data', 'error'); }
+                        } catch (e) { 
+                            console.error(e); 
+                            this.showToast('Error saving data', 'error'); 
+                        } finally {
+                            this.isSaving = false;
+                        }
                     },
                     async deleteData() {
                         try {
