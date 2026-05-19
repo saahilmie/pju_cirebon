@@ -134,11 +134,8 @@
                     if (typeof window.Echo !== 'undefined') {
                         window.Echo.channel('pju-updates')
                             .listen('.pju.updated', (e) => {
-                                // Don't show notification if current user made the change
-                                const currentUser = '{{ auth()->check() ? auth()->user()->name : "" }}';
-                                if (e.updatedBy !== currentUser) {
-                                    this.showToast(e);
-                                }
+                                // Show notification to everyone for testing/visibility
+                                this.showToast(e);
                             });
                     }
                 },
