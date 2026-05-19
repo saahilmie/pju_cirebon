@@ -158,7 +158,7 @@ class PjuReportController extends Controller
             $query->where('nama_kabupaten', $region);
         }
         if ($status) {
-            if ($status === 'unclear') {
+            if (strtolower($status) === 'unclear') {
                 // Unclear = no KDAM or has generated IDPEL (pattern: "code - area / region")
                 $query->where(function ($q) {
                     $q->whereNull('kdam')
