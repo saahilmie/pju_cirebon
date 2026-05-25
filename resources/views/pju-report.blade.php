@@ -323,11 +323,35 @@
                 </div>
             </div>
 
+            <!-- Floating Bulk Action Bar -->
+            <div x-show="selectedIds.length > 0" x-cloak x-transition
+                class="fixed top-24 left-1/2 transform -translate-x-1/2 bg-white rounded-full shadow-2xl px-6 py-3 z-[100] flex items-center gap-4"
+                style="border: 1px solid #C8BFBF;">
+                <span class="font-bold text-[#29AAE1]" x-text="selectedIds.length + ' selected'"></span>
+                <div class="h-6 w-px bg-gray-300"></div>
+                @if(auth()->user() && auth()->user()->isAdmin())
+                    <button @click="showBulkUpdateModal = true" class="flex items-center gap-2 text-gray-600 hover:text-blue-600 font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg> Edit
+                    </button>
+                    <button @click="confirmBulkDelete()" class="flex items-center gap-2 text-gray-600 hover:text-red-600 font-medium">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg> Delete
+                    </button>
+                @endif
+                <button @click="selectedIds = []" class="ml-2 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100" title="Clear selection">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+            </div>
+
             <!-- Table with horizontal scroll -->
             <div class="overflow-x-auto">
                 <table class="w-full min-w-[1800px]">
                     <thead class="bg-[#29AAE1] text-white">
                         <tr>
+                            @if(auth()->user() && auth()->user()->isAdmin())
+                            <th class="px-3 py-3 text-left text-xs font-semibold w-10">
+                                <input type="checkbox" @click="toggleSelectAllPage()" :checked="isAllPageSelected" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            </th>
+                            @endif
                             <th class="px-3 py-3 text-left text-xs font-semibold">NO</th>
                             <th class="px-3 py-3 text-left text-xs font-semibold">IDPEL</th>
                             <th class="px-3 py-3 text-left text-xs font-semibold">NAMA</th>
@@ -353,7 +377,17 @@
                     </thead>
                     <tbody>
                         <template x-for="(item, index) in filteredData" :key="item.id">
-                            <tr class="hover:bg-gray-50">
+                            <tr :class="{
+                                'bg-orange-100 hover:bg-orange-200': item.update_color_marker === 'orange',
+                                'bg-purple-100 hover:bg-purple-200': item.update_color_marker === 'purple',
+                                'bg-blue-50': selectedIds.includes(item.id),
+                                'hover:bg-gray-50': !selectedIds.includes(item.id) && !item.update_color_marker
+                            }">
+                                @if(auth()->user() && auth()->user()->isAdmin())
+                                <td class="px-3 py-3 text-xs">
+                                    <input type="checkbox" :value="item.id" x-model="selectedIds" class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                                </td>
+                                @endif
                                 <td class="px-3 py-3 text-xs text-gray-600"
                                     x-text="(currentPage - 1) * perPage + index + 1"></td>
                                 <td class="px-3 py-3 text-xs text-gray-800 font-medium" x-text="item.idpel"></td>
@@ -408,14 +442,6 @@
                                                         d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                                                 </svg>
                                             </button>
-                                        @else
-                                            <button @click="openPhotoUploadModal(item)"
-                                                class="text-gray-400 hover:text-[#29AAE1]" title="Upload Photo">
-                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                            </button>
                                         @endif
                                     </div>
                                 </td>
@@ -452,6 +478,19 @@
                     <button @click="currentPage = Math.min(totalPages, currentPage + 1)"
                         :disabled="currentPage === totalPages" class="px-3 py-1 rounded text-sm disabled:opacity-50"
                         style="border: 1px solid #C8BFBF;">&gt;</button>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="px-4 py-3 bg-gray-50 flex items-center gap-6 rounded-b-xl" style="border-top: 1px solid #C8BFBF;">
+                <span class="text-sm font-semibold text-gray-600">Legend:</span>
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 bg-orange-100 border border-orange-300 rounded-sm inline-block"></span>
+                    <span class="text-xs text-gray-600">Updated from Unclear to Meterisasi</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 bg-purple-100 border border-purple-300 rounded-sm inline-block"></span>
+                    <span class="text-xs text-gray-600">Updated from Abodemen to Meterisasi</span>
                 </div>
             </div>
         </div>
@@ -927,6 +966,27 @@
         </div>
     </div>
 
+    <!-- Bulk Update Modal -->
+    <div x-show="showBulkUpdateModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" @click.away="showBulkUpdateModal = false">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Bulk Update Status</h3>
+            <p class="text-sm text-gray-600 mb-4">Select new status for <span class="font-bold text-[#29AAE1]" x-text="selectedIds.length"></span> selected records:</p>
+            <div class="mb-6">
+                <select x-model="bulkKdam" class="w-full px-4 py-2 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#29AAE1]" style="border: 1px solid #C8BFBF;">
+                    <option value="">-- Select Status --</option>
+                    <option value="M">Meterisasi (M)</option>
+                    <option value="A">Abodemen (A)</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3">
+                <button @click="showBulkUpdateModal = false; bulkKdam = ''" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg text-sm font-medium">Cancel</button>
+                <button @click="submitBulkUpdate()" :disabled="!bulkKdam || isSaving" class="px-4 py-2 bg-[#29AAE1] text-white rounded-lg text-sm font-medium disabled:opacity-50 hover:bg-[#1E8CC0]">
+                    Update
+                </button>
+            </div>
+        </div>
+    </div>
+
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
         <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
@@ -950,8 +1010,9 @@
                     isLoading: false, // Loading state for data fetch
                     _initialData: [], // Cache of initial unfiltered data
                     form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '', is_idpel_main: false },
+                    
+                    selectedIds: [], showBulkUpdateModal: false, bulkKdam: '',
 
-                    // Check if another entry with same IDPEL already has is_idpel_main=true
                     hasExistingIdpelMain() {
                         if (!this.form.idpel) return false;
                         const currentId = this.isEditing ? this.editingId : null;
@@ -960,6 +1021,11 @@
                             item.is_idpel_main &&
                             item.id !== currentId
                         );
+                    },
+
+                    get isAllPageSelected() {
+                        if (this.filteredData.length === 0) return false;
+                        return this.filteredData.every(item => this.selectedIds.includes(item.id));
                     },
 
                     get isAllSelected() { return !this.selectedRegionals.length && !this.selectedStatuses.length && !this.selectedIdpels.length; },
@@ -1401,6 +1467,71 @@
                         }
 
                         this.showToast(`Exported ${this.filteredData.length} records as ${format.toUpperCase()}`, 'success');
+                    },
+
+                    toggleSelectAllPage() {
+                        if (this.isAllPageSelected) {
+                            const pageIds = this.filteredData.map(i => i.id);
+                            this.selectedIds = this.selectedIds.filter(id => !pageIds.includes(id));
+                        } else {
+                            const newIds = this.filteredData.map(i => i.id).filter(id => !this.selectedIds.includes(id));
+                            this.selectedIds = [...this.selectedIds, ...newIds];
+                        }
+                    },
+
+                    async confirmBulkDelete() {
+                        if(!confirm(`Are you sure you want to delete ${this.selectedIds.length} records? This cannot be undone.`)) return;
+                        
+                        try {
+                            const res = await fetch('/api/pju-report/bulk/delete', {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json', 
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify({ ids: this.selectedIds })
+                            });
+                            const json = await res.json();
+                            if (json.success) {
+                                this.showToast(json.message, 'success');
+                                this.selectedIds = [];
+                                this.loadData();
+                            } else {
+                                this.showToast(json.message || 'Error deleting', 'error');
+                            }
+                        } catch (e) {
+                            this.showToast('Network error', 'error');
+                        }
+                    },
+
+                    async submitBulkUpdate() {
+                        this.isSaving = true;
+                        try {
+                            const res = await fetch('/api/pju-report/bulk/update', {
+                                method: 'POST',
+                                headers: { 
+                                    'Content-Type': 'application/json', 
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                                },
+                                body: JSON.stringify({ ids: this.selectedIds, kdam: this.bulkKdam })
+                            });
+                            const json = await res.json();
+                            if (json.success) {
+                                this.showToast(json.message, 'success');
+                                this.selectedIds = [];
+                                this.showBulkUpdateModal = false;
+                                this.bulkKdam = '';
+                                this.loadData();
+                            } else {
+                                this.showToast(json.message || 'Error updating', 'error');
+                            }
+                        } catch (e) {
+                            this.showToast('Network error', 'error');
+                        } finally {
+                            this.isSaving = false;
+                        }
                     }
                 };
             }

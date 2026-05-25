@@ -31,6 +31,8 @@ Route::middleware('auth')->group(function () {
     Route::put('/api/pju-report/{id}', [PjuReportController::class, 'update']);
     Route::post('/api/pju-report/{id}/photo', [PjuReportController::class, 'updatePhoto']);
     Route::delete('/api/pju-report/{id}', [PjuReportController::class, 'destroy']);
+    Route::post('/api/pju-report/bulk/update', [PjuReportController::class, 'bulkUpdate']);
+    Route::post('/api/pju-report/bulk/delete', [PjuReportController::class, 'bulkDelete']);
     Route::post('/api/pju-report/import', [PjuReportController::class, 'importCsv']);
     Route::get('/api/pju-report/export', [PjuReportController::class, 'exportExcel']);
 

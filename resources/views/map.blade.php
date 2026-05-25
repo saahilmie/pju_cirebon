@@ -131,6 +131,17 @@
                     </div>
                 </div>
                 <div class="border-t mt-4 pt-3 space-y-2.5 text-sm">
+                    <p class="text-gray-500 font-semibold">Bulk Edit Status</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full bg-[#F97316]"></div>
+                        <span class="text-gray-600">Unclear -> Meterisasi</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-3 h-3 rounded-full bg-[#A855F7]"></div>
+                        <span class="text-gray-600">Abodemen -> Meterisasi</span>
+                    </div>
+                </div>
+                <div class="border-t mt-4 pt-3 space-y-2.5 text-sm">
                     <p class="text-gray-500 font-semibold">Regional</p>
                     <div class="flex items-center gap-3">
                         <div class="w-3 h-3 rounded-sm bg-[#B51CEC] opacity-60"></div>
@@ -715,7 +726,15 @@
                     },
 
                     addMarker(point) {
-                        const color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
+                        let color = point.kdam === 'M' ? '#17C353' : point.kdam === 'A' ? '#FBED21' : '#EB2027';
+                        
+                        // Override color if it was bulk updated
+                        if (point.update_color_marker === 'orange') {
+                            color = '#F97316';
+                        } else if (point.update_color_marker === 'purple') {
+                            color = '#A855F7';
+                        }
+
                         let marker;
 
                         // Use lightweight CircleMarker for "All Data" mode (faster rendering for 10k+ markers)

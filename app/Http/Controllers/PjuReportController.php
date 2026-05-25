@@ -174,7 +174,7 @@ class PjuReportController extends Controller
             $query->where('idpel', 'LIKE', "%{$search}%");
         }
 
-        $data = $query->get();
+        // Remove $data = $query->get() to prevent memory exhaustion
 
         // Create CSV response (more efficient for large data)
         $headers = [
@@ -206,7 +206,7 @@ class PjuReportController extends Controller
             'Is Main IDPEL'
         ];
 
-        $callback = function () use ($data, $columns) {
+        $callback = function () use ($query, $columns) {
             $file = fopen('php://output', 'w');
 
             // Add BOM for Excel to recognize UTF-8
@@ -215,32 +215,34 @@ class PjuReportController extends Controller
             // Header row
             fputcsv($file, $columns);
 
-            // Data rows
-            foreach ($data as $row) {
-                fputcsv($file, [
-                    $row->idpel,
-                    $row->nama,
-                    $row->namapnj,
-                    $row->rt,
-                    $row->rw,
-                    $row->tarif,
-                    $row->daya,
-                    $row->jenislayanan ?: ($row->nomor_meter_prepaid ? 'PRABAYAR' : 'PASKABAYAR'),
-                    $row->nomor_meter_kwh,
-                    $row->nomor_gardu,
-                    $row->nomor_jurusan_tiang,
-                    $row->nama_gardu,
-                    $row->nomor_meter_prepaid,
-                    $row->koordinat_x,
-                    $row->koordinat_y,
-                    $row->kdam,
-                    $row->nama_kabupaten,
-                    $row->nama_kecamatan,
-                    $row->nama_kelurahan,
-                    $row->photo ? 'Yes' : 'No',
-                    $row->is_idpel_main ? 'Yes' : 'No',
-                ]);
-            }
+            // Data rows (use chunking to save memory)
+            $query->chunk(500, function ($data) use ($file) {
+                foreach ($data as $row) {
+                    fputcsv($file, [
+                        $row->idpel,
+                        $row->nama,
+                        $row->namapnj,
+                        $row->rt,
+                        $row->rw,
+                        $row->tarif,
+                        $row->daya,
+                        $row->jenislayanan ?: ($row->nomor_meter_prepaid ? 'PRABAYAR' : 'PASKABAYAR'),
+                        $row->nomor_meter_kwh,
+                        $row->nomor_gardu,
+                        $row->nomor_jurusan_tiang,
+                        $row->nama_gardu,
+                        $row->nomor_meter_prepaid,
+                        $row->koordinat_x,
+                        $row->koordinat_y,
+                        $row->kdam,
+                        $row->nama_kabupaten,
+                        $row->nama_kecamatan,
+                        $row->nama_kelurahan,
+                        $row->photo ? 'Yes' : 'No',
+                        $row->is_idpel_main ? 'Yes' : 'No',
+                    ]);
+                }
+            });
 
             fclose($file);
         };
@@ -250,6 +252,9 @@ class PjuReportController extends Controller
 
     public function store(Request $request)
     {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
+
         $request->validate([
             'idpel' => 'required|string|max:255',
             'nama' => 'nullable|string|max:255',
@@ -290,6 +295,9 @@ class PjuReportController extends Controller
 
     public function update(Request $request, $id)
     {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
+
         $pju = PjuData::findOrFail($id);
 
         $request->validate([
@@ -335,6 +343,9 @@ class PjuReportController extends Controller
 
     public function destroy($id)
     {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
+
         $pju = PjuData::findOrFail($id);
         $idpel = $pju->idpel;
 
@@ -359,6 +370,9 @@ class PjuReportController extends Controller
      */
     public function updatePhoto(Request $request, $id)
     {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
+
         $pju = PjuData::findOrFail($id);
 
         $request->validate([
@@ -394,6 +408,9 @@ class PjuReportController extends Controller
      */
     public function importCsv(Request $request)
     {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
+
         set_time_limit(600); // 10 minutes for large files
 
         $request->validate([
@@ -659,5 +676,100 @@ class PjuReportController extends Controller
         }
 
         return null;
+    }
+
+    /**
+     * Bulk Update KDAM status for selected IDs
+     */
+    public function bulkUpdate(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:pju_data,id',
+            'kdam' => 'nullable|string|in:M,A',
+        ]);
+
+        $ids = $request->ids;
+        $kdam = $request->kdam;
+        $updatedCount = 0;
+
+        // Iterate instead of mass-update to track the color markers based on previous kdam
+        foreach ($ids as $id) {
+            $pju = PjuData::find($id);
+            if (!$pju) continue;
+
+            $oldKdam = $pju->kdam;
+            
+            // Set new KDAM
+            $pju->kdam = $kdam;
+
+            // Set color marker logic
+            if ($kdam === 'M') {
+                if (empty($oldKdam)) {
+                    $pju->update_color_marker = 'orange'; // From Unclear to Meter
+                } elseif ($oldKdam === 'A') {
+                    $pju->update_color_marker = 'purple'; // From Abodemen to Meter
+                }
+            } else {
+                // If they update to Abodemen or Unclear, we can reset or leave it. 
+                // Let's reset the color marker to null.
+                $pju->update_color_marker = null;
+            }
+
+            $pju->save();
+            $updatedCount++;
+        }
+
+        // Trigger real-time event for refresh
+        try {
+            event(new PjuDataUpdated('bulk_updated', 'multiple', auth()->user()->name, 0));
+        } catch (\Exception $e) {
+            \Log::warning('Broadcast failed for PJU bulk update: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => "Successfully updated {$updatedCount} records."
+        ]);
+    }
+
+    /**
+     * Bulk Delete for selected IDs
+     */
+    public function bulkDelete(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
+        $request->validate([
+            'ids' => 'required|array',
+            'ids.*' => 'integer|exists:pju_data,id',
+        ]);
+
+        $ids = $request->ids;
+        $deletedCount = 0;
+
+        foreach ($ids as $id) {
+            $pju = PjuData::find($id);
+            if (!$pju) continue;
+
+            if ($pju->photo) {
+                Storage::disk('public')->delete($pju->photo);
+            }
+            $pju->delete();
+            $deletedCount++;
+        }
+
+        try {
+            event(new PjuDataUpdated('bulk_deleted', 'multiple', auth()->user()->name, 0));
+        } catch (\Exception $e) {
+            \Log::warning('Broadcast failed for PJU bulk delete: ' . $e->getMessage());
+        }
+
+        return response()->json([
+            'success' => true, 
+            'message' => "Successfully deleted {$deletedCount} records."
+        ]);
     }
 }

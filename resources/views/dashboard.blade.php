@@ -158,13 +158,12 @@
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-sm font-semibold text-gray-700">Stats Progress</h3>
-                    <div class="flex items-center gap-3 text-[10px]">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#17C353]"></span>
-                            M</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#FBED21]"></span>
-                            A</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#EB2027]"></span>
-                            Unclear</span>
+                    <div class="flex flex-wrap items-center gap-2 text-[10px] justify-end">
+                        <span class="flex items-center gap-1" title="Meterisasi"><span class="w-2 h-2 rounded-full bg-[#17C353]"></span> M</span>
+                        <span class="flex items-center gap-1" title="Abonemen"><span class="w-2 h-2 rounded-full bg-[#FBED21]"></span> A</span>
+                        <span class="flex items-center gap-1" title="Unclear"><span class="w-2 h-2 rounded-full bg-[#EB2027]"></span> Unc</span>
+                        <span class="flex items-center gap-1" title="Unclear -> Meterisasi"><span class="w-2 h-2 rounded-full bg-[#F97316]"></span> U->M</span>
+                        <span class="flex items-center gap-1" title="Abonemen -> Meterisasi"><span class="w-2 h-2 rounded-full bg-[#A855F7]"></span> A->M</span>
                     </div>
                 </div>
                 <div class="flex gap-2 h-40">
@@ -199,13 +198,12 @@
             <div class="bg-white rounded-lg shadow p-4">
                 <div class="flex items-center justify-between mb-3">
                     <h3 class="text-sm font-semibold text-gray-700">Maps Progress</h3>
-                    <div class="flex items-center gap-3 text-[10px]">
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#17C353]"></span>
-                            M</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#FBED21]"></span>
-                            A</span>
-                        <span class="flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-[#EB2027]"></span>
-                            Unclear</span>
+                    <div class="flex flex-wrap items-center gap-2 text-[10px] justify-end">
+                        <span class="flex items-center gap-1" title="Meterisasi"><span class="w-2 h-2 rounded-full bg-[#17C353]"></span> M</span>
+                        <span class="flex items-center gap-1" title="Abonemen"><span class="w-2 h-2 rounded-full bg-[#FBED21]"></span> A</span>
+                        <span class="flex items-center gap-1" title="Unclear"><span class="w-2 h-2 rounded-full bg-[#EB2027]"></span> Unc</span>
+                        <span class="flex items-center gap-1" title="Unclear -> Meterisasi"><span class="w-2 h-2 rounded-full bg-[#F97316]"></span> U->M</span>
+                        <span class="flex items-center gap-1" title="Abonemen -> Meterisasi"><span class="w-2 h-2 rounded-full bg-[#A855F7]"></span> A->M</span>
                     </div>
                 </div>
                 <div id="mini-map" class="h-40 rounded z-0"></div>

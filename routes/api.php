@@ -93,7 +93,8 @@ Route::get('/pju-markers', function (Request $request) {
         'koordinat_x',
         'koordinat_y',
         'photo',
-        'is_idpel_main'
+        'is_idpel_main',
+        'update_color_marker'
     ])
         ->limit($limit)
         ->get();
@@ -133,7 +134,8 @@ Route::get('/pju-markers/search', function (Request $request) {
             'koordinat_x',
             'koordinat_y',
             'photo',
-            'is_idpel_main'
+            'is_idpel_main',
+            'update_color_marker'
         ])
         ->limit(100)
         ->get();
