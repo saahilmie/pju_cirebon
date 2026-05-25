@@ -964,8 +964,6 @@
                 </div>
             </div>
         </div>
-    </div>
-
     <!-- Bulk Update Modal -->
     <div x-show="showBulkUpdateModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" @click.away="showBulkUpdateModal = false">
@@ -986,6 +984,8 @@
             </div>
         </div>
     </div>
+
+</div>
 
     @push('scripts')
         <script src="https://cdn.jsdelivr.net/npm/exif-js"></script>
