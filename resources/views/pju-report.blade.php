@@ -985,6 +985,42 @@
         </div>
     </div>
 
+    <!-- Bulk Delete Modal -->
+    <div x-show="showBulkDeleteModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" @click.away="showBulkDeleteModal = false">
+            <div class="p-6 text-center">
+                <div class="w-16 h-16 rounded-full bg-red-100 mx-auto flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                </div>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Delete Confirmation</h3>
+                <p class="text-gray-600 mb-6">Are you sure you want to delete these data?</p>
+                
+                <div class="bg-gray-50 rounded-lg p-4 mb-4 text-center">
+                    <span class="font-bold text-gray-800 text-lg" x-text="selectedIds.length + ' data'"></span>
+                    <span class="text-gray-600"> will be deleted</span>
+                </div>
+
+                <p class="text-sm text-red-500 flex items-center justify-center gap-2 mb-6">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    This action cannot be undone.
+                </p>
+
+                <div class="flex justify-center gap-3">
+                    <button @click="showBulkDeleteModal = false" class="px-6 py-2.5 rounded-lg font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition-colors">
+                        Cancel
+                    </button>
+                    <button @click="executeBulkDelete()" :disabled="isSaving" class="px-6 py-2.5 rounded-lg font-medium text-white bg-red-600 hover:bg-red-700 transition-colors disabled:opacity-50">
+                        Yes, Delete
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </div>
 
     @push('scripts')
@@ -1011,7 +1047,7 @@
                     _initialData: [], // Cache of initial unfiltered data
                     form: { idpel: '', nama: '', namapnj: '', rt: '', rw: '', tarif: '', daya: '', jenislayanan: '', nomor_meter_kwh: '', nomor_gardu: '', nomor_jurusan_tiang: '', nama_gardu: '', nomor_meter_prepaid: '', koordinat_x: '', koordinat_y: '', kdam: '', nama_kabupaten: '', nama_kecamatan: '', nama_kelurahan: '', is_idpel_main: false },
                     
-                    selectedIds: [], showBulkUpdateModal: false, bulkKdam: '',
+                    selectedIds: [], showBulkUpdateModal: false, showBulkDeleteModal: false, bulkKdam: '',
 
                     hasExistingIdpelMain() {
                         if (!this.form.idpel) return false;
@@ -1479,10 +1515,13 @@
                         }
                     },
 
-                    async confirmBulkDelete() {
-                        if(!confirm(`Are you sure you want to delete ${this.selectedIds.length} records? This cannot be undone.`)) return;
-                        
+                    confirmBulkDelete() {
+                        this.showBulkDeleteModal = true;
+                    },
+
+                    async executeBulkDelete() {
                         try {
+                            this.isSaving = true;
                             const res = await fetch('/api/pju-report/bulk/delete', {
                                 method: 'POST',
                                 headers: { 
@@ -1501,7 +1540,10 @@
                                 this.showToast(json.message || 'Error deleting', 'error');
                             }
                         } catch (e) {
-                            this.showToast('Network error', 'error');
+                            this.showToast('Error deleting data', 'error');
+                        } finally {
+                            this.isSaving = false;
+                            this.showBulkDeleteModal = false;
                         }
                     },
 
