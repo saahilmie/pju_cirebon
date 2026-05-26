@@ -913,57 +913,6 @@
             </div>
         </div>
 
-        <!-- Photo Upload Modal (Employee Only) -->
-        <div x-show="showPhotoUploadModal" x-cloak
-            class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md" @click.away="showPhotoUploadModal = false">
-                <div class="flex items-center justify-between p-5" style="border-bottom: 1px solid #C8BFBF;">
-                    <div>
-                        <h3 class="text-lg font-bold text-gray-800">Upload Photo</h3>
-                        <p class="text-sm text-gray-500" x-text="'IDPEL: ' + (photoUploadItem?.idpel || '')"></p>
-                    </div>
-                    <button @click="showPhotoUploadModal = false"
-                        class="text-gray-400 hover:text-gray-600 text-2xl">&times;</button>
-                </div>
-                <div class="p-5">
-                    <!-- Photo Upload Area -->
-                    <div class="border-2 border-dashed rounded-xl p-6 text-center transition-colors"
-                        :class="isDragging ? 'border-[#29AAE1] bg-blue-50' : 'border-[#C8BFBF]'"
-                        @dragover.prevent="isDragging = true" @dragleave.prevent="isDragging = false"
-                        @drop.prevent="handleDrop($event)">
-                        <template x-if="photoPreview">
-                            <div class="flex flex-col items-center gap-3">
-                                <img :src="photoPreview" class="w-32 h-32 object-cover rounded-lg">
-                                <p class="text-sm text-gray-600" x-text="photoName || 'Current photo'"></p>
-                                <button type="button" @click="removePhoto()"
-                                    class="text-red-500 text-sm hover:underline">Remove</button>
-                            </div>
-                        </template>
-                        <template x-if="!photoPreview">
-                            <div>
-                                <svg class="w-10 h-10 mx-auto text-[#29AAE1] mb-2" fill="none" stroke="currentColor"
-                                    viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                </svg>
-                                <p class="text-gray-600 text-sm mb-1">Drag and drop or click to upload</p>
-                                <p class="text-gray-400 text-xs">JPG, PNG (Max 20MB)</p>
-                                <input type="file" accept="image/jpeg,image/png" @change="handleFileSelect($event)"
-                                    class="hidden" x-ref="photoFileInput">
-                                <button type="button" @click="$refs.photoFileInput.click()"
-                                    class="mt-3 px-4 py-2 bg-[#29AAE1] text-white rounded-lg text-sm">Choose File</button>
-                            </div>
-                        </template>
-                    </div>
-                </div>
-                <div class="flex justify-end gap-3 p-5" style="border-top: 1px solid #C8BFBF;">
-                    <button @click="showPhotoUploadModal = false" class="px-5 py-2 rounded-lg"
-                        style="border: 1px solid #C8BFBF;">Cancel</button>
-                    <button @click="savePhotoOnly()" class="px-5 py-2 bg-[#29AAE1] text-white rounded-lg">Upload
-                        Photo</button>
-                </div>
-            </div>
-        </div>
     <!-- Bulk Update Modal -->
     <div x-show="showBulkUpdateModal" x-cloak class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" x-transition>
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6" @click.away="showBulkUpdateModal = false">
@@ -1036,7 +985,6 @@
                     currentPage: 1, perPage: 10,
                     showModal: false, isEditing: false, showDeleteModal: false, deleteItem: null,
                     showViewModal: false, viewingItem: null,
-                    showPhotoUploadModal: false, photoUploadItem: null,
                     showImportResultModal: false, importResult: { imported: 0, duplicates: 0, errors: 0 },
                     isImporting: false, importStatus: '',
                     isDragging: false, photoPreview: null, photoName: '', photoFile: null,
@@ -1324,42 +1272,6 @@
                         } catch (e) { this.showToast('Error deleting data', 'error'); }
                     },
                     showToast(message, type = 'success') { this.toast = { show: true, message, type }; setTimeout(() => this.toast.show = false, 3000); },
-
-                    // Photo Upload Modal for Employee
-                    openPhotoUploadModal(item) {
-                        this.photoUploadItem = item;
-                        this.photoPreview = item.photo ? '/storage/' + item.photo : null;
-                        this.photoFile = null;
-                        this.photoName = '';
-                        this.showPhotoUploadModal = true;
-                    },
-                    async savePhotoOnly() {
-                        if (!this.photoFile) {
-                            this.showToast('Please select a photo to upload', 'error');
-                            return;
-                        }
-                        const formData = new FormData();
-                        formData.append('photo', this.photoFile);
-                        formData.append('_method', 'PUT');
-                        try {
-                            const res = await fetch(`/api/pju-report/${this.photoUploadItem.id}/photo`, {
-                                method: 'POST',
-                                body: formData,
-                                headers: { 
-                                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                                    'Accept': 'application/json'
-                                }
-                            });
-                            const json = await res.json();
-                            if (json.success) {
-                                this.showToast('Photo uploaded successfully', 'success');
-                                this.showPhotoUploadModal = false;
-                                this.loadData();
-                            } else {
-                                this.showToast(json.message || 'Error uploading photo', 'error');
-                            }
-                        } catch (e) { this.showToast('Error uploading photo', 'error'); }
-                    },
 
                     // Import CSV/Excel
                     async handleImport(event, format) {

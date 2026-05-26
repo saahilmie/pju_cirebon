@@ -14,6 +14,7 @@ class PhotoUploadController extends Controller
      */
     public function index()
     {
+        if (!auth()->user()->isAdmin()) return abort(403, 'Unauthorized action. Employees are read-only.');
         return view('photo-upload');
     }
 
@@ -22,6 +23,8 @@ class PhotoUploadController extends Controller
      */
     public function analyze(Request $request)
     {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
         $request->validate([
             'files' => 'required|array',
             'files.*' => 'required|image|mimes:jpeg,png,jpg|max:20480',
@@ -57,6 +60,8 @@ class PhotoUploadController extends Controller
      */
     public function process(Request $request)
     {
+        if (!auth()->user()->isAdmin()) return response()->json(['success' => false, 'message' => 'Unauthorized action. Employees are read-only.'], 403);
+
         $request->validate([
             'items' => 'required|array',
             'items.*.temp_path' => 'required|string',

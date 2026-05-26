@@ -3,6 +3,8 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use App\Models\PjuData;
 
 class ProcessUpdateMeterisasi extends Command
 {
@@ -18,92 +20,54 @@ class ProcessUpdateMeterisasi extends Command
      *
      * @var string
      */
-    protected $description = 'Process UPDATE METERISASI.xlsx to update KDAM to M and mark with purple color';
+    protected $description = 'Process METERISASI files to update KDAM';
 
     /**
      * Execute the console command.
      */
     public function handle()
     {
-        $filePath = $this->argument('file') ?: 'D:\KP\Data PLN\UPDATE METERISASI.xlsx';
-        
+        $this->processFile('D:\KP\Data PLN\DAFTAR PJU SUDAH METERISASI.xlsx', 'M', 'orange');
+        $this->info('');
+        $this->processFile('D:\KP\Data PLN\abodemen sisa.xlsx', 'A', null);
+        $this->info('Finished processing all files!');
+    }
+
+    private function processFile($filePath, $kdam, $colorMarker)
+    {
         if (!file_exists($filePath)) {
-            $this->error("File not found at: {$filePath}");
+            $this->error("File not found: " . $filePath);
             return;
         }
 
-        $this->info("Loading Excel file...");
-        $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($filePath);
+        $this->info("Loading Excel file: " . basename($filePath));
+        $spreadsheet = IOFactory::load($filePath);
         $worksheet = $spreadsheet->getActiveSheet();
         $rows = $worksheet->toArray();
+        array_shift($rows); // Remove header row
 
-        if (empty($rows)) {
-            $this->error("Excel file is empty.");
-            return;
-        }
-
-        $headers = array_map('trim', array_map('strtolower', $rows[0]));
-        
-        // Find IDPEL column index
-        $idpelIndex = false;
-        foreach ($headers as $index => $header) {
-            if (str_contains($header, 'idpel') || str_contains($header, 'id_pel') || str_contains($header, 'id pel')) {
-                $idpelIndex = $index;
-                break;
-            }
-        }
-
-        if ($idpelIndex === false) {
-            // fallback: let's just look at the first data row and find a 11-12 digit number
-            $this->warn("Could not find IDPEL header. Will try to auto-detect from data.");
-        }
-
-        $updatedCount = 0;
-        $notFoundCount = 0;
-
-        $this->info("Processing rows...");
-        
-        $bar = $this->output->createProgressBar(count($rows) - 1);
-
-        for ($i = 1; $i < count($rows); $i++) {
-            $row = $rows[$i];
-            $idpel = null;
-
-            if ($idpelIndex !== false) {
-                $idpel = preg_replace('/[^0-9]/', '', $row[$idpelIndex] ?? '');
-            } else {
-                // Auto detect
-                foreach ($row as $cell) {
-                    $cleaned = preg_replace('/[^0-9]/', '', $cell ?? '');
-                    if (strlen($cleaned) >= 11 && strlen($cleaned) <= 12) {
-                        $idpel = $cleaned;
-                        break;
-                    }
+        $this->info("Collecting IDPELs...");
+        $idpels = [];
+        foreach ($rows as $row) {
+            foreach ($row as $cell) {
+                $cleaned = preg_replace('/[^0-9]/', '', (string)$cell);
+                if (strlen($cleaned) >= 11 && strlen($cleaned) <= 12) {
+                    $idpels[] = $cleaned;
+                    break;
                 }
             }
-
-            if (!$idpel) {
-                $bar->advance();
-                continue;
-            }
-
-            // Find in database
-            $record = \App\Models\PjuData::where('idpel', $idpel)->first();
-            
-            if ($record) {
-                $record->kdam = 'M';
-                $record->update_color_marker = 'purple'; // Originates from Abodemen
-                $record->save();
-                $updatedCount++;
-            } else {
-                $notFoundCount++;
-                $this->line("\nIDPEL not found in DB: {$idpel}");
-            }
-            $bar->advance();
         }
 
-        $bar->finish();
-        $this->newLine();
-        $this->info("Finished! Updated: {$updatedCount}, Not Found: {$notFoundCount}");
+        $idpels = array_unique($idpels);
+        $this->info("Found " . count($idpels) . " unique IDPELs.");
+
+        if (count($idpels) > 0) {
+            $this->info("Updating database...");
+            $updatedCount = PjuData::whereIn('idpel', $idpels)->update([
+                'kdam' => $kdam,
+                'update_color_marker' => $colorMarker
+            ]);
+            $this->info("Finished " . basename($filePath) . "! Updated: $updatedCount rows.");
+        }
     }
 }
