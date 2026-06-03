@@ -242,4 +242,225 @@ class PhotoUploadController extends Controller
             ];
         }
     }
+
+    /**
+     * Show the bulk status update page
+     */
+    public function bulkStatusIndex()
+    {
+        if (!auth()->user()->isAdmin()) return abort(403, 'Unauthorized action.');
+        return view('bulk-status-update');
+    }
+
+    /**
+     * Analyze uploaded CSV/Excel file for bulk status update
+     * Auto-detects IDPEL and KDAM columns
+     */
+    public function bulkStatusAnalyze(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
+        }
+
+        $request->validate([
+            'file' => 'required|file|max:102400',
+        ]);
+
+        $file = $request->file('file');
+        $ext = strtolower($file->getClientOriginalExtension());
+
+        if (!in_array($ext, ['csv', 'xlsx', 'xls'])) {
+            return response()->json(['success' => false, 'message' => 'Invalid file type. Only CSV and Excel files are supported.']);
+        }
+
+        try {
+            // Read file using PhpSpreadsheet
+            $spreadsheet = \PhpOffice\PhpSpreadsheet\IOFactory::load($file->getPathname());
+            $sheet = $spreadsheet->getActiveSheet();
+            $rows = $sheet->toArray();
+
+            if (count($rows) < 2) {
+                return response()->json(['success' => false, 'message' => 'File is empty or has no data rows.']);
+            }
+
+            // Get headers and auto-detect columns
+            $headers = array_map(function ($h) {
+                return strtolower(trim(str_replace(['"', ' '], ['', '_'], $h ?? '')));
+            }, $rows[0]);
+
+            $idpelCol = $this->findColumnIndex($headers, ['idpel', 'id_pel', 'idpelanggan', 'id_pelanggan', 'no_idpel']);
+            $kdamCol = $this->findColumnIndex($headers, ['kdam', 'status', 'status_kdam']);
+
+            if ($idpelCol === null) {
+                return response()->json(['success' => false, 'message' => 'Could not find IDPEL column. Please make sure your file has a column named "IDPEL".']);
+            }
+
+            // Parse data rows
+            $records = [];
+            for ($i = 1; $i < count($rows); $i++) {
+                $idpel = trim($rows[$i][$idpelCol] ?? '');
+                if (empty($idpel)) continue;
+
+                // Clean IDPEL - remove any spaces
+                $idpel = preg_replace('/\s+/', '', $idpel);
+
+                $kdam = $kdamCol !== null ? strtoupper(trim($rows[$i][$kdamCol] ?? '')) : 'M';
+
+                // Validate KDAM value
+                if (!in_array($kdam, ['M', 'A'])) {
+                    $kdam = 'M'; // Default to M if invalid
+                }
+
+                $records[] = ['idpel' => $idpel, 'kdam' => $kdam];
+            }
+
+            if (empty($records)) {
+                return response()->json(['success' => false, 'message' => 'No valid data found in the file.']);
+            }
+
+            // Check against database
+            $uniqueIdpels = array_unique(array_column($records, 'idpel'));
+            $existingRecords = PjuData::whereIn('idpel', $uniqueIdpels)
+                ->select('idpel', 'kdam')
+                ->get()
+                ->keyBy('idpel');
+
+            $willUpdate = 0;
+            $alreadySame = 0;
+            $notFound = 0;
+            $notFoundIdpels = [];
+
+            foreach ($records as $record) {
+                $existing = $existingRecords->get($record['idpel']);
+                if (!$existing) {
+                    $notFound++;
+                    $notFoundIdpels[] = $record['idpel'];
+                } elseif (strtoupper($existing->kdam) === $record['kdam']) {
+                    $alreadySame++;
+                } else {
+                    $willUpdate++;
+                }
+            }
+
+            // Store parsed data in temp file for processing
+            $fileKey = 'bulk-status-' . uniqid();
+            $tempPath = storage_path('app/temp/' . $fileKey . '.json');
+            if (!is_dir(dirname($tempPath))) {
+                mkdir(dirname($tempPath), 0755, true);
+            }
+            file_put_contents($tempPath, json_encode($records));
+
+            return response()->json([
+                'success' => true,
+                'file_key' => $fileKey,
+                'preview' => [
+                    'total' => count($records),
+                    'will_update' => $willUpdate,
+                    'already_same' => $alreadySame,
+                    'not_found' => $notFound,
+                    'not_found_idpels' => array_unique($notFoundIdpels),
+                    'kdam_col_found' => $kdamCol !== null,
+                ],
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error reading file: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Process the bulk status update
+     */
+    public function bulkStatusProcess(Request $request)
+    {
+        if (!auth()->user()->isAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized action.'], 403);
+        }
+
+        $request->validate([
+            'file_key' => 'required|string',
+        ]);
+
+        $fileKey = $request->file_key;
+        $tempPath = storage_path('app/temp/' . $fileKey . '.json');
+
+        if (!file_exists($tempPath)) {
+            return response()->json(['success' => false, 'message' => 'Session expired. Please upload the file again.']);
+        }
+
+        try {
+            $records = json_decode(file_get_contents($tempPath), true);
+
+            $updated = 0;
+            $skipped = 0;
+            $notFoundIdpels = [];
+
+            // Group records by target KDAM value for efficient batch updates
+            $updateGroups = [];
+            $allIdpels = array_unique(array_column($records, 'idpel'));
+
+            // Get existing records
+            $existingRecords = PjuData::whereIn('idpel', $allIdpels)
+                ->select('idpel', 'kdam')
+                ->get()
+                ->keyBy('idpel');
+
+            foreach ($records as $record) {
+                $existing = $existingRecords->get($record['idpel']);
+                if (!$existing) {
+                    $notFoundIdpels[] = $record['idpel'];
+                    continue;
+                }
+
+                if (strtoupper($existing->kdam) === $record['kdam']) {
+                    $skipped++;
+                    continue;
+                }
+
+                // Group by target KDAM for batch update
+                if (!isset($updateGroups[$record['kdam']])) {
+                    $updateGroups[$record['kdam']] = [];
+                }
+                $updateGroups[$record['kdam']][] = $record['idpel'];
+            }
+
+            // Execute batch updates
+            foreach ($updateGroups as $kdam => $idpels) {
+                $count = PjuData::whereIn('idpel', $idpels)->update(['kdam' => $kdam]);
+                $updated += $count;
+            }
+
+            // Clean up temp file
+            @unlink($tempPath);
+
+            // Broadcast event
+            try {
+                event(new PjuDataUpdated('bulk_status_updated', "Bulk: {$updated} records", auth()->user()->name, null));
+            } catch (\Exception $e) {
+                \Log::warning('Broadcast failed for bulk status update: ' . $e->getMessage());
+            }
+
+            return response()->json([
+                'success' => true,
+                'updated' => $updated,
+                'skipped' => $skipped,
+                'not_found_idpels' => array_unique($notFoundIdpels),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Error processing update: ' . $e->getMessage()]);
+        }
+    }
+
+    /**
+     * Find column index by checking multiple possible names
+     */
+    private function findColumnIndex(array $headers, array $possibleNames): ?int
+    {
+        foreach ($headers as $index => $header) {
+            if (in_array($header, $possibleNames)) {
+                return $index;
+            }
+        }
+        return null;
+    }
 }
+

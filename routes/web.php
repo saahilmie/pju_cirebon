@@ -56,6 +56,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/photo-upload', [App\Http\Controllers\PhotoUploadController::class, 'index'])->name('photo-upload');
     Route::post('/api/photo-upload/analyze', [App\Http\Controllers\PhotoUploadController::class, 'analyze']);
     Route::post('/api/photo-upload/process', [App\Http\Controllers\PhotoUploadController::class, 'process']);
+
+    // Bulk Status Update
+    Route::get('/bulk-status-update', [App\Http\Controllers\PhotoUploadController::class, 'bulkStatusIndex'])->name('bulk-status-update');
+    Route::post('/api/bulk-status-update/analyze', [App\Http\Controllers\PhotoUploadController::class, 'bulkStatusAnalyze']);
+    Route::post('/api/bulk-status-update/process', [App\Http\Controllers\PhotoUploadController::class, 'bulkStatusProcess']);
 });
 
 
