@@ -74,6 +74,31 @@
                     </div>
                 </div>
 
+                <div class="relative" x-data="{ open: false }">
+                    <button @click="open = !open"
+                        class="bg-white rounded-lg shadow-lg px-5 py-2.5 flex items-center gap-2 text-sm text-gray-700 hover:bg-gray-50 min-w-[120px]">
+                        <span x-text="selectedDaya ? selectedDaya + ' VA' : 'Daya'"></span>
+                        <svg class="w-4 h-4 ml-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                        </svg>
+                    </button>
+                    <div x-show="open" @click.away="open = false" x-transition
+                        class="absolute top-full mt-2 bg-white rounded-lg shadow-xl py-2 w-44 z-50">
+                        <button @click="filterByDaya(null); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left text-sm">
+                            All Daya
+                        </button>
+                        <button @click="filterByDaya(10); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left">
+                            <span class="w-3 h-3 rounded-full bg-[#3B82F6]"></span> <span class="text-sm">10 VA</span>
+                        </button>
+                        <button @click="filterByDaya(20); open = false"
+                            class="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-50 cursor-pointer text-left">
+                            <span class="w-3 h-3 rounded-full bg-[#EF4444]"></span> <span class="text-sm">20 VA (Potensi Ilegal)</span>
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Photo Filter Toggle -->
                 <button @click="togglePhotoFilter()"
                     class="bg-white rounded-lg shadow-lg px-4 py-2.5 flex items-center gap-2 text-sm hover:bg-gray-50 transition-colors"
@@ -407,8 +432,10 @@
                     searchQuery: '',
                     selectedRegion: null,
                     selectedStatus: null,
+                    selectedDaya: null,
                     filterRegionAPI: null,  // API value for region filter
                     filterStatusAPI: null,  // API value for status filter ('M', 'A', 'unclear')
+                    filterDayaAPI: null,    // API value for daya filter
                     showOnlyWithPhoto: false, // Default: show ALL data, not just with photo
                     allMarkersData: [],
                     regions: [
@@ -626,7 +653,8 @@
                                 withPhoto: this.showOnlyWithPhoto ? '1' : '0',
                                 region: this.filterRegionAPI || '',
                                 status: this.filterStatusAPI || '',
-                                search: this.searchQuery || ''
+                                search: this.searchQuery || '',
+                                daya: this.filterDayaAPI || ''
                             });
 
                             const response = await fetch(`/api/pju-markers?${params.toString()}`);
@@ -960,6 +988,12 @@
                         this.reloadViewportMarkers();  // Reload from server with filter
                     },
 
+                    filterByDaya(daya) {
+                        this.filterDayaAPI = daya || null;
+                        this.selectedDaya = daya || null;
+                        this.reloadViewportMarkers();
+                    },
+
                     applyFilters() {
                         this.markers.forEach(({ marker, data }) => {
                             let showMarker = true;
@@ -981,6 +1015,11 @@
                                 } else if (data.kdam !== expectedKdam) {
                                     showMarker = false;
                                 }
+                            }
+
+                            // Filter by daya
+                            if (this.selectedDaya && data.daya !== this.selectedDaya) {
+                                showMarker = false;
                             }
 
                             if (showMarker) {

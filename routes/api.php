@@ -20,6 +20,7 @@ Route::get('/pju-markers', function (Request $request) {
     $region = $request->get('region');
     $status = $request->get('status');
     $search = $request->get('search');
+    $daya = $request->get('daya');
 
     $query = PjuData::whereNotNull('koordinat_x')
         ->whereNotNull('koordinat_y');
@@ -46,6 +47,11 @@ Route::get('/pju-markers', function (Request $request) {
         } else {
             $query->where('kdam', $status);
         }
+    }
+
+    // Filter by daya
+    if ($daya && $daya !== 'null') {
+        $query->where('daya', $daya);
     }
 
     // Filter by IDPEL search
