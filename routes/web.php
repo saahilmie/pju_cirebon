@@ -44,8 +44,15 @@ Route::middleware('auth')->group(function () {
     Route::get('/api/analytics/idpel', [AnalyticsController::class, 'getIdpelAnalysis']);
     Route::get('/api/analytics/filters', [AnalyticsController::class, 'getFilterOptions']);
 
-    // User Management (Admin only)
-    Route::resource('users', UserController::class)->except(['show', 'create', 'edit']);
+    // User Management (Super Admin only)
+    Route::resource('users', UserController::class)
+        ->except(['show', 'create', 'edit'])
+        ->middleware(function ($request, $next) {
+            if (!$request->user() || !$request->user()->isSuperAdmin()) {
+                abort(403, 'Unauthorized action. Only Super Admin can manage users.');
+            }
+            return $next($request);
+        });
 
     // Profile Settings
     Route::get('/profile', [App\Http\Controllers\ProfileController::class, 'index'])->name('profile');
